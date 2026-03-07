@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar'
 import TaskTracker from './views/TaskTracker'
 import HabitTracker from './views/HabitTracker'
 import GoalsView from './views/GoalsView'
+import FaplessView from './views/FaplessView'
 import SettingsView from './views/SettingsView'
 import AuthPage from './views/AuthPage'
 import { Loader } from 'lucide-react'
@@ -28,6 +29,7 @@ function Dashboard() {
   const renderView = () => {
     if (view === 'habits') return <HabitTracker />
     if (view === 'goals') return <GoalsView />
+    if (view === 'fapless') return <FaplessView />
     if (view === 'settings') return <SettingsView />
     return <TaskTracker />
   }

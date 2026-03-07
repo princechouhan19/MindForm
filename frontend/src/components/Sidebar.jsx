@@ -1,12 +1,13 @@
 import React from 'react'
-import { CheckSquare, Activity, Target, Settings, LogOut, User, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { CheckSquare, Activity, Target, Settings, LogOut, User, PanelLeftClose, PanelLeftOpen, Flame } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const navItems = [
-  { id: 'tasks', label: 'Task Tracker', icon: CheckSquare, color: 'var(--cyan)' },
-  { id: 'habits', label: 'Habit Tracker', icon: Activity, color: 'var(--amber)' },
-  { id: 'goals', label: 'Goals', icon: Target, color: 'var(--green)' },
-  { id: 'settings', label: 'Settings', icon: Settings, color: 'var(--text-secondary)' },
+  { id: 'tasks',   label: 'Task Tracker',   icon: CheckSquare, color: 'var(--cyan)' },
+  { id: 'habits',  label: 'Habit Tracker',  icon: Activity,    color: 'var(--amber)' },
+  { id: 'goals',   label: 'Goals',          icon: Target,      color: 'var(--green)' },
+  { id: 'fapless', label: 'Fapless',        icon: Flame,       color: '#ff4500' },
+  { id: 'settings',label: 'Settings',       icon: Settings,    color: 'var(--text-secondary)' },
 ]
 
 export default function Sidebar({ active, onChange, isOpen, onToggle }) {

@@ -48,3 +48,12 @@ export const goalsAPI = {
   update: (id, payload) => request('PUT', `/goals/${id}`, payload),
   delete: (id) => request('DELETE', `/goals/${id}`),
 }
+
+// Fapless
+export const faplessAPI = {
+  get: () => request('GET', '/fapless'),
+  update: (payload) => request('PUT', '/fapless', payload),
+  relapse: (reason, dayCount) => request('POST', '/fapless/relapse', { reason, dayCount }),
+  start: () => request('POST', '/fapless/start'),
+  addAura: (points) => request('PUT', '/fapless/aura', { points }),
+}

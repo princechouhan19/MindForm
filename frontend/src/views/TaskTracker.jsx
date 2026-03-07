@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { Plus, Trash2, ChevronLeft, ChevronRight, Star, AlertTriangle, Download, Cloud, CloudOff, Loader } from 'lucide-react'
+import { Plus, Trash2, ChevronLeft, ChevronRight, Star, AlertTriangle, Download, Cloud, CloudOff, Loader, Copy } from 'lucide-react'
 import { tasksAPI } from '../api/client'
 import { useSync } from '../hooks/useSync'
 import { DonutChart } from '../components/StatCard'
@@ -81,6 +81,16 @@ export default function TaskTracker() {
   }
 
   const removeTask = (t) => updateWeek({ tasks: tasks.filter(x => x !== t) })
+
+  const copyFromLastWeek = () => {
+    if (weekNum <= 1) return
+    const prevWeekKey = `${monthKey}-w${weekNum - 1}`
+    const prevData = allData[prevWeekKey] || {}
+    const prevTasks = prevData.tasks || DEFAULT_TASKS
+    const hasCustomTasks = JSON.stringify(tasks) !== JSON.stringify(DEFAULT_TASKS)
+    if (hasCustomTasks && !confirm(`This will replace your current Week ${weekNum} tasks with Week ${weekNum - 1} tasks. Continue?`)) return
+    updateWeek({ tasks: [...prevTasks] })
+  }
   const setRef = (field, val) => updateWeek({ reflection: { ...reflection, [field]: val } })
 
   const dayStats = weekDays.map((day, i) => {
@@ -227,7 +237,20 @@ export default function TaskTracker() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: 16 }}>
               <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 16 }}>MANAGE TASKS</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>MANAGE TASKS</div>
+                  {weekNum > 1 && (
+                    <button
+                      onClick={copyFromLastWeek}
+                      title={`Copy tasks from Week ${weekNum - 1}`}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: 'var(--cyan)', background: 'var(--cyan-dim)', border: '1px solid rgba(0,229,255,0.25)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer', transition: 'all 0.15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,229,255,0.18)'; e.currentTarget.style.borderColor = 'var(--cyan)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'var(--cyan-dim)'; e.currentTarget.style.borderColor = 'rgba(0,229,255,0.25)' }}
+                    >
+                      <Copy size={12} /> Copy from Week {weekNum - 1}
+                    </button>
+                  )}
+                </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                   {tasks.map(t => (
                     <div key={t} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'var(--bg-glass)', borderRadius: 8, border: '1px solid var(--border)' }}>
