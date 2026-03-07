@@ -58,7 +58,7 @@ export default function Sidebar({ active, onChange, isOpen, onToggle }) {
       {/* Nav */}
       <nav style={{ padding: isOpen ? '14px 10px' : '14px 6px', flex: 1 }}>
         {isOpen && <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.15em', padding: '0 6px', marginBottom: 6 }}>MODULES</div>}
-        {navItems.map(({ id, label, icon: Icon }) => {
+        {navItems.map(({ id, label, icon: Icon, color }) => {
           const isActive = active === id
           return (
             <button key={id} onClick={() => onChange(id)} title={!isOpen ? label : undefined}
