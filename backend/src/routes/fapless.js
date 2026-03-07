@@ -1,12 +1,12 @@
 const express = require('express')
 const router = express.Router()
-const auth = require('../middleware/auth')
+const { protect } = require('../middleware/auth')
 const ctrl = require('../controllers/faplessController')
 
-router.get('/', auth, ctrl.getRecord)
-router.put('/', auth, ctrl.update)
-router.post('/relapse', auth, ctrl.relapse)
-router.post('/start', auth, ctrl.start)
-router.put('/aura', auth, ctrl.addAura)
+router.get('/', protect, ctrl.getRecord)
+router.put('/', protect, ctrl.update)
+router.post('/relapse', protect, ctrl.relapse)
+router.post('/start', protect, ctrl.start)
+router.put('/aura', protect, ctrl.addAura)
 
 module.exports = router
