@@ -4,6 +4,10 @@
 
 # 🌌 Mindform Dashboard
 
+<p align="center">
+  <a href="https://mindform.onrender.com/"><strong>🚀 Live Demo</strong></a>
+</p>
+
 **Mindform** is a high-performance, full-stack productivity ecosystem designed to streamline personal growth through data-driven habit tracking, task management, and psychological wellness monitoring.
 
 Built with a modern **PERN-style** architecture (replacing PG with MongoDB), Mindform offers a seamless, real-time synchronized experience for high-achievers.
@@ -29,6 +33,18 @@ Built with a modern **PERN-style** architecture (replacing PG with MongoDB), Min
 
 ### 📊 Data Sovereignty
 - **CSV Export:** Full data transparency—export your tasks and habit logs to professional formats for offline analysis.
+
+---
+
+## 📸 Showcase
+
+| Task Tracker | Habit Tracker |
+|:---:|:---:|
+| <img src="Showcase/TaskTracker.png" width="400" /> | <img src="Showcase/Habit-Tracker.png" width="400" /> |
+| **NoFap Tracker** | **Goals Dashboard** |
+| <img src="Showcase/fapless.png" width="400" /> | <img src="Showcase/Goals.png" width="400" /> |
+| **Settings (Mobile/Desktop)** | |
+| <img src="Showcase/Settings.png" width="400" /> | |
 
 ---
 
