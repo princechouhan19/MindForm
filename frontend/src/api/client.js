@@ -40,3 +40,11 @@ export const habitsAPI = {
   getMonth: (monthKey) => request('GET', `/habits/${monthKey}`),
   upsertMonth: (monthKey, payload) => request('PUT', `/habits/${monthKey}`, payload),
 }
+
+// Goals
+export const goalsAPI = {
+  getAll: () => request('GET', '/goals'),
+  create: (payload) => request('POST', '/goals', payload),
+  update: (id, payload) => request('PUT', `/goals/${id}`, payload),
+  delete: (id) => request('DELETE', `/goals/${id}`),
+}

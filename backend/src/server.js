@@ -9,6 +9,7 @@ const connectDB = require('./config/db')
 const authRoutes = require('./routes/auth')
 const taskRoutes = require('./routes/tasks')
 const habitRoutes = require('./routes/habits')
+const goalRoutes = require('./routes/goals')
 
 const app = express()
 
@@ -66,6 +67,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/tasks', taskRoutes)
 app.use('/api/habits', habitRoutes)
+app.use('/api/goals', goalRoutes)
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production' || process.env.SERVE_FRONTEND === 'true') {

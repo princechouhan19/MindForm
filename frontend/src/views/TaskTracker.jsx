@@ -132,33 +132,33 @@ export default function TaskTracker() {
       <div style={{ padding: '20px 24px 0', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--cyan)', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 4 }}>TASK TRACKER</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <h1 style={{ fontSize: 22, fontWeight: 800 }}>{monthName} {year}</h1>
+            <div style={{ fontSize: 13, color: 'var(--cyan)', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 6 }}>TASK TRACKER</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <h1 style={{ fontSize: 28, fontWeight: 800 }}>{monthName} {year}</h1>
               <SyncIndicator />
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '4px 8px' }}>
-              <button onClick={() => setWeekNum(w => Math.max(1, w - 1))} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex' }}><ChevronLeft size={14} /></button>
-              <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', padding: '0 4px', minWidth: 48, textAlign: 'center' }}>Week {weekNum}</span>
-              <button onClick={() => setWeekNum(w => Math.min(totalWeeks, w + 1))} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex' }}><ChevronRight size={14} /></button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '6px 12px' }}>
+              <button onClick={() => setWeekNum(w => Math.max(1, w - 1))} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex' }}><ChevronLeft size={18} /></button>
+              <span style={{ fontSize: 14, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', padding: '0 6px', minWidth: 60, textAlign: 'center' }}>Week {weekNum}</span>
+              <button onClick={() => setWeekNum(w => Math.min(totalWeeks, w + 1))} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex' }}><ChevronRight size={18} /></button>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '4px 8px' }}>
-              <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1); setWeekNum(1) }} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex' }}><ChevronLeft size={14} /></button>
-              <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1); setWeekNum(1) }} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex' }}><ChevronRight size={14} /></button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '6px 12px' }}>
+              <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1); setWeekNum(1) }} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex' }}><ChevronLeft size={18} /></button>
+              <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1); setWeekNum(1) }} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex' }}><ChevronRight size={18} /></button>
             </div>
-            <button onClick={exportCSV} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', padding: '6px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
+            <button onClick={exportCSV} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text-secondary)', padding: '8px 14px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}
               onMouseEnter={e => e.currentTarget.style.color = 'var(--cyan)'}
               onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
-              <Download size={12} /> Export
+              <Download size={14} /> Export
             </button>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 200px 200px', gap: 10, marginBottom: 16 }}>
-          <div style={{ gridColumn: '1 / 3', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
-            <div style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 8 }}>WEEKLY PROGRESS</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 220px 220px', gap: 12, marginBottom: 20 }}>
+          <div style={{ gridColumn: '1 / 3', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 10 }}>WEEKLY PROGRESS</div>
             <ResponsiveContainer width="100%" height={60}>
               <BarChart data={weeklyBarData} barSize={20}>
                 <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#6b7280', fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} />
@@ -167,21 +167,21 @@ export default function TaskTracker() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>THIS WEEK INSIGHTS</div>
-            {bestDay && <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Star size={11} color="var(--amber)" fill="var(--amber)" /><div><div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Strongest</div><div style={{ fontSize: 12, fontWeight: 700, color: 'var(--amber)' }}>{bestDay.label} · {bestDay.pct}%</div></div></div>}
-            {worstDay && worstDay.label !== bestDay?.label && <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><AlertTriangle size={11} color="var(--red)" /><div><div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Needs Focus</div><div style={{ fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>{worstDay.label} · {worstDay.pct}%</div></div></div>}
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>THIS WEEK INSIGHTS</div>
+            {bestDay && <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Star size={14} color="var(--amber)" fill="var(--amber)" /><div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Strongest</div><div style={{ fontSize: 14, fontWeight: 700, color: 'var(--amber)' }}>{bestDay.label} · {bestDay.pct}%</div></div></div>}
+            {worstDay && worstDay.label !== bestDay?.label && <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><AlertTriangle size={14} color="var(--red)" /><div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Needs Focus</div><div style={{ fontSize: 14, fontWeight: 700, color: 'var(--red)' }}>{worstDay.label} · {worstDay.pct}%</div></div></div>}
           </div>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <div style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>WEEK SCORE</div>
-            <DonutChart percent={weekScore} size={70} color={weekScore >= 80 ? 'var(--green)' : weekScore >= 50 ? 'var(--amber)' : 'var(--red)'} />
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>WEEK SCORE</div>
+            <DonutChart percent={weekScore} size={84} color={weekScore >= 80 ? 'var(--green)' : weekScore >= 50 ? 'var(--amber)' : 'var(--red)'} />
           </div>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '14px', display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'center' }}>
-            <div style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>WEEK TOTALS</div>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px', display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>WEEK TOTALS</div>
             {[['Goal', totalGoal, 'var(--text-primary)'], ['Done', totalCompleted, 'var(--green)'], ['Left', totalGoal - totalCompleted, 'var(--red)']].map(([l, v, c]) => (
               <div key={l} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{l}</span>
-                <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-mono)', color: c }}>{v}</span>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{l}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-mono)', color: c }}>{v}</span>
               </div>
             ))}
           </div>
@@ -200,56 +200,56 @@ export default function TaskTracker() {
                 const stats = dayStats[i]
                 const isToday = day && new Date(year, month, day).toDateString() === today.toDateString()
                 return (
-                  <div key={i} style={{ background: isToday ? 'rgba(0,229,255,0.04)' : 'var(--bg-card)', border: `1px solid ${isToday ? 'rgba(0,229,255,0.25)' : 'var(--border)'}`, borderRadius: 'var(--radius-md)', padding: '12px', opacity: day ? 1 : 0.3 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                  <div key={i} style={{ background: isToday ? 'rgba(0,229,255,0.04)' : 'var(--bg-card)', border: `1px solid ${isToday ? 'rgba(0,229,255,0.25)' : 'var(--border)'}`, borderRadius: 'var(--radius-md)', padding: '16px', opacity: day ? 1 : 0.3 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                       <div>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: isToday ? 'var(--cyan)' : 'var(--text-secondary)', letterSpacing: '0.08em' }}>{SHORT_DAYS[i]}</div>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: isToday ? 'var(--cyan)' : 'var(--text-primary)', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{day || '—'}</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: isToday ? 'var(--cyan)' : 'var(--text-secondary)', letterSpacing: '0.08em' }}>{SHORT_DAYS[i]}</div>
+                        <div style={{ fontSize: 24, fontWeight: 800, color: isToday ? 'var(--cyan)' : 'var(--text-primary)', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{day || '—'}</div>
                       </div>
-                      <DonutChart percent={stats.pct} size={44} color={stats.pct >= 80 ? 'var(--green)' : stats.pct >= 50 ? 'var(--amber)' : 'var(--red)'} />
+                      <DonutChart percent={stats.pct} size={50} color={stats.pct >= 80 ? 'var(--green)' : stats.pct >= 50 ? 'var(--amber)' : 'var(--red)'} />
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {tasks.map(task => (
-                        <label key={task} style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: day ? 'pointer' : 'default', padding: '4px 0' }}>
-                          <input type="checkbox" checked={day ? getChecked(day, task) : false} disabled={!day} onChange={e => day && setChecked(day, task, e.target.checked)} style={{ accentColor: 'var(--cyan)', width: 12, height: 12, cursor: 'pointer' }} />
-                          <span style={{ fontSize: 10, color: day && getChecked(day, task) ? 'var(--text-muted)' : 'var(--text-secondary)', textDecoration: day && getChecked(day, task) ? 'line-through' : 'none', lineHeight: 1.3, transition: 'all 0.15s' }}>{task}</span>
+                        <label key={task} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: day ? 'pointer' : 'default', padding: '6px 0' }}>
+                          <input type="checkbox" checked={day ? getChecked(day, task) : false} disabled={!day} onChange={e => day && setChecked(day, task, e.target.checked)} style={{ accentColor: 'var(--cyan)', width: 15, height: 15, cursor: 'pointer' }} />
+                          <span style={{ fontSize: 13, color: day && getChecked(day, task) ? 'var(--text-muted)' : 'var(--text-secondary)', textDecoration: day && getChecked(day, task) ? 'line-through' : 'none', lineHeight: 1.3, transition: 'all 0.15s' }}>{task}</span>
                         </label>
                       ))}
                     </div>
-                    <div style={{ display: 'flex', gap: 6, marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 9, color: 'var(--green)', fontFamily: 'var(--font-mono)' }}>✓{stats.completed}</span>
-                      <span style={{ fontSize: 9, color: 'var(--red)', fontFamily: 'var(--font-mono)' }}>✗{stats.total - stats.completed}</span>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: 11, color: 'var(--green)', fontFamily: 'var(--font-mono)' }}>✓{stats.completed}</span>
+                      <span style={{ fontSize: 11, color: 'var(--red)', fontFamily: 'var(--font-mono)' }}>✗{stats.total - stats.completed}</span>
                     </div>
                   </div>
                 )
               })}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 12 }}>
-              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
-                <div style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 12 }}>MANAGE TASKS</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: 16 }}>
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 16 }}>MANAGE TASKS</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                   {tasks.map(t => (
-                    <div key={t} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: 'var(--bg-glass)', borderRadius: 6, border: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 11, color: 'var(--text-primary)' }}>{t}</span>
-                      <button onClick={() => removeTask(t)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 2 }}
+                    <div key={t} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'var(--bg-glass)', borderRadius: 8, border: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{t}</span>
+                      <button onClick={() => removeTask(t)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 4 }}
                         onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
-                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}><Trash2 size={11} /></button>
+                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}><Trash2 size={15} /></button>
                     </div>
                   ))}
                 </div>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <input value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTask()} placeholder="Add task..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 6, padding: '6px 10px', fontSize: 11, color: 'var(--text-primary)' }} />
-                  <button onClick={addTask} style={{ background: 'var(--cyan-dim)', border: '1px solid rgba(0,229,255,0.2)', borderRadius: 6, color: 'var(--cyan)', padding: '6px 10px', display: 'flex', alignItems: 'center' }}><Plus size={13} /></button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTask()} placeholder="Add task..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text-primary)' }} />
+                  <button onClick={addTask} style={{ background: 'var(--cyan-dim)', border: '1px solid rgba(0,229,255,0.2)', borderRadius: 8, color: 'var(--cyan)', padding: '10px 16px', display: 'flex', alignItems: 'center' }}><Plus size={18} /></button>
                 </div>
               </div>
-              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
-                <div style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 12 }}>WEEKLY REFLECTION</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 16 }}>WEEKLY REFLECTION</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {[['win', '🏆 Best win this week?'], ['slow', '🐢 What slowed me down?'], ['focus', '🎯 One focus for next week']].map(([field, label]) => (
                     <div key={field}>
-                      <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>{label}</div>
-                      <textarea value={reflection[field] || ''} onChange={e => setRef(field, e.target.value)} rows={2} style={{ width: '100%', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 6, padding: '8px 10px', fontSize: 11, color: 'var(--text-primary)', resize: 'vertical', lineHeight: 1.5, fontFamily: 'var(--font-display)' }} />
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>{label}</div>
+                      <textarea value={reflection[field] || ''} onChange={e => setRef(field, e.target.value)} rows={2} style={{ width: '100%', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', fontSize: 14, color: 'var(--text-primary)', resize: 'vertical', lineHeight: 1.5, fontFamily: 'var(--font-display)' }} />
                     </div>
                   ))}
                 </div>

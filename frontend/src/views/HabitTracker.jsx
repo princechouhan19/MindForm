@@ -133,29 +133,29 @@ export default function HabitTracker() {
       <div style={{ padding: '20px 24px 12px', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--amber)', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 4 }}>HABIT TRACKER</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <h1 style={{ fontSize: 22, fontWeight: 800 }}>{monthName} {year}</h1>
+            <div style={{ fontSize: 13, color: 'var(--amber)', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 6 }}>HABIT TRACKER</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <h1 style={{ fontSize: 28, fontWeight: 800 }}>{monthName} {year}</h1>
               <SyncBadge />
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '4px 8px' }}>
-              <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1) }} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex' }}><ChevronLeft size={14} /></button>
-              <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', minWidth: 70, textAlign: 'center' }}>{monthName.slice(0, 3)} {year}</span>
-              <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1) }} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex' }}><ChevronRight size={14} /></button>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '6px 12px' }}>
+              <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1) }} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex' }}><ChevronLeft size={18} /></button>
+              <span style={{ fontSize: 14, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', minWidth: 90, textAlign: 'center' }}>{monthName.slice(0, 3)} {year}</span>
+              <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1) }} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex' }}><ChevronRight size={18} /></button>
             </div>
-            <button onClick={exportCSV} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-secondary)', padding: '6px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
+            <button onClick={exportCSV} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text-secondary)', padding: '8px 14px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}
               onMouseEnter={e => e.currentTarget.style.color = 'var(--amber)'}
               onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
-              <Download size={12} /> Export
+              <Download size={14} /> Export
             </button>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 140px 140px 140px', gap: 10, marginBottom: 14 }}>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '12px 14px' }}>
-            <div style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 8 }}>DAILY PROGRESS</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 160px 160px 160px', gap: 12, marginBottom: 20 }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 10 }}>DAILY PROGRESS</div>
             <ResponsiveContainer width="100%" height={55}>
               <BarChart data={dailyData} barSize={4}>
                 <XAxis dataKey="label" tick={false} axisLine={false} tickLine={false} />
@@ -175,10 +175,10 @@ export default function HabitTracker() {
             </ResponsiveContainer>
           </div>
           {[['GOAL', habits.length * totalDays, 'var(--text-primary)'], ['DONE', totalDone, 'var(--green)'], ['LEFT', totalGoal - totalDone, 'var(--red)']].map(([l, v, c]) => (
-            <div key={l} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>{l}</div>
-              <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'var(--font-mono)', color: c }}>{v}</div>
-              <DonutChart percent={l === 'GOAL' ? 100 : l === 'DONE' ? overallPct : 100 - overallPct} size={30} color={c} />
+            <div key={l} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>{l}</div>
+              <div style={{ fontSize: 32, fontWeight: 800, fontFamily: 'var(--font-mono)', color: c }}>{v}</div>
+              <DonutChart percent={l === 'GOAL' ? 100 : l === 'DONE' ? overallPct : 100 - overallPct} size={36} color={c} />
             </div>
           ))}
         </div>
@@ -197,17 +197,17 @@ export default function HabitTracker() {
                   <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                     <thead>
                       <tr>
-                        <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.1em', borderBottom: '1px solid var(--border)', position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 2 }}>MY HABITS</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', borderBottom: '1px solid var(--border)', position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 2 }}>MY HABITS</th>
                         {weekGroups.map(wg => wg.days.map((d, di) => {
                           const isToday = new Date(year, month, d).toDateString() === today.toDateString()
                           return (
-                            <th key={d} style={{ padding: '4px 2px', fontSize: 9, fontFamily: 'var(--font-mono)', color: isToday ? 'var(--amber)' : 'var(--text-muted)', borderBottom: '1px solid var(--border)', borderLeft: di === 0 && wg.week > 1 ? '1px solid rgba(255,183,0,0.15)' : 'none', minWidth: 24, textAlign: 'center' }}>
-                              {di === 0 && <div style={{ fontSize: 8, color: 'var(--amber)', marginBottom: 2 }}>W{wg.week}</div>}
+                            <th key={d} style={{ padding: '6px 4px', fontSize: 11, fontFamily: 'var(--font-mono)', color: isToday ? 'var(--amber)' : 'var(--text-muted)', borderBottom: '1px solid var(--border)', borderLeft: di === 0 && wg.week > 1 ? '1px solid rgba(255,183,0,0.15)' : 'none', minWidth: 32, textAlign: 'center' }}>
+                              {di === 0 && <div style={{ fontSize: 9, color: 'var(--amber)', marginBottom: 2 }}>W{wg.week}</div>}
                               {d}
                             </th>
                           )
                         }))}
-                        <th style={{ padding: '10px 8px', fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.08em', borderBottom: '1px solid var(--border)', borderLeft: '1px solid var(--border)', minWidth: 36, textAlign: 'center' }}>%</th>
+                        <th style={{ padding: '12px 10px', fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.08em', borderBottom: '1px solid var(--border)', borderLeft: '1px solid var(--border)', minWidth: 44, textAlign: 'center' }}>%</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -217,21 +217,21 @@ export default function HabitTracker() {
                           <tr key={habit.name} style={{ background: hi % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}
                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,183,0,0.03)'}
                             onMouseLeave={e => e.currentTarget.style.background = hi % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'}>
-                            <td style={{ padding: '7px 14px', fontSize: 11, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 1, whiteSpace: 'nowrap' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, minWidth: 180 }}>
+                            <td style={{ padding: '10px 16px', fontSize: 14, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 1, whiteSpace: 'nowrap' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, minWidth: 220 }}>
                                 <span>{habit.emoji} {habit.name}</span>
-                                <button onClick={() => removeHabit(habit.name)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 0, flexShrink: 0 }}
+                                <button onClick={() => removeHabit(habit.name)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 2, flexShrink: 0 }}
                                   onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
-                                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}><Trash2 size={10} /></button>
+                                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}><Trash2 size={14} /></button>
                               </div>
                             </td>
                             {weekGroups.map(wg => wg.days.map((d, di) => (
-                              <td key={d} style={{ textAlign: 'center', borderBottom: '1px solid var(--border)', borderLeft: di === 0 && wg.week > 1 ? '1px solid rgba(255,183,0,0.08)' : 'none', padding: '2px' }}>
-                                <input type="checkbox" checked={getChecked(d, habit.name)} onChange={e => toggleCheck(d, habit.name, e.target.checked)} style={{ accentColor: 'var(--amber)', width: 12, height: 12, cursor: 'pointer' }} />
+                              <td key={d} style={{ textAlign: 'center', borderBottom: '1px solid var(--border)', borderLeft: di === 0 && wg.week > 1 ? '1px solid rgba(255,183,0,0.08)' : 'none', padding: '4px' }}>
+                                <input type="checkbox" checked={getChecked(d, habit.name)} onChange={e => toggleCheck(d, habit.name, e.target.checked)} style={{ accentColor: 'var(--amber)', width: 15, height: 15, cursor: 'pointer' }} />
                               </td>
                             )))}
-                            <td style={{ textAlign: 'center', borderBottom: '1px solid var(--border)', borderLeft: '1px solid var(--border)', padding: '7px 4px' }}>
-                              <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 700, color: stats.pct >= 80 ? 'var(--green)' : stats.pct >= 50 ? 'var(--amber)' : 'var(--red)' }}>{stats.pct}%</span>
+                            <td style={{ textAlign: 'center', borderBottom: '1px solid var(--border)', borderLeft: '1px solid var(--border)', padding: '10px 6px' }}>
+                              <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700, color: stats.pct >= 80 ? 'var(--green)' : stats.pct >= 50 ? 'var(--amber)' : 'var(--red)' }}>{stats.pct}%</span>
                             </td>
                           </tr>
                         )
@@ -239,32 +239,32 @@ export default function HabitTracker() {
                     </tbody>
                   </table>
                 </div>
-                <div style={{ padding: '10px 14px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8 }}>
-                  <input value={newEmoji} onChange={e => setNewEmoji(e.target.value)} style={{ width: 36, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 6, padding: '5px', fontSize: 14, color: 'var(--text-primary)', textAlign: 'center' }} placeholder="✨" />
-                  <input value={newHabit} onChange={e => setNewHabit(e.target.value)} onKeyDown={e => e.key === 'Enter' && addHabit()} placeholder="Add new habit..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 6, padding: '5px 10px', fontSize: 11, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }} />
-                  <button onClick={addHabit} style={{ background: 'var(--amber-dim)', border: '1px solid rgba(255,183,0,0.2)', borderRadius: 6, color: 'var(--amber)', padding: '5px 12px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-display)' }}>
-                    <Plus size={12} /> Add
+                <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: 10 }}>
+                  <input value={newEmoji} onChange={e => setNewEmoji(e.target.value)} style={{ width: 44, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px', fontSize: 16, color: 'var(--text-primary)', textAlign: 'center' }} placeholder="✨" />
+                  <input value={newHabit} onChange={e => setNewHabit(e.target.value)} onKeyDown={e => e.key === 'Enter' && addHabit()} placeholder="Add new habit..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 14px', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }} />
+                  <button onClick={addHabit} style={{ background: 'var(--amber-dim)', border: '1px solid rgba(255,183,0,0.2)', borderRadius: 8, color: 'var(--amber)', padding: '8px 18px', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display)', fontWeight: 600 }}>
+                    <Plus size={16} /> Add
                   </button>
                 </div>
               </div>
 
-              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                  <Trophy size={11} color="var(--amber)" />
-                  <span style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>TOP HABITS</span>
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                  <Trophy size={15} color="var(--amber)" />
+                  <span style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>TOP HABITS</span>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {top10.map((h, i) => (
-                    <div key={h.name} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                      <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: i < 3 ? 'var(--amber)' : 'var(--text-muted)', minWidth: 14, textAlign: 'right' }}>{i + 1}</span>
-                      <span style={{ fontSize: 9 }}>{h.emoji}</span>
+                    <div key={h.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: i < 3 ? 'var(--amber)' : 'var(--text-muted)', minWidth: 18, textAlign: 'right' }}>{i + 1}</span>
+                      <span style={{ fontSize: 12 }}>{h.emoji}</span>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 10, color: 'var(--text-primary)', lineHeight: 1.2, marginBottom: 2 }}>{h.name}</div>
-                        <div style={{ height: 3, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
+                        <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.2, marginBottom: 4 }}>{h.name}</div>
+                        <div style={{ height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
                           <div style={{ height: '100%', width: `${h.pct}%`, background: h.pct >= 80 ? 'var(--green)' : h.pct >= 50 ? 'var(--amber)' : 'var(--red)', borderRadius: 2, transition: 'width 0.4s ease' }} />
                         </div>
                       </div>
-                      <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', minWidth: 28, textAlign: 'right' }}>{h.pct}%</span>
+                      <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', minWidth: 36, textAlign: 'right' }}>{h.pct}%</span>
                     </div>
                   ))}
                 </div>

@@ -1,52 +1,80 @@
 import React from 'react'
-import { CheckSquare, Activity, Zap, LogOut, User } from 'lucide-react'
+import { CheckSquare, Activity, Target, Settings, LogOut, User, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const navItems = [
-  { id: 'tasks', label: 'Task Tracker', icon: CheckSquare },
-  { id: 'habits', label: 'Habit Tracker', icon: Activity },
+  { id: 'tasks', label: 'Task Tracker', icon: CheckSquare, color: 'var(--cyan)' },
+  { id: 'habits', label: 'Habit Tracker', icon: Activity, color: 'var(--amber)' },
+  { id: 'goals', label: 'Goals', icon: Target, color: 'var(--green)' },
+  { id: 'settings', label: 'Settings', icon: Settings, color: 'var(--text-secondary)' },
 ]
 
-export default function Sidebar({ active, onChange }) {
+export default function Sidebar({ active, onChange, isOpen, onToggle }) {
   const { user, logout } = useAuth()
 
   return (
     <aside style={{
-      width: 'var(--sidebar-width)',
+      width: isOpen ? 'var(--sidebar-width)' : '60px',
       height: '100vh',
       background: 'var(--bg-surface)',
       borderRight: '1px solid var(--border)',
       display: 'flex',
       flexDirection: 'column',
       flexShrink: 0,
+      transition: 'width 0.25s ease',
+      overflow: 'hidden',
     }}>
-      <div style={{ padding: '28px 20px 20px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, var(--cyan), #0077ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px var(--cyan-glow)' }}>
-            <Zap size={16} color="#000" fill="#000" />
-          </div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.05em' }}>MIND FORM</div>
-            <div style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-secondary)', letterSpacing: '0.12em', marginTop: 1 }}>PRODUCTIVITY SUITE</div>
-          </div>
+      {/* Logo + Toggle */}
+      <div style={{ padding: '16px 12px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: isOpen ? 'space-between' : 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
+          <img src="/logo.png" alt="Mind Form" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'contain', flexShrink: 0 }} />
+          {isOpen && (
+            <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.02em', lineHeight: 1.1 }}>
+              <div>Mind</div>
+              <div>Form</div>
+            </div>
+          )}
         </div>
+        {isOpen && (
+          <button onClick={onToggle} title="Collapse sidebar" style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 4, borderRadius: 6, flexShrink: 0, transition: 'color 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+            <PanelLeftClose size={16} />
+          </button>
+        )}
       </div>
-      <nav style={{ padding: '16px 12px', flex: 1 }}>
-        <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.15em', padding: '0 8px', marginBottom: 8 }}>MODULES</div>
+
+      {/* Toggle button when closed */}
+      {!isOpen && (
+        <div style={{ padding: '12px 0', display: 'flex', justifyContent: 'center', borderBottom: '1px solid var(--border)' }}>
+          <button onClick={onToggle} title="Open sidebar" style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 6, borderRadius: 6, transition: 'color 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--cyan)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+            <PanelLeftOpen size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Nav */}
+      <nav style={{ padding: isOpen ? '14px 10px' : '14px 6px', flex: 1 }}>
+        {isOpen && <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.15em', padding: '0 6px', marginBottom: 6 }}>MODULES</div>}
         {navItems.map(({ id, label, icon: Icon }) => {
           const isActive = active === id
           return (
-            <button key={id} onClick={() => onChange(id)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 'var(--radius-sm)', background: isActive ? 'var(--cyan-dim)' : 'transparent', border: isActive ? '1px solid rgba(0,229,255,0.2)' : '1px solid transparent', color: isActive ? 'var(--cyan)' : 'var(--text-secondary)', fontSize: 13, fontWeight: isActive ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s ease', marginBottom: 4, textAlign: 'left', fontFamily: 'var(--font-display)' }}
+            <button key={id} onClick={() => onChange(id)} title={!isOpen ? label : undefined}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: isOpen ? 10 : 0, justifyContent: isOpen ? 'flex-start' : 'center', padding: isOpen ? '10px 10px' : '10px 0', borderRadius: 'var(--radius-sm)', background: isActive ? (color + '18') : 'transparent', border: isActive ? `1px solid ${color}33` : '1px solid transparent', color: isActive ? color : 'var(--text-secondary)', fontSize: 13, fontWeight: isActive ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s ease', marginBottom: 4, textAlign: 'left', fontFamily: 'var(--font-display)' }}
               onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'var(--bg-glass-hover)'; e.currentTarget.style.color = 'var(--text-primary)' } }}
               onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' } }}>
-              <Icon size={15} />{label}
-              {isActive && <div style={{ marginLeft: 'auto', width: 4, height: 4, borderRadius: '50%', background: 'var(--cyan)', boxShadow: '0 0 6px var(--cyan)' }} />}
+              <Icon size={15} />
+              {isOpen && <><span>{label}</span>{isActive && <div style={{ marginLeft: 'auto', width: 5, height: 5, borderRadius: '50%', background: color, boxShadow: `0 0 6px ${color}` }} />}</>}
             </button>
           )
         })}
       </nav>
-      <div style={{ borderTop: '1px solid var(--border)', padding: '12px' }}>
-        {user && (
+
+      {/* User & Logout */}
+      <div style={{ borderTop: '1px solid var(--border)', padding: isOpen ? '12px' : '10px 6px' }}>
+        {user && isOpen && (
           <div style={{ padding: '8px 10px', background: 'var(--bg-glass)', borderRadius: 8, border: '1px solid var(--border)', marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--cyan-dim), var(--amber-dim))', border: '1px solid var(--border-bright)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -59,12 +87,14 @@ export default function Sidebar({ active, onChange }) {
             </div>
           </div>
         )}
-        <button onClick={logout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, background: 'none', border: '1px solid transparent', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'var(--font-display)' }}
+        <button onClick={logout} title={!isOpen ? 'Sign out' : undefined}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: isOpen ? 'flex-start' : 'center', gap: 8, padding: isOpen ? '8px 10px' : '8px 0', borderRadius: 8, background: 'none', border: '1px solid transparent', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'var(--font-display)' }}
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,71,87,0.08)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'rgba(255,71,87,0.2)' }}
           onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'transparent' }}>
-          <LogOut size={13} /> Sign out
+          <LogOut size={13} /> {isOpen && 'Sign out'}
         </button>
       </div>
     </aside>
   )
 }
+

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { Zap, Eye, EyeOff, Loader } from 'lucide-react'
+import { Eye, EyeOff, Loader } from 'lucide-react'
 
 export default function AuthPage() {
   const { login, register, error, setError } = useAuth()
@@ -27,9 +27,9 @@ export default function AuthPage() {
     width: '100%',
     background: 'rgba(255,255,255,0.04)',
     border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: 10,
-    padding: '12px 16px',
-    fontSize: 14,
+    borderRadius: 12,
+    padding: '14px 18px',
+    fontSize: 16,
     color: 'var(--text-primary)',
     outline: 'none',
     transition: 'border-color 0.15s',
@@ -61,26 +61,19 @@ export default function AuthPage() {
         animation: 'fadeIn 0.4s ease',
       }}>
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 10,
-            background: 'linear-gradient(135deg, var(--cyan), #0077ff)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 20px var(--cyan-glow)',
-          }}>
-            <Zap size={20} color="#000" fill="#000" />
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 36 }}>
+          <img src="/logo.png" alt="Mind Form" style={{ width: 48, height: 48, borderRadius: 12, objectFit: 'contain' }} />
           <div>
-            <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.04em' }}>MIND FORM</div>
-            <div style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.12em' }}>PRODUCTIVITY SUITE</div>
+            <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '0.04em' }}>MIND FORM</div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.12em' }}>PRODUCTIVITY SUITE</div>
           </div>
         </div>
 
         {/* Title */}
-        <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>
+        <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>
           {mode === 'login' ? 'Welcome back' : 'Create account'}
         </h2>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 28 }}>
+        <p style={{ fontSize: 15, color: 'var(--text-secondary)', marginBottom: 32 }}>
           {mode === 'login' ? 'Sign in to your dashboard' : 'Start tracking your habits & tasks'}
         </p>
 
@@ -132,25 +125,25 @@ export default function AuthPage() {
 
         {/* Submit */}
         <button onClick={handleSubmit} disabled={loading} style={{
-          width: '100%', marginTop: 24,
+          width: '100%', marginTop: 28,
           background: loading ? 'var(--cyan-dim)' : 'linear-gradient(135deg, var(--cyan), #0077ff)',
-          border: 'none', borderRadius: 10,
-          padding: '13px', fontSize: 14, fontWeight: 700,
+          border: 'none', borderRadius: 12,
+          padding: '15px', fontSize: 16, fontWeight: 700,
           color: loading ? 'var(--cyan)' : '#000',
           cursor: loading ? 'not-allowed' : 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           transition: 'opacity 0.15s',
           fontFamily: 'var(--font-display)',
           letterSpacing: '0.03em',
         }}>
-          {loading ? <><Loader size={15} style={{ animation: 'spin 1s linear infinite' }} /> {mode === 'login' ? 'Signing in...' : 'Creating account...'}</> : mode === 'login' ? 'Sign In' : 'Create Account'}
+          {loading ? <><Loader size={18} style={{ animation: 'spin 1s linear infinite' }} /> {mode === 'login' ? 'Signing in...' : 'Creating account...'}</> : mode === 'login' ? 'Sign In' : 'Create Account'}
         </button>
 
         {/* Toggle mode */}
-        <div style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: 'var(--text-secondary)' }}>
+        <div style={{ textAlign: 'center', marginTop: 24, fontSize: 14, color: 'var(--text-secondary)' }}>
           {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
           <button onClick={() => { setMode(m => m === 'login' ? 'register' : 'login'); setError('') }} style={{
-            background: 'none', color: 'var(--cyan)', fontWeight: 600, fontSize: 13,
+            background: 'none', color: 'var(--cyan)', fontWeight: 600, fontSize: 14,
             cursor: 'pointer', fontFamily: 'var(--font-display)',
           }}>
             {mode === 'login' ? 'Sign up' : 'Sign in'}
