@@ -12,6 +12,9 @@ const habitRoutes = require('./routes/habits')
 
 const app = express()
 
+// Trust proxy for Render/Cloud platforms
+app.set('trust proxy', 1)
+
 // Connect to DB
 connectDB()
 
