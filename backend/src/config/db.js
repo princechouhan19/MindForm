@@ -2,9 +2,13 @@ const mongoose = require('mongoose')
 
 const connectDB = async () => {
   try {
-    const dbURI = process.env.MONGO_URI || process.env.MONGODB_URI
+    let dbURI = process.env.MONGO_URI || process.env.MONGODB_URI
     if (!dbURI) throw new Error('Database URI is missing from environment variables!')
     
+    // Safety trim for accidental spaces
+    dbURI = dbURI.trim()
+    
+    console.log('⏳ Attempting to connect to MongoDB...')
     const conn = await mongoose.connect(dbURI, {
       serverSelectionTimeoutMS: 5000,
     })
