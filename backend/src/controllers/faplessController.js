@@ -1,7 +1,7 @@
 const Fapless = require('../models/Fapless')
 
 // GET current user's fapless data
-exports.get = async (req, res) => {
+exports.getRecord = async (req, res) => {
   try {
     let doc = await Fapless.findOne({ user: req.user.id })
     if (!doc) {
