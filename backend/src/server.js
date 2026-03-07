@@ -111,4 +111,20 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`)
+
+  // Keep Render free tier alive — ping self every 45 seconds
+  if (process.env.NODE_ENV === 'production') {
+    const https = require('https')
+    const SELF_URL = process.env.RENDER_EXTERNAL_URL || `https://mindform.onrender.com`
+
+    setInterval(() => {
+      https.get(`${SELF_URL}/health`, (res) => {
+        console.log(`🏓 Self-ping OK [${res.statusCode}]`)
+      }).on('error', (err) => {
+        console.warn(`⚠️  Self-ping failed: ${err.message}`)
+      })
+    }, 45 * 1000) // every 45 seconds
+
+    console.log(`🏓 Self-ping active → ${SELF_URL}/health every 45s`)
+  }
 })
