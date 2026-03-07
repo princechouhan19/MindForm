@@ -1,159 +1,86 @@
-# Prince OS Dashboard v2 — Full Stack
+<p align="center">
+  <img src="logo.png" width="120" alt="Mindform Logo" />
+</p>
 
-React frontend + Express/MongoDB backend with JWT auth. Deploy-ready for Render.
+# 🌌 Mindform Dashboard
+
+**Mindform** is a high-performance, full-stack productivity ecosystem designed to streamline personal growth through data-driven habit tracking, task management, and psychological wellness monitoring.
+
+Built with a modern **PERN-style** architecture (replacing PG with MongoDB), Mindform offers a seamless, real-time synchronized experience for high-achievers.
 
 ---
 
-## 📁 Structure
+## ✨ Core Features
 
-```
-prince-dashboard-v2/
-├── backend/          ← Express API (deploy as Render Web Service)
+### 📋 Precision Task Tracking
+- **Weekly Cycles:** View and manage tasks in 7-day high-focus sprints.
+- **Weekly Reflections:** Built-in journaling for "Wins," "Obstacles," and "Next Week's Focus."
+- **Performance Analytics:** Historical bar charts to track completion percentages across weeks.
+
+### 📅 Habit Mastery
+- **Monthly Matrix:** Full visibility into your daily consistency across customized habits.
+- **Mental State Integration:** Track **Mood** and **Motivation** (1–10) to correlate habits with psychological well-being.
+- **Top 10 Leaderboard:** Automatically ranks your most consistent habits to reinforce positive behavior.
+
+### 🛡️ Secure & Synchronized
+- **Real-time Synchronization:** High-frequency, debounced auto-sync ensures your data is saved to the cloud instantly.
+- **JWT-Powered Security:** Industry-standard authentication with bcrypt password hashing and sensitive data isolation.
+- **Sync Architecture:** Visual indicators in the UI provide real-time feedback on your cloud connection status.
+
+### 📊 Data Sovereignty
+- **CSV Export:** Full data transparency—export your tasks and habit logs to professional formats for offline analysis.
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | React 18, Vite, Recharts, Lucide Icons, Vanilla CSS (Premium) |
+| **Backend** | Node.js, Express, JWT, Helmet.js, Rate-Limiting |
+| **Database** | MongoDB Atlas (NoSQL) |
+| **Deployment** | Render (CI/CD Integrated) |
+
+---
+
+## 📁 System Architecture
+
+```text
+mindform/
+├── backend/          # RESTful API Engine
 │   ├── src/
-│   │   ├── server.js
-│   │   ├── config/db.js
-│   │   ├── models/       (User, TaskWeek, HabitMonth)
-│   │   ├── controllers/  (auth, tasks, habits)
-│   │   ├── routes/
-│   │   └── middleware/
-│   ├── .env.example
-│   └── package.json
-│
-└── frontend/         ← React + Vite (deploy as Render Static Site)
-    ├── src/
-    │   ├── api/client.js       (fetch wrapper)
-    │   ├── context/AuthContext (JWT + user state)
-    │   ├── hooks/useSync.js    (debounced auto-save)
-    │   ├── views/              (AuthPage, TaskTracker, HabitTracker)
-    │   └── components/         (Sidebar, StatCard)
-    ├── .env.example
-    └── package.json
+│   │   ├── models/   # Data Schemas (User, Task, Habit, Fapless)
+│   │   ├── routes/   # Express Router Implementation
+│   │   └── middleware/# JWT Verification & Security Layer
+├── frontend/         # High-Fidelity UI
+│   ├── src/
+│   │   ├── api/      # Modular API Client
+│   │   ├── context/  # Global Auth & Session Management
+│   │   └── views/    # Responsive View Components
 ```
 
 ---
 
-## ⚡ Local Development
+## ⚡ Technical Setup
 
-### 1. Backend
+### Backend
+1. `cd backend`
+2. `npm install`
+3. Configure `.env` (refer to `.env.example` for `MONGO_URI` and `JWT_SECRET`)
+4. `npm start` (Runs on port 5000)
 
-```bash
-cd backend
-npm install
-cp .env.example .env
-# Edit .env — add your MONGO_URI and JWT_SECRET
-npm run dev
-# Runs on http://localhost:5000
-```
-
-### 2. Frontend
-
-```bash
-cd frontend
-npm install
-cp .env.example .env
-# .env already has VITE_API_URL=http://localhost:5000/api
-npm run dev
-# Runs on http://localhost:5173
-```
+### Frontend
+1. `cd frontend`
+2. `npm install`
+3. `npm run dev` (Runs on port 5173)
 
 ---
 
-## 🚀 Deploy on Render
-
-### Step 1 — Push to GitHub
-Push the entire `prince-dashboard-v2` folder to a GitHub repo.
-
----
-
-### Step 2 — Deploy Backend (Web Service)
-
-1. Go to [render.com](https://render.com) → **New → Web Service**
-2. Connect your GitHub repo
-3. Settings:
-   - **Root Directory:** `backend`
-   - **Build Command:** `npm install`
-   - **Start Command:** `npm start`
-   - **Environment:** Node
-4. Add **Environment Variables:**
-   ```
-   MONGO_URI        = mongodb+srv://your_connection_string
-   JWT_SECRET       = any_long_random_string_here
-   JWT_EXPIRES_IN   = 7d
-   NODE_ENV         = production
-   FRONTEND_URL     = https://your-frontend.onrender.com
-   ```
-5. Click **Create Web Service**
-6. Copy the backend URL (e.g. `https://prince-dashboard-api.onrender.com`)
+## 🔒 Security & Performance
+- **Data Isolation:** All database queries are scoped by User ID for strict tenancy isolation.
+- **Sanitization:** Implements Helmet.js and CORS protection for high-integrity production environments.
+- **Optimized Builds:** Vite-powered bundling for lightning-fast asset delivery on mobile and desktop.
 
 ---
 
-### Step 3 — Deploy Frontend (Static Site)
-
-1. Go to Render → **New → Static Site**
-2. Connect same GitHub repo
-3. Settings:
-   - **Root Directory:** `frontend`
-   - **Build Command:** `npm install && npm run build`
-   - **Publish Directory:** `dist`
-4. Add **Environment Variable:**
-   ```
-   VITE_API_URL = https://prince-dashboard-api.onrender.com/api
-   ```
-5. Click **Create Static Site**
-
----
-
-### Step 4 — Update Backend CORS
-Go back to backend environment variables and update:
-```
-FRONTEND_URL = https://your-actual-frontend-url.onrender.com
-```
-Redeploy backend.
-
----
-
-## 🔑 API Endpoints
-
-### Auth
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | `/api/auth/register` | Create account |
-| POST | `/api/auth/login` | Login, returns JWT |
-| GET | `/api/auth/me` | Get current user |
-
-### Tasks (requires Bearer token)
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET | `/api/tasks/month/:monthKey` | All weeks in month |
-| GET | `/api/tasks/:weekKey` | Single week data |
-| PUT | `/api/tasks/:weekKey` | Save/update week |
-
-### Habits (requires Bearer token)
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET | `/api/habits/:monthKey` | Month habit data |
-| PUT | `/api/habits/:monthKey` | Save/update month |
-
-**Key formats:**
-- `monthKey` → `"2025-0"` (year-monthIndex, January = 0)
-- `weekKey` → `"2025-0-w1"` (year-monthIndex-weekNumber)
-
----
-
-## 🛡 Security Features
-- Passwords hashed with bcrypt (12 rounds)
-- JWT tokens expire in 7 days
-- Rate limiting (200 req/15min general, 20 req/15min auth)
-- Helmet.js security headers
-- CORS restricted to your frontend URL
-
----
-
-## ✨ Features
-- **Auth:** Register/Login with JWT, persistent sessions
-- **Auto-sync:** Data saves to MongoDB 1.5s after any change
-- **Sync indicator:** Live saving/saved/error badge in header
-- **Task Tracker:** Weekly grid, reflections, weekly progress chart
-- **Habit Tracker:** Monthly grid, mental state tracking, Top 10 ranking
-- **CSV Export:** Both views support data export
-- **Multi-user:** Each user has isolated data in MongoDB
+© 2026 Mindform. All Rights Reserved.
