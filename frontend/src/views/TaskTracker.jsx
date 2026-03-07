@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { Plus, Trash2, ChevronLeft, ChevronRight, Star, AlertTriangle, Download, Cloud, CloudOff, Loader, Copy } from 'lucide-react'
+import { Plus, Trash2, ChevronLeft, ChevronRight, Star, AlertTriangle, Download, Cloud, CloudOff, Loader, Copy, CheckCircle2, Circle } from 'lucide-react'
 import { tasksAPI } from '../api/client'
 import { useSync } from '../hooks/useSync'
 import { DonutChart } from '../components/StatCard'
@@ -26,11 +26,24 @@ function getWeeksInMonth(year, month) {
   return Math.ceil((firstDay.getDay() + lastDay.getDate()) / 7)
 }
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(window.innerWidth <= 768)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth <= 768)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
+
 export default function TaskTracker() {
   const today = new Date()
+  const isMobile = useIsMobile()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
   const [weekNum, setWeekNum] = useState(1)
+  const [selectedDay, setSelectedDay] = useState(today.getDate())
+  const [mobileTab, setMobileTab] = useState('tasks') // 'tasks' | 'manage' | 'reflect'
 
   // All data keyed by weekKey
   const [allData, setAllData] = useState({})
@@ -44,51 +57,31 @@ export default function TaskTracker() {
   const checks = weekData.checks || {}
   const reflection = weekData.reflection || {}
 
-  // Load month data when month/year changes
   useEffect(() => {
     setLoadingWeek(true)
     tasksAPI.getMonth(monthKey)
-      .then(res => {
-        if (res.data) setAllData(prev => ({ ...prev, ...res.data }))
-      })
+      .then(res => { if (res.data) setAllData(prev => ({ ...prev, ...res.data })) })
       .catch(console.error)
       .finally(() => setLoadingWeek(false))
   }, [monthKey])
 
-  // Current week payload for sync
   const syncPayload = useMemo(() => ({ tasks, checks, reflection }), [JSON.stringify({ tasks, checks, reflection })])
-
   const saveFn = useCallback(() => tasksAPI.upsertWeek(weekKey, syncPayload), [weekKey, JSON.stringify(syncPayload)])
   const syncStatus = useSync(saveFn, syncPayload)
 
   const totalWeeks = getWeeksInMonth(year, month)
   const weekDays = useMemo(() => getWeekDays(year, month, weekNum), [year, month, weekNum])
 
-  const updateWeek = (patch) => {
-    setAllData(prev => ({
-      ...prev,
-      [weekKey]: { ...prev[weekKey], ...patch }
-    }))
-  }
-
+  const updateWeek = (patch) => setAllData(prev => ({ ...prev, [weekKey]: { ...prev[weekKey], ...patch } }))
   const getChecked = (day, task) => checks[`${day}-${task}`] || false
   const setChecked = (day, task, val) => updateWeek({ checks: { ...checks, [`${day}-${task}`]: val } })
-
-  const addTask = () => {
-    if (!newTask.trim()) return
-    updateWeek({ tasks: [...tasks, newTask.trim()] })
-    setNewTask('')
-  }
-
+  const addTask = () => { if (!newTask.trim()) return; updateWeek({ tasks: [...tasks, newTask.trim()] }); setNewTask('') }
   const removeTask = (t) => updateWeek({ tasks: tasks.filter(x => x !== t) })
-
   const copyFromLastWeek = () => {
     if (weekNum <= 1) return
-    const prevWeekKey = `${monthKey}-w${weekNum - 1}`
-    const prevData = allData[prevWeekKey] || {}
-    const prevTasks = prevData.tasks || DEFAULT_TASKS
-    const hasCustomTasks = JSON.stringify(tasks) !== JSON.stringify(DEFAULT_TASKS)
-    if (hasCustomTasks && !confirm(`This will replace your current Week ${weekNum} tasks with Week ${weekNum - 1} tasks. Continue?`)) return
+    const prevTasks = (allData[`${monthKey}-w${weekNum - 1}`] || {}).tasks || DEFAULT_TASKS
+    const hasCustom = JSON.stringify(tasks) !== JSON.stringify(DEFAULT_TASKS)
+    if (hasCustom && !confirm(`Replace Week ${weekNum} tasks with Week ${weekNum - 1} tasks?`)) return
     updateWeek({ tasks: [...prevTasks] })
   }
   const setRef = (field, val) => updateWeek({ reflection: { ...reflection, [field]: val } })
@@ -119,23 +112,200 @@ export default function TaskTracker() {
   })
 
   const monthName = new Date(year, month).toLocaleString('default', { month: 'long' })
+  const tt = { background: '#13151d', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontFamily: 'var(--font-mono)', fontSize: 11 }
 
+  const SyncIndicator = () => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: syncStatus === 'error' ? 'var(--red)' : syncStatus === 'saving' ? 'var(--amber)' : syncStatus === 'saved' ? 'var(--green)' : 'var(--text-muted)' }}>
+      {syncStatus === 'saving' ? <Loader size={11} style={{ animation: 'spin 1s linear infinite' }} /> : <Cloud size={11} />}
+      {syncStatus === 'saving' ? 'Saving...' : syncStatus === 'saved' ? 'Saved' : syncStatus === 'error' ? 'Error' : ''}
+    </div>
+  )
+
+  // ─── Mobile Layout ──────────────────────────────────────────────────────────
+  if (isMobile) {
+    const selIdx = weekDays.findIndex(d => d === selectedDay)
+    const selStats = selIdx >= 0 ? dayStats[selIdx] : null
+    const scoreColor = selStats ? (selStats.pct >= 80 ? 'var(--green)' : selStats.pct >= 50 ? 'var(--amber)' : 'var(--red)') : 'var(--text-muted)'
+
+    return (
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } } @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }`}</style>
+
+        {/* Mobile Header */}
+        <div style={{ padding: '14px 14px 0', flexShrink: 0 }}>
+          {/* Week + Month row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '6px 10px' }}>
+              <button onClick={() => setWeekNum(w => Math.max(1, w - 1))} style={{ background: 'none', color: 'var(--text-secondary)', display: 'flex', padding: 2 }}><ChevronLeft size={16} /></button>
+              <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--cyan)', fontWeight: 700 }}>Week {weekNum}</span>
+              <button onClick={() => setWeekNum(w => Math.min(totalWeeks, w + 1))} style={{ background: 'none', color: 'var(--text-secondary)', display: 'flex', padding: 2 }}><ChevronRight size={16} /></button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)' }}>{monthName.slice(0, 3)} {year}</span>
+              <SyncIndicator />
+            </div>
+          </div>
+
+          {/* Week score mini bar + stat */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 14, alignItems: 'center' }}>
+            <div style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>WEEK SCORE</span>
+                <span style={{ fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-mono)', color: weekScore >= 80 ? 'var(--green)' : weekScore >= 50 ? 'var(--amber)' : 'var(--red)' }}>{weekScore}%</span>
+              </div>
+              <div style={{ height: 5, background: 'var(--border)', borderRadius: 3 }}>
+                <div style={{ height: '100%', width: `${weekScore}%`, background: weekScore >= 80 ? 'var(--green)' : weekScore >= 50 ? 'var(--amber)' : 'var(--red)', borderRadius: 3, transition: 'width 0.4s' }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3, fontSize: 11, fontFamily: 'var(--font-mono)' }}>
+              <div><span style={{ color: 'var(--green)' }}>✓{totalCompleted}</span></div>
+              <div><span style={{ color: 'var(--red)' }}>✗{totalGoal - totalCompleted}</span></div>
+            </div>
+          </div>
+
+          {/* Day pill selector */}
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none', marginBottom: 2 }}>
+            {weekDays.map((day, i) => {
+              if (!day) return null
+              const isToday = new Date(year, month, day).toDateString() === today.toDateString()
+              const isSel = day === selectedDay
+              const pct = dayStats[i]?.pct || 0
+              const col = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : pct > 0 ? 'var(--red)' : 'var(--text-muted)'
+              return (
+                <button
+                  key={day}
+                  onClick={() => setSelectedDay(day)}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                    padding: '8px 10px', borderRadius: 12, flexShrink: 0, cursor: 'pointer',
+                    background: isSel ? 'var(--cyan-dim)' : 'var(--bg-card)',
+                    border: `1px solid ${isSel ? 'var(--cyan)' : isToday ? 'rgba(0,229,255,0.25)' : 'var(--border)'}`,
+                    transition: 'all 0.15s', minWidth: 42,
+                  }}>
+                  <span style={{ fontSize: 9, fontWeight: 600, color: isSel ? 'var(--cyan)' : 'var(--text-muted)', letterSpacing: '0.05em' }}>{SHORT_DAYS[i]}</span>
+                  <span style={{ fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-mono)', color: isSel ? 'var(--cyan)' : isToday ? 'var(--text-primary)' : 'var(--text-secondary)', lineHeight: 1 }}>{day}</span>
+                  {pct > 0 && <div style={{ width: 20, height: 3, borderRadius: 2, background: col }} />}
+                  {pct === 0 && <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--border)' }} />}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Mobile Tab bar (Tasks / Manage / Reflect) */}
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', flexShrink: 0, padding: '0 14px' }}>
+          {[['tasks', 'Today\'s Tasks'], ['manage', 'Manage'], ['reflect', 'Reflect']].map(([tab, label]) => (
+            <button key={tab} onClick={() => setMobileTab(tab)} style={{
+              flex: 1, padding: '10px 0', fontSize: 11, fontWeight: 600, background: 'none',
+              color: mobileTab === tab ? 'var(--cyan)' : 'var(--text-muted)',
+              borderBottom: `2px solid ${mobileTab === tab ? 'var(--cyan)' : 'transparent'}`,
+              transition: 'all 0.15s', letterSpacing: '0.05em',
+            }}>{label}</button>
+          ))}
+        </div>
+
+        {/* Mobile Content */}
+        <div style={{ flex: 1, overflow: 'auto', padding: '16px 14px 80px' }}>
+          {loadingWeek ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-secondary)', gap: 8 }}>
+              <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> Loading...
+            </div>
+          ) : mobileTab === 'tasks' ? (
+            <div style={{ animation: 'fadeUp 0.25s ease' }}>
+              {/* Day header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{SHORT_DAYS[weekDays.indexOf(selectedDay)]}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--cyan)', lineHeight: 1.1 }}>{selectedDay} {monthName.slice(0, 3)}</div>
+                </div>
+                {selStats && (
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 28, fontWeight: 900, fontFamily: 'var(--font-mono)', color: scoreColor, lineHeight: 1 }}>{selStats.pct}%</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{selStats.completed}/{selStats.total} done</div>
+                  </div>
+                )}
+              </div>
+              {/* Task cards */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {tasks.map(task => {
+                  const done = getChecked(selectedDay, task)
+                  return (
+                    <label key={task} style={{
+                      display: 'flex', alignItems: 'center', gap: 14,
+                      padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
+                      background: done ? 'rgba(0,255,136,0.05)' : 'var(--bg-card)',
+                      border: `1px solid ${done ? 'rgba(0,255,136,0.25)' : 'var(--border)'}`,
+                      transition: 'all 0.2s',
+                    }}>
+                      <input type="checkbox" checked={done}
+                        onChange={e => setChecked(selectedDay, task, e.target.checked)}
+                        style={{ display: 'none' }} />
+                      <div style={{ flexShrink: 0 }}>
+                        {done
+                          ? <CheckCircle2 size={22} color="var(--green)" fill="rgba(0,255,136,0.15)" />
+                          : <Circle size={22} color="var(--border-bright)" />
+                        }
+                      </div>
+                      <span style={{
+                        fontSize: 15, fontWeight: 500,
+                        color: done ? 'var(--text-muted)' : 'var(--text-primary)',
+                        textDecoration: done ? 'line-through' : 'none',
+                        flex: 1, lineHeight: 1.4, transition: 'all 0.2s',
+                      }}>{task}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+          ) : mobileTab === 'manage' ? (
+            <div style={{ animation: 'fadeUp 0.25s ease' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>TASKS THIS WEEK</span>
+                {weekNum > 1 && (
+                  <button onClick={copyFromLastWeek} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--cyan)', background: 'var(--cyan-dim)', border: '1px solid rgba(0,229,255,0.25)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>
+                    <Copy size={11} /> Copy Wk {weekNum - 1}
+                  </button>
+                )}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                {tasks.map(t => (
+                  <div key={t} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'var(--bg-card)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 14, color: 'var(--text-primary)', flex: 1 }}>{t}</span>
+                    <button onClick={() => removeTask(t)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 6, borderRadius: 6 }}
+                      onTouchStart={e => e.currentTarget.style.color = 'var(--red)'}
+                      onTouchEnd={e => e.currentTarget.style.color = 'var(--text-muted)'}><Trash2 size={15} /></button>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTask()}
+                  placeholder="Add task..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: 'var(--text-primary)' }} />
+                <button onClick={addTask} style={{ background: 'var(--cyan-dim)', border: '1px solid rgba(0,229,255,0.2)', borderRadius: 10, color: 'var(--cyan)', padding: '12px 16px', display: 'flex', alignItems: 'center' }}><Plus size={18} /></button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ animation: 'fadeUp 0.25s ease', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {[['win', '🏆', 'Best win this week?'], ['slow', '🐢', 'What slowed me down?'], ['focus', '🎯', 'Focus for next week']].map(([field, emoji, label]) => (
+                <div key={field} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 10 }}>{emoji} {label}</div>
+                  <textarea value={reflection[field] || ''} onChange={e => setRef(field, e.target.value)} rows={3}
+                    style={{ width: '100%', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', fontSize: 14, color: 'var(--text-primary)', resize: 'none', lineHeight: 1.5, fontFamily: 'var(--font-display)', boxSizing: 'border-box' }} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // ─── Desktop Layout (original) ──────────────────────────────────────────────
   const exportCSV = () => {
     let csv = `Task Tracker - ${monthName} ${year} Week ${weekNum}\n\nTask,${SHORT_DAYS.map((d, i) => weekDays[i] ? `${d} ${weekDays[i]}` : d).join(',')}\n`
     tasks.forEach(t => { csv += `"${t}",${weekDays.map(d => d ? (getChecked(d, t) ? '✓' : '✗') : '-').join(',')}\n` })
     const blob = new Blob([csv], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a'); a.href = url; a.download = `tasks-${year}-${month + 1}-w${weekNum}.csv`; a.click()
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `tasks-${year}-${month + 1}-w${weekNum}.csv`; a.click()
   }
-
-  const SyncIndicator = () => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: syncStatus === 'error' ? 'var(--red)' : syncStatus === 'saving' ? 'var(--amber)' : syncStatus === 'saved' ? 'var(--green)' : 'var(--text-muted)' }}>
-      {syncStatus === 'saving' ? <Loader size={11} style={{ animation: 'spin 1s linear infinite' }} /> : syncStatus === 'saved' ? <Cloud size={11} /> : syncStatus === 'error' ? <CloudOff size={11} /> : <Cloud size={11} />}
-      {syncStatus === 'saving' ? 'Saving...' : syncStatus === 'saved' ? 'Saved' : syncStatus === 'error' ? 'Sync failed' : ''}
-    </div>
-  )
-
-  const tt = { background: '#13151d', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontFamily: 'var(--font-mono)', fontSize: 11 }
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -240,13 +410,9 @@ export default function TaskTracker() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                   <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>MANAGE TASKS</div>
                   {weekNum > 1 && (
-                    <button
-                      onClick={copyFromLastWeek}
-                      title={`Copy tasks from Week ${weekNum - 1}`}
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: 'var(--cyan)', background: 'var(--cyan-dim)', border: '1px solid rgba(0,229,255,0.25)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer', transition: 'all 0.15s' }}
+                    <button onClick={copyFromLastWeek} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: 'var(--cyan)', background: 'var(--cyan-dim)', border: '1px solid rgba(0,229,255,0.25)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer', transition: 'all 0.15s' }}
                       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,229,255,0.18)'; e.currentTarget.style.borderColor = 'var(--cyan)' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'var(--cyan-dim)'; e.currentTarget.style.borderColor = 'rgba(0,229,255,0.25)' }}
-                    >
+                      onMouseLeave={e => { e.currentTarget.style.background = 'var(--cyan-dim)'; e.currentTarget.style.borderColor = 'rgba(0,229,255,0.25)' }}>
                       <Copy size={12} /> Copy from Week {weekNum - 1}
                     </button>
                   )}
