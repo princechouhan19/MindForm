@@ -2,7 +2,10 @@ const mongoose = require('mongoose')
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
+    const dbURI = process.env.MONGO_URI || process.env.MONGODB_URI
+    if (!dbURI) throw new Error('Database URI is missing from environment variables!')
+    
+    const conn = await mongoose.connect(dbURI, {
       serverSelectionTimeoutMS: 5000,
     })
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`)
