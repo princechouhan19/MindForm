@@ -81,3 +81,98 @@ input, select, textarea {
 .animate-in {
   animation: fadeIn 0.3s ease forwards;
 }
+
+/* ─── Mobile sidebar overlay backdrop ─────────────────── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 40;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* ─── Bottom nav bar (mobile only) ────────────────────── */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 58px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  z-index: 50;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 4px;
+}
+
+.mobile-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  transition: all 0.15s;
+  min-width: 52px;
+}
+.mobile-nav-btn.active {
+  color: var(--cyan);
+  background: var(--cyan-dim);
+}
+
+/* ─── Tablet ≤ 1024px ──────────────────────────────────── */
+@media (max-width: 1024px) {
+  :root { --sidebar-width: 190px; }
+}
+
+/* ─── Mobile ≤ 768px ───────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Sidebar becomes fixed overlay */
+  .sidebar-desktop {
+    position: fixed !important;
+    top: 0; left: 0; bottom: 0;
+    z-index: 45;
+    transform: translateX(-110%);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1) !important;
+    box-shadow: 6px 0 32px rgba(0,0,0,0.6);
+  }
+  .sidebar-desktop.sidebar-open {
+    transform: translateX(0) !important;
+  }
+  .sidebar-overlay.overlay-active { display: block; }
+
+  /* Show bottom nav */
+  .mobile-bottom-nav { display: flex; }
+
+  /* Main area gets bottom padding */
+  .main-content { padding-bottom: 58px; }
+
+  /* Responsive grids */
+  .grid-3col { grid-template-columns: 1fr !important; }
+  .grid-4col { grid-template-columns: 1fr 1fr !important; }
+  .grid-2col { grid-template-columns: 1fr !important; }
+
+  /* Smaller headings */
+  h1 { font-size: 22px !important; }
+
+  /* Tighter padding inside views */
+  .view-pad { padding: 14px 14px 0 !important; }
+  .view-scroll { padding: 0 14px 80px !important; }
+}
+
+/* ─── Small mobile ≤ 480px ─────────────────────────────── */
+@media (max-width: 480px) {
+  h1 { font-size: 18px !important; }
+  .grid-4col { grid-template-columns: 1fr 1fr !important; }
+  .hide-xs { display: none !important; }
+}

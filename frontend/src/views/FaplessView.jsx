@@ -162,9 +162,16 @@ export default function FaplessView() {
   useEffect(() => { load() }, [load])
 
   // ─── Derived state ─────────────────────────────────────────────────────────
-  const streakDays = data?.startDate
-    ? Math.floor((Date.now() - new Date(data.startDate).getTime()) / (1000 * 60 * 60 * 24))
-    : 0
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60000) // update every minute
+    return () => clearInterval(t)
+  }, [])
+
+  const totalMs = data?.startDate ? now - new Date(data.startDate).getTime() : 0
+  const streakDays = Math.floor(totalMs / (1000 * 60 * 60 * 24))
+  const streakHrs  = Math.floor((totalMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const streakMins = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60))
 
   const currentLevel = getLevel(streakDays)
   const nextLevel = getNextLevel(streakDays)
@@ -284,7 +291,7 @@ export default function FaplessView() {
       `}</style>
 
       {/* Header */}
-      <div style={{ padding: '20px 24px 0', flexShrink: 0 }}>
+      <div className="view-pad" style={{ padding: '20px 24px 0', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <div>
             <div style={{ fontSize: 13, color: '#ff4500', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 6 }}>FAPLESS</div>
@@ -342,16 +349,28 @@ export default function FaplessView() {
       </div>
 
       {/* Scrollable content */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 28px' }}>
+      <div className="view-scroll" style={{ flex: 1, overflow: 'auto', padding: '0 24px 28px' }}>
 
         {/* ── Hero: Streak + Level ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 16 }}>
+        <div className="grid-3col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 16 }}>
           {/* Streak counter */}
           <div style={{ ...card, textAlign: 'center', animation: 'glow 3s ease infinite', border: `1px solid ${currentLevel.color}55`, position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at center, ${currentLevel.color}08 0%, transparent 70%)`, pointerEvents: 'none' }} />
             <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: 8 }}>CURRENT STREAK</div>
             <div style={{ fontSize: 64, fontWeight: 900, fontFamily: 'var(--font-mono)', color: currentLevel.color, lineHeight: 1, animation: 'auraFloat 4s ease infinite' }}>
               {streakDays}
+            </div>
+            {/* Hours & Minutes */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 4 }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'var(--font-mono)', color: currentLevel.color, opacity: 0.8, lineHeight: 1 }}>{String(streakHrs).padStart(2,'0')}</div>
+                <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.1em', marginTop: 2 }}>HRS</div>
+              </div>
+              <div style={{ fontSize: 18, color: currentLevel.color, opacity: 0.4, lineHeight: 1, marginBottom: 4 }}>:</div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'var(--font-mono)', color: currentLevel.color, opacity: 0.8, lineHeight: 1 }}>{String(streakMins).padStart(2,'0')}</div>
+                <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.1em', marginTop: 2 }}>MINS</div>
+              </div>
             </div>
             <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 }}>day{streakDays !== 1 ? 's' : ''}</div>
             {data?.startDate && (
@@ -396,7 +415,7 @@ export default function FaplessView() {
               Total relapses: <span style={{ color: data?.relapses?.length > 0 ? 'var(--red)' : 'var(--green)', fontWeight: 700 }}>{data?.relapses?.length || 0}</span>
             </div>
           </div>
-        </div>
+        </div>  {/* end hero grid */}
 
         {/* ── All Levels Map ── */}
         <button onClick={() => setExpandedSection(s => s === 'levels' ? '' : 'levels')} style={sectionBtn('levels')}>
@@ -571,7 +590,7 @@ export default function FaplessView() {
         )}
 
         {/* ── Daily Motivation ── */}
-        <div style={{ ...card, background: `linear-gradient(135deg, var(--bg-card), ${currentLevel.color}08)`, border: `1px solid ${currentLevel.color}33` }}>
+        <div className="" style={{ ...card, background: `linear-gradient(135deg, var(--bg-card), ${currentLevel.color}08)`, border: `1px solid ${currentLevel.color}33` }}>
           <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: 12 }}>TODAY'S REMINDER</div>
           <div style={{ fontSize: 16, fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: 1.7, fontWeight: 500 }}>
             {MOTIVATIONAL[Math.floor((streakDays + new Date().getDate()) % MOTIVATIONAL.length)]}

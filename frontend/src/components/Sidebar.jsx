@@ -10,12 +10,12 @@ const navItems = [
   { id: 'settings',label: 'Settings',       icon: Settings,    color: 'var(--text-secondary)' },
 ]
 
-export default function Sidebar({ active, onChange, isOpen, onToggle }) {
+export default function Sidebar({ active, onChange, isOpen, onToggle, isMobile }) {
   const { user, logout } = useAuth()
 
   return (
     <aside style={{
-      width: isOpen ? 'var(--sidebar-width)' : '60px',
+      width: isMobile ? '240px' : (isOpen ? 'var(--sidebar-width)' : '60px'),
       height: '100vh',
       background: 'var(--bg-surface)',
       borderRight: '1px solid var(--border)',
