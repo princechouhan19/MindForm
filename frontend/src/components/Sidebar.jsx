@@ -26,7 +26,7 @@ export default function Sidebar({ active, onChange }) {
             <Zap size={16} color="#000" fill="#000" />
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.05em' }}>PRINCE OS</div>
+            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.05em' }}>MIND FORM</div>
             <div style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-secondary)', letterSpacing: '0.12em', marginTop: 1 }}>PRODUCTIVITY SUITE</div>
           </div>
         </div>

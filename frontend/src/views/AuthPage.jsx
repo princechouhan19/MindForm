@@ -71,7 +71,7 @@ export default function AuthPage() {
             <Zap size={20} color="#000" fill="#000" />
           </div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.04em' }}>PRINCE OS</div>
+            <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.04em' }}>MIND FORM</div>
             <div style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.12em' }}>PRODUCTIVITY SUITE</div>
           </div>
         </div>

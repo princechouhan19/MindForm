@@ -53,7 +53,7 @@ app.use(express.urlencoded({ extended: true }))
 app.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'Prince Dashboard API is running 🚀',
+    message: 'Mind Form API is running 🚀',
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV,
   })
