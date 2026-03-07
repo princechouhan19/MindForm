@@ -19,8 +19,23 @@ app.set('trust proxy', 1)
 // Connect to DB
 connectDB()
 
-// Security middleware
-app.use(helmet())
+// Security middleware — configure CSP to allow same-origin API and React
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+      imgSrc: ["'self'", 'data:', 'blob:'],
+      connectSrc: ["'self'"],
+      workerSrc: ["'self'", 'blob:'],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}))
 
 // CORS
 app.use(cors({
