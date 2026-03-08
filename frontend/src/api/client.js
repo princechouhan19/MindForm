@@ -57,3 +57,25 @@ export const faplessAPI = {
   start: () => request('POST', '/fapless/start'),
   addAura: (points) => request('PUT', '/fapless/aura', { points }),
 }
+
+// Social
+export const socialAPI = {
+  leaderboard: () => request('GET', '/social/leaderboard'),
+  getMe: () => request('GET', '/social/me'),
+  updateMe: (payload) => request('PUT', '/social/me', payload),
+  getProfile: (userId) => request('GET', `/social/profile/${userId}`),
+  follow: (userId) => request('POST', `/social/follow/${userId}`),
+  unfollow: (userId) => request('DELETE', `/social/follow/${userId}`),
+  getForumMessages: () => request('GET', '/social/forum'),
+  postForumMessage: (text) => request('POST', '/social/forum', { text }),
+}
+
+// Admin (only works if user is princechouhan4606@gmail.com)
+export const adminAPI = {
+  getUsers: () => request('GET', '/social/admin/users'),
+  getBadges: () => request('GET', '/social/admin/badges'),
+  assignBadge: (userId, badgeId) => request('POST', `/social/admin/badge/${userId}`, { badgeId }),
+  revokeBadge: (userId, badgeId) => request('DELETE', `/social/admin/badge/${userId}`, { badgeId }),
+  deleteForumMsg: (msgId) => request('DELETE', `/social/admin/forum/${msgId}`),
+}
+

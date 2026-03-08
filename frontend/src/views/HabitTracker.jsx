@@ -79,8 +79,16 @@ export default function HabitTracker() {
   const saveFn = useCallback(() => habitsAPI.upsertMonth(monthKey, syncPayload), [monthKey, JSON.stringify(syncPayload)])
   const syncStatus = useSync(saveFn, syncPayload)
 
+  const isFutureDay = (day) => {
+    const d = new Date(year, month, day)
+    const t = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    return d > t
+  }
   const getChecked = (day, name) => checks[`${day}-${name}`] || false
-  const toggleCheck = (day, name, val) => setChecks(prev => ({ ...prev, [`${day}-${name}`]: val }))
+  const toggleCheck = (day, name, val) => {
+    if (isFutureDay(day)) return   // block future days
+    setChecks(prev => ({ ...prev, [`${day}-${name}`]: val }))
+  }
   const getMentalVal = (day, type) => mental[`${day}-${type}`] || ''
   const setMentalVal = (day, type, val) => {
     const num = Math.min(10, Math.max(1, parseInt(val) || 0))
@@ -186,18 +194,20 @@ export default function HabitTracker() {
               const d = i + 1
               const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear()
               const isSel = d === selectedDay
+              const isFuture = isFutureDay(d)
               const done = habits.filter(h => getChecked(d, h.name)).length
               const pct = habits.length ? Math.round((done / habits.length) * 100) : 0
               const col = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : pct > 0 ? 'var(--red)' : null
               return (
-                <button key={d} onClick={() => setSelectedDay(d)} style={{
+                <button key={d} onClick={() => !isFuture && setSelectedDay(d)} style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                  padding: '6px 8px', borderRadius: 10, flexShrink: 0, cursor: 'pointer', minWidth: 38,
+                  padding: '6px 8px', borderRadius: 10, flexShrink: 0, cursor: isFuture ? 'not-allowed' : 'pointer', minWidth: 38,
                   background: isSel ? 'var(--amber-dim)' : 'var(--bg-card)',
                   border: `1px solid ${isSel ? 'var(--amber)' : isToday ? 'rgba(255,183,0,0.35)' : 'var(--border)'}`,
+                  opacity: isFuture ? 0.4 : 1,
                 }}>
                   <span style={{ fontSize: 8, color: isSel ? 'var(--amber)' : 'var(--text-muted)', fontWeight: 700 }}>
-                    {['S','M','T','W','T','F','S'][new Date(year, month, d).getDay()]}
+                    {isFuture ? '🔒' : ['S','M','T','W','T','F','S'][new Date(year, month, d).getDay()]}
                   </span>
                   <span style={{ fontSize: 14, fontWeight: 800, fontFamily: 'var(--font-mono)', color: isSel ? 'var(--amber)' : isToday ? 'var(--text-primary)' : 'var(--text-secondary)', lineHeight: 1 }}>{d}</span>
                   <div style={{ width: 16, height: 3, borderRadius: 2, background: col || 'var(--border)' }} />
@@ -224,6 +234,11 @@ export default function HabitTracker() {
           {loading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-secondary)', gap: 8 }}>
               <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> Loading habits...
+            </div>
+          ) : mobileTab === 'today' && isFutureDay(selectedDay) ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 200, gap: 12, color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: 36 }}>🔒</div>
+              <div style={{ fontSize: 14, textAlign: 'center', lineHeight: 1.6 }}>Future day<br /><span style={{ fontSize: 12 }}>You can only log habits for today or past days.</span></div>
             </div>
           ) : mobileTab === 'today' ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, animation: 'fadeUp 0.25s ease' }}>
@@ -407,10 +422,11 @@ export default function HabitTracker() {
                         <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', borderBottom: '1px solid var(--border)', position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 2 }}>MY HABITS</th>
                         {weekGroups.map(wg => wg.days.map((d, di) => {
                           const isToday = new Date(year, month, d).toDateString() === today.toDateString()
+                          const isFuture = isFutureDay(d)
                           return (
-                            <th key={d} style={{ padding: '6px 4px', fontSize: 11, fontFamily: 'var(--font-mono)', color: isToday ? 'var(--amber)' : 'var(--text-muted)', borderBottom: '1px solid var(--border)', borderLeft: di === 0 && wg.week > 1 ? '1px solid rgba(255,183,0,0.15)' : 'none', minWidth: 32, textAlign: 'center' }}>
+                            <th key={d} style={{ padding: '6px 4px', fontSize: 11, fontFamily: 'var(--font-mono)', color: isToday ? 'var(--amber)' : isFuture ? 'var(--text-muted)' : 'var(--text-muted)', borderBottom: '1px solid var(--border)', borderLeft: di === 0 && wg.week > 1 ? '1px solid rgba(255,183,0,0.15)' : 'none', minWidth: 32, textAlign: 'center', opacity: isFuture ? 0.4 : 1 }}>
                               {di === 0 && <div style={{ fontSize: 9, color: 'var(--amber)', marginBottom: 2 }}>W{wg.week}</div>}
-                              {d}
+                              {isFuture ? '🔒' : d}
                             </th>
                           )
                         }))}
@@ -433,8 +449,8 @@ export default function HabitTracker() {
                               </div>
                             </td>
                             {weekGroups.map(wg => wg.days.map((d, di) => (
-                              <td key={d} style={{ textAlign: 'center', borderBottom: '1px solid var(--border)', borderLeft: di === 0 && wg.week > 1 ? '1px solid rgba(255,183,0,0.08)' : 'none', padding: '4px' }}>
-                                <input type="checkbox" checked={getChecked(d, habit.name)} onChange={e => toggleCheck(d, habit.name, e.target.checked)} style={{ accentColor: 'var(--amber)', width: 15, height: 15, cursor: 'pointer' }} />
+                              <td key={d} style={{ textAlign: 'center', borderBottom: '1px solid var(--border)', borderLeft: di === 0 && wg.week > 1 ? '1px solid rgba(255,183,0,0.08)' : 'none', padding: '4px', opacity: isFutureDay(d) ? 0.35 : 1 }}>
+                                <input type="checkbox" checked={getChecked(d, habit.name)} disabled={isFutureDay(d)} onChange={e => toggleCheck(d, habit.name, e.target.checked)} style={{ accentColor: 'var(--amber)', width: 15, height: 15, cursor: isFutureDay(d) ? 'not-allowed' : 'pointer' }} />
                               </td>
                             )))}
                             <td style={{ textAlign: 'center', borderBottom: '1px solid var(--border)', borderLeft: '1px solid var(--border)', padding: '10px 6px' }}>

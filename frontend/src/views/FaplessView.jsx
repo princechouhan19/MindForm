@@ -47,6 +47,7 @@ function calcAura(days) {
 
 // ─── LEVEL BENEFITS ───────────────────────────────────────────────────────────
 const BENEFITS = {
+  clown:         ['• Day 0: The journey starts today', '• Brain is seeking easy dopamine', '• Focus on the next 24 hours only'],
   noob:          ['• Reduced urge intensity', '• Better sleep quality starts', '• You broke the cycle — that\'s huge'],
   novice:        ['• Energy levels rising', '• Brain fog decreasing', '• Improved focus for 20-30 min tasks', '• Reduced social anxiety'],
   average:       ['• Dopamine receptors partially healed', '• Morning motivation boost', '• Clearer thinking & sharper memory', '• More emotional control'],
@@ -175,7 +176,7 @@ export default function FaplessView() {
   // ─── Derived state ─────────────────────────────────────────────────────────
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 60000) // update every minute
+    const t = setInterval(() => setNow(Date.now()), 1000) // update every second
     return () => clearInterval(t)
   }, [])
 
@@ -183,10 +184,15 @@ export default function FaplessView() {
   const streakDays = Math.floor(totalMs / (1000 * 60 * 60 * 24))
   const streakHrs  = Math.floor((totalMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
   const streakMins = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60))
+  const streakSecs = Math.floor((totalMs % (1000 * 60)) / 1000)
 
   const currentLevel = getLevel(streakDays)
   const nextLevel = getNextLevel(streakDays)
-  const auraPoints = calcAura(streakDays)
+  
+  // 1 aura point per second + bonuses from challenges
+  const baseAura = Math.floor(totalMs / 1000)
+  const challengeBonus = data?.relapses?.reduce((acc, r) => acc + (r.bonusEarned || 0), 0) || 0
+  const auraPoints = baseAura + challengeBonus
   const progressToNext = nextLevel
     ? Math.round(((streakDays - currentLevel.minDays) / (nextLevel.minDays - currentLevel.minDays)) * 100)
     : 100
@@ -297,13 +303,23 @@ export default function FaplessView() {
     })
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <style>{`
-          @keyframes spin { to { transform: rotate(360deg) } }
-          @keyframes glow { 0%,100%{box-shadow:0 0 12px ${currentLevel.color}44} 50%{box-shadow:0 0 28px ${currentLevel.color}88} }
-          @keyframes auraFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-          @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-          .fapless-card:hover { border-color: var(--border-bright) !important; }
-        `}</style>
+        {/* Aura Floating Header */}
+        <div style={{
+          position: 'sticky', top: 0, zIndex: 100, background: 'rgba(10,11,15,0.7)', backdropFilter: 'blur(10px)',
+          borderBottom: '1px solid rgba(255,215,0,0.15)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Zap size={16} color="#ffd700" fill="#ffd700" style={{ animation: 'aura-pulse 1s ease-in-out infinite' }} />
+            <span style={{ fontSize: 18, fontWeight: 900, fontFamily: 'var(--font-mono)', color: '#ffd700', letterSpacing: '-0.5px' }}>
+              {auraPoints.toLocaleString()}
+            </span>
+            <span style={{ fontSize: 11, color: 'rgba(255,215,0,0.6)', fontWeight: 700, letterSpacing: '0.05em' }}>AURA</span>
+          </div>
+          <div style={{
+             fontSize: 10, fontWeight: 800, color: '#ffd700', background: 'rgba(255,215,0,0.1)',
+             padding: '4px 10px', borderRadius: 20, animation: 'aura-plus 1s ease-out infinite'
+          }}>+1 AURA/SEC</div>
+        </div>
 
         {/* Mobile Hero */}
         <div style={{ padding: '14px 14px 0', flexShrink: 0 }}>
@@ -323,16 +339,20 @@ export default function FaplessView() {
                 <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 2 }}>STREAK</div>
                 <div style={{ fontSize: 56, fontWeight: 900, fontFamily: 'var(--font-mono)', color: currentLevel.color, lineHeight: 1, animation: 'auraFloat 4s ease infinite' }}>{streakDays}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>days</div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-mono)', color: currentLevel.color, opacity: 0.8, lineHeight: 1 }}>{String(streakHrs).padStart(2,'0')}</div>
-                    <div style={{ fontSize: 8, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>HRS</div>
-                  </div>
-                  <div style={{ fontSize: 13, color: currentLevel.color, opacity: 0.3, marginBottom: 6 }}>:</div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-mono)', color: currentLevel.color, opacity: 0.8, lineHeight: 1 }}>{String(streakMins).padStart(2,'0')}</div>
-                    <div style={{ fontSize: 8, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>MINS</div>
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                  {[
+                    { v: streakHrs, l: 'H' },
+                    { v: streakMins, l: 'M' },
+                    { v: streakSecs, l: 'S' }
+                  ].map((t, i) => (
+                    <React.Fragment key={t.l}>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-mono)', color: currentLevel.color, opacity: 0.8 }}>{String(t.v).padStart(2,'0')}</div>
+                        <div style={{ fontSize: 7, color: 'var(--text-muted)', fontWeight: 800 }}>{t.l}</div>
+                      </div>
+                      {i < 2 && <div style={{ fontSize: 12, color: currentLevel.color, opacity: 0.2, marginTop: -8 }}>:</div>}
+                    </React.Fragment>
+                  ))}
                 </div>
               </div>
 
@@ -562,23 +582,44 @@ export default function FaplessView() {
         @keyframes spin { to { transform: rotate(360deg) } }
         @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.7;transform:scale(0.97)} }
         @keyframes glow {
-          0%,100%{box-shadow:0 0 12px ${currentLevel.color}44}
-          50%{box-shadow:0 0 32px ${currentLevel.color}88}
+          0%,100%{box-shadow:0 0 12px ${currentLevel.color}22}
+          50%{box-shadow:0 0 32px ${currentLevel.color}44}
         }
         @keyframes auraFloat {
           0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}
         }
-        .fapless-card:hover { border-color: var(--border-bright) !important; }
+        @keyframes aura-pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.2);opacity:0.8} }
+        @keyframes aura-plus { 0%{opacity:0;transform:translateY(5px)} 20%{opacity:1;transform:translateY(0)} 80%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-5px)} }
+        .fapless-card:hover { border-color: var(--border-bright) !important; transform: translateY(-2px); }
+        .hero-val { font-family: 'Outfit', sans-serif; letter-spacing: -2px; }
       `}</style>
 
+      {/* Aura Floating Header */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 100, background: 'rgba(10,11,15,0.7)', backdropFilter: 'blur(10px)',
+        borderBottom: '1px solid rgba(255,215,0,0.15)', padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Zap size={18} color="#ffd700" fill="#ffd700" style={{ animation: 'aura-pulse 1s ease-in-out infinite' }} />
+          <span style={{ fontSize: 24, fontWeight: 900, fontFamily: 'var(--font-mono)', color: '#ffd700', letterSpacing: '-0.5px' }}>
+            {auraPoints.toLocaleString()}
+          </span>
+          <span style={{ fontSize: 13, color: 'rgba(255,215,0,0.6)', fontWeight: 800, letterSpacing: '0.1em' }}>AURA POINTS</span>
+        </div>
+        <div style={{
+           fontSize: 12, fontWeight: 800, color: '#ffd700', background: 'rgba(255,215,0,0.1)',
+           padding: '6px 14px', borderRadius: 20, animation: 'aura-plus 1s ease-out infinite'
+        }}>+1 AURA PER SECOND</div>
+      </div>
+
       {/* Header */}
-      <div className="view-pad" style={{ padding: '20px 24px 0', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div className="view-pad" style={{ padding: '24px 24px 0', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <div>
-            <div style={{ fontSize: 13, color: '#ff4500', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 6 }}>FAPLESS</div>
-            <h1 style={{ fontSize: 28, fontWeight: 800 }}>NoFap Tracker</h1>
+            <div style={{ fontSize: 12, color: '#ff4500', fontWeight: 800, letterSpacing: '0.25em', marginBottom: 4, textTransform: 'uppercase' }}>Discipline Engine</div>
+            <h1 style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-1.5px', background: 'linear-gradient(to right, #fff, #a0a0a0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Mastery Journey</h1>
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 12 }}>
             {!data?.startDate ? (
               <button onClick={handleStart} disabled={saving}
                 style={{ background: 'linear-gradient(135deg, #ff4500, #ff8c00)', border: 'none', borderRadius: 12, color: '#fff', padding: '10px 22px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -633,67 +674,83 @@ export default function FaplessView() {
       <div className="view-scroll" style={{ flex: 1, overflow: 'auto', padding: '0 24px 28px' }}>
 
         {/* ── Hero: Streak + Level ── */}
-        <div className="grid-3col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 16 }}>
+        <div className="grid-3col" style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1fr) minmax(300px, 1fr)', gap: 20, marginBottom: 24 }}>
           {/* Streak counter */}
-          <div style={{ ...card, textAlign: 'center', animation: 'glow 3s ease infinite', border: `1px solid ${currentLevel.color}55`, position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at center, ${currentLevel.color}08 0%, transparent 70%)`, pointerEvents: 'none' }} />
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: 8 }}>CURRENT STREAK</div>
-            <div style={{ fontSize: 64, fontWeight: 900, fontFamily: 'var(--font-mono)', color: currentLevel.color, lineHeight: 1, animation: 'auraFloat 4s ease infinite' }}>
+          <div style={{ 
+            ...card, textAlign: 'center', border: `1px solid ${currentLevel.color}33`, position: 'relative', overflow: 'hidden',
+            background: 'linear-gradient(180deg, var(--bg-card), rgba(0,0,0,0.2))', display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 240
+          }}>
+            <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at center, ${currentLevel.color}08 0%, transparent 70%)`, pointerEvents: 'none' }} />
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.2em', fontWeight: 800, marginBottom: 16 }}>CURRENT STREAK</div>
+            <div className="hero-val" style={{ fontSize: 84, fontWeight: 900, color: currentLevel.color, lineHeight: 1, animation: 'auraFloat 4s ease-in-out infinite' }}>
               {streakDays}
             </div>
-            {/* Hours & Minutes */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 4 }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'var(--font-mono)', color: currentLevel.color, opacity: 0.8, lineHeight: 1 }}>{String(streakHrs).padStart(2,'0')}</div>
-                <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.1em', marginTop: 2 }}>HRS</div>
-              </div>
-              <div style={{ fontSize: 18, color: currentLevel.color, opacity: 0.4, lineHeight: 1, marginBottom: 4 }}>:</div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'var(--font-mono)', color: currentLevel.color, opacity: 0.8, lineHeight: 1 }}>{String(streakMins).padStart(2,'0')}</div>
-                <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.1em', marginTop: 2 }}>MINS</div>
-              </div>
+            {/* Hours & Minutes & Seconds */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 12 }}>
+              {[
+                { v: streakHrs, l: 'HR' },
+                { v: streakMins, l: 'MIN' },
+                { v: streakSecs, l: 'SEC' }
+              ].map((t, i) => (
+                <React.Fragment key={t.l}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 18, fontWeight: 800, fontFamily: 'var(--font-mono)', color: currentLevel.color, opacity: 0.9 }}>{String(t.v).padStart(2,'0')}</div>
+                    <div style={{ fontSize: 8, color: 'var(--text-muted)', fontWeight: 800, letterSpacing: '0.1em' }}>{t.l}</div>
+                  </div>
+                  {i < 2 && <div style={{ fontSize: 18, color: currentLevel.color, opacity: 0.2, fontWeight: 300 }}>:</div>}
+                </React.Fragment>
+              ))}
             </div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 }}>day{streakDays !== 1 ? 's' : ''}</div>
-            {data?.startDate && (
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>
-                Since {new Date(data.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-              </div>
-            )}
-            {!data?.startDate && (
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>Click "Start Journey" to begin</div>
-            )}
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 12, fontWeight: 700, letterSpacing: '0.1em', opacity: 0.8 }}>{streakDays === 1 ? 'DAY' : 'DAYS'} COMPLETED</div>
           </div>
 
-          {/* Level */}
-          <div style={{ ...card, textAlign: 'center', border: `1px solid ${currentLevel.color}44`, background: `linear-gradient(135deg, var(--bg-card), ${currentLevel.color}08)` }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: 10 }}>CURRENT LEVEL</div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: currentLevel.color, marginBottom: 6, lineHeight: 1.2 }}>{currentLevel.label}</div>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14, lineHeight: 1.5 }}>{currentLevel.desc}</div>
-            {nextLevel && (
-              <>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 6 }}>
-                  Next: <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{nextLevel.label}</span> in {nextLevel.minDays - streakDays} day{nextLevel.minDays - streakDays !== 1 ? 's' : ''}
-                </div>
-                <div style={{ height: 6, background: 'var(--border)', borderRadius: 3, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${progressToNext}%`, background: `linear-gradient(90deg, ${currentLevel.color}, ${nextLevel.color})`, borderRadius: 3, transition: 'width 0.5s ease' }} />
-                </div>
-              </>
-            )}
-            {!nextLevel && <div style={{ fontSize: 12, color: currentLevel.color, fontWeight: 700 }}>🏆 MAX LEVEL REACHED</div>}
+          {/* Level Card */}
+          <div style={{ 
+            ...card, textAlign: 'center', border: `1px solid ${currentLevel.color}44`, 
+            background: `linear-gradient(180deg, var(--bg-card), ${currentLevel.color}10)`,
+            display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 240, position: 'relative', overflow: 'hidden'
+          }}>
+            <div style={{ fontSize: 48, position: 'absolute', top: -10, right: -10, opacity: 0.1, transform: 'rotate(15deg)' }}>{currentLevel.label.split(' ')[0]}</div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.2em', fontWeight: 800, marginBottom: 20 }}>CURRENT IDENTITY</div>
+            <div style={{ fontSize: 42, fontWeight: 900, color: currentLevel.color, marginBottom: 8, letterSpacing: '-1px' }}>{currentLevel.label.split(' ').slice(1).join(' ')}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6, maxWidth: '80%', margin: '0 auto 24px' }}>{currentLevel.desc}</div>
+            
+            <div style={{ padding: '0 24px' }}>
+              {nextLevel ? (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>Next: {nextLevel.label.split(' ').slice(1).join(' ')}</span>
+                    <span style={{ fontSize: 11, color: currentLevel.color, fontWeight: 800 }}>{nextLevel.minDays - streakDays}D REMAINING</span>
+                  </div>
+                  <div style={{ height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ height: '100%', width: `${progressToNext}%`, background: `linear-gradient(90deg, ${currentLevel.color}, ${nextLevel.color})`, transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} />
+                  </div>
+                </>
+              ) : (
+                <div style={{ fontSize: 12, color: '#ffd700', fontWeight: 900, letterSpacing: '0.1em' }}>🏆 ASCENDED GIGACHAD</div>
+              )}
+            </div>
           </div>
 
-          {/* Aura */}
-          <div style={{ ...card, textAlign: 'center', background: 'linear-gradient(135deg, var(--bg-card), rgba(255,215,0,0.05))' }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: 8 }}>AURA POINTS</div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 6 }}>
-              <Zap size={22} color="#ffd700" fill="#ffd700" />
-              <span style={{ fontSize: 40, fontWeight: 900, fontFamily: 'var(--font-mono)', color: '#ffd700', lineHeight: 1 }}>{auraPoints.toLocaleString()}</span>
+          {/* Aura Card */}
+          <div style={{ 
+            ...card, textAlign: 'center', background: 'linear-gradient(180deg, var(--bg-card), rgba(255,215,0,0.05))',
+            display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 240, border: '1px solid rgba(255,215,0,0.2)'
+          }}>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.2em', fontWeight: 800, marginBottom: 16 }}>DISCIPLINE ENERGY</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 8 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(255,215,0,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Zap size={24} color="#ffd700" fill="#ffd700" style={{ animation: 'aura-pulse 1s linear infinite' }} />
+              </div>
+              <span className="hero-val" style={{ fontSize: 52, fontWeight: 900, color: '#ffd700', lineHeight: 1 }}>{auraPoints.toLocaleString()}</span>
             </div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>
-              +{currentLevel.auraPerDay} aura/day at this level
+            <div style={{ fontSize: 13, color: '#ffd700', fontWeight: 800, opacity: 0.8, marginBottom: 12 }}>AURA POINTS EARNED</div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', padding: '6px 14px', borderRadius: 20, margin: '0 auto' }}>
+              <Star size={12} color="#ffd700" />
+              <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>+{currentLevel.auraPerDay} / DAY STREAK BONUS</span>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-              Total relapses: <span style={{ color: data?.relapses?.length > 0 ? 'var(--red)' : 'var(--green)', fontWeight: 700 }}>{data?.relapses?.length || 0}</span>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 16 }}>
+              TOTAL RELAPSES: <span style={{ color: data?.relapses?.length > 0 ? '#ff4757' : '#2ed573', fontWeight: 900 }}>{data?.relapses?.length || 0}</span>
             </div>
           </div>
         </div>  {/* end hero grid */}

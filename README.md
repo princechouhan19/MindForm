@@ -14,25 +14,29 @@ Built with a modern **PERN-style** architecture (replacing PG with MongoDB), Min
 
 ---
 
-## ✨ Core Features
+### 🤝 Social Hub (Crowdsourced Growth)
+- **Live Leaderboard:** Real-time ranking of top public profiles by streak days and Aura points.
+- **Community Forum:** Private group discussion board with **2-day auto-delete history** for privacy and focus.
+- **Social Profiles:** Customizable public/private profiles with country flags, bios, and follower/following stats.
+- **Admin Engine:** Robust badge assignment system (🎥 Content Creator, 👑 OG Member, 🔱 Sigma) for verified community figures.
 
-### 📋 Precision Task Tracking
-- **Weekly Cycles:** View and manage tasks in 7-day high-focus sprints.
-- **Weekly Reflections:** Built-in journaling for "Wins," "Obstacles," and "Next Week's Focus."
-- **Performance Analytics:** Historical bar charts to track completion percentages across weeks.
+### 🍱 Fapless Aura System
+- **Real-time Aura Gain:** Dynamic +1 Aura/second tracking with pulsating UI feedback for active streaks.
+- **Premium Dashboard:** High-fidelity "Power Module" design with glassmorphism, animated level titles, and identity cards.
+- **Psychological Anchoring:** Level-based identity shifts (e.g., "Novice" → "Monk" → "Legend") to reinforce behavioral change.
 
-### 📅 Habit Mastery
-- **Monthly Matrix:** Full visibility into your daily consistency across customized habits.
-- **Mental State Integration:** Track **Mood** and **Motivation** (1–10) to correlate habits with psychological well-being.
-- **Top 10 Leaderboard:** Automatically ranks your most consistent habits to reinforce positive behavior.
+### 🛡️ Anti-Abuse & Security Layer
+- **Disposable Mail Blocking:** Integrated blocklist of 200+ temporary/spam email providers (Mailinator, Yopmail, etc.).
+- **Bot Defense:** Silent honeypots and IP-based rate limiting (max 3 registrations/hour) to keep the community genuine.
+- **Data Privacy:** Automated 24-hour cleanup of AI Chat history and 48-hour cleanup of forum messages.
 
-### 🛡️ Secure & Synchronized
-- **Real-time Synchronization:** High-frequency, debounced auto-sync ensures your data is saved to the cloud instantly.
-- **JWT-Powered Security:** Industry-standard authentication with bcrypt password hashing and sensitive data isolation.
-- **Sync Architecture:** Visual indicators in the UI provide real-time feedback on your cloud connection status.
+### 🎯 Goal Management
+- **Structured Progress:** Create and track multi-category goals (Career, Health, Spirit) with deadlines and visual progress bars.
+- **Habit Integration:** Correlation between daily habit completion and high-level goal advancement.
 
-### 📊 Data Sovereignty
-- **CSV Export:** Full data transparency—export your tasks and habit logs to professional formats for offline analysis.
+### 🤖 AI Intelligence
+- **Dual Engine:** Seamlessly toggle between **Google Gemini 1.5 Flash** and **Mistral AI** within a unified chat interface.
+- **Markdown Context:** Optimized response rendering for technical and planning advice.
 
 ---
 
@@ -40,11 +44,11 @@ Built with a modern **PERN-style** architecture (replacing PG with MongoDB), Min
 
 | Task Tracker | Habit Tracker |
 |:---:|:---:|
-| <img src="Showcase/TaskTracker.png" width="400" /> | <img src="Showcase/Habit-Tracker.png" width="400" /> |
-| **NoFap Tracker** | **Goals Dashboard** |
-| <img src="Showcase/fapless.png" width="400" /> | <img src="Showcase/Goals.png" width="400" /> |
-| **Settings (Mobile/Desktop)** | |
-| <img src="Showcase/Settings.png" width="400" /> | |
+| <img src="frontend/public/TaskTracker.png" width="400" /> | <img src="frontend/public/Habit-Tracker.png" width="400" /> |
+| **NoFap / Social Dashboard** | **Goals & Settings** |
+| <img src="frontend/public/fapless.png" width="400" /> | <img src="frontend/public/Goals.png" width="400" /> |
+| **Social Hub / Leaderboard** | **AI Chat Interface** |
+| <img src="frontend/public/Settings.png" width="400" /> | <img src="frontend/public/TaskTracker.png" width="400" /> |
 
 ---
 

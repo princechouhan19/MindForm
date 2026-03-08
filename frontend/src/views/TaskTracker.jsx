@@ -26,6 +26,19 @@ function getWeeksInMonth(year, month) {
   return Math.ceil((firstDay.getDay() + lastDay.getDate()) / 7)
 }
 
+function getCurrentWeekNum(year, month) {
+  // Returns 1-based week number for today within the given month
+  const today = new Date()
+  if (today.getFullYear() !== year || today.getMonth() !== month) return 1
+  // find week by scanning which week contains today's date
+  const totalWeeks = getWeeksInMonth(year, month)
+  for (let w = 1; w <= totalWeeks; w++) {
+    const days = getWeekDays(year, month, w).filter(Boolean)
+    if (days.includes(today.getDate())) return w
+  }
+  return 1
+}
+
 function useIsMobile() {
   const [mobile, setMobile] = useState(window.innerWidth <= 768)
   useEffect(() => {
@@ -41,7 +54,7 @@ export default function TaskTracker() {
   const isMobile = useIsMobile()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
-  const [weekNum, setWeekNum] = useState(1)
+  const [weekNum, setWeekNum] = useState(() => getCurrentWeekNum(today.getFullYear(), today.getMonth()))
   const [selectedDay, setSelectedDay] = useState(today.getDate())
   const [mobileTab, setMobileTab] = useState('tasks') // 'tasks' | 'manage' | 'reflect'
 
@@ -74,7 +87,15 @@ export default function TaskTracker() {
 
   const updateWeek = (patch) => setAllData(prev => ({ ...prev, [weekKey]: { ...prev[weekKey], ...patch } }))
   const getChecked = (day, task) => checks[`${day}-${task}`] || false
-  const setChecked = (day, task, val) => updateWeek({ checks: { ...checks, [`${day}-${task}`]: val } })
+  const isFutureDay = (day) => {
+    const d = new Date(year, month, day)
+    const t = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    return d > t
+  }
+  const setChecked = (day, task, val) => {
+    if (isFutureDay(day)) return   // block future days
+    updateWeek({ checks: { ...checks, [`${day}-${task}`]: val } })
+  }
   const addTask = () => { if (!newTask.trim()) return; updateWeek({ tasks: [...tasks, newTask.trim()] }); setNewTask('') }
   const removeTask = (t) => updateWeek({ tasks: tasks.filter(x => x !== t) })
   const copyFromLastWeek = () => {
@@ -336,8 +357,9 @@ export default function TaskTracker() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 220px 220px', gap: 12, marginBottom: 20 }}>
-          <div style={{ gridColumn: '1 / 3', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
+          {/* Weekly Progress — spans 2 cols */}
+          <div style={{ gridColumn: 'span 2', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', minWidth: 0 }}>
             <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 10 }}>WEEKLY PROGRESS</div>
             <ResponsiveContainer width="100%" height={60}>
               <BarChart data={weeklyBarData} barSize={20}>
@@ -347,17 +369,20 @@ export default function TaskTracker() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>THIS WEEK INSIGHTS</div>
-            {bestDay && <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Star size={14} color="var(--amber)" fill="var(--amber)" /><div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Strongest</div><div style={{ fontSize: 14, fontWeight: 700, color: 'var(--amber)' }}>{bestDay.label} · {bestDay.pct}%</div></div></div>}
-            {worstDay && worstDay.label !== bestDay?.label && <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><AlertTriangle size={14} color="var(--red)" /><div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Needs Focus</div><div style={{ fontSize: 14, fontWeight: 700, color: 'var(--red)' }}>{worstDay.label} · {worstDay.pct}%</div></div></div>}
+          {/* Insights */}
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>THIS WEEK INSIGHTS</div>
+            {bestDay && <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><Star size={14} color="var(--amber)" fill="var(--amber)" style={{ flexShrink: 0 }} /><div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Strongest</div><div style={{ fontSize: 14, fontWeight: 700, color: 'var(--amber)', whiteSpace: 'nowrap' }}>{bestDay.label} · {bestDay.pct}%</div></div></div>}
+            {worstDay && worstDay.label !== bestDay?.label && <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><AlertTriangle size={14} color="var(--red)" style={{ flexShrink: 0 }} /><div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Needs Focus</div><div style={{ fontSize: 14, fontWeight: 700, color: 'var(--red)', whiteSpace: 'nowrap' }}>{worstDay.label} · {worstDay.pct}%</div></div></div>}
           </div>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>WEEK SCORE</div>
+          {/* Week Score */}
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, minWidth: 0 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>WEEK SCORE</div>
             <DonutChart percent={weekScore} size={84} color={weekScore >= 80 ? 'var(--green)' : weekScore >= 50 ? 'var(--amber)' : 'var(--red)'} />
           </div>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px', display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>WEEK TOTALS</div>
+          {/* Week Totals */}
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px', display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center', minWidth: 0 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>WEEK TOTALS</div>
             {[['Goal', totalGoal, 'var(--text-primary)'], ['Done', totalCompleted, 'var(--green)'], ['Left', totalGoal - totalCompleted, 'var(--red)']].map(([l, v, c]) => (
               <div key={l} style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{l}</span>
@@ -379,8 +404,12 @@ export default function TaskTracker() {
               {weekDays.map((day, i) => {
                 const stats = dayStats[i]
                 const isToday = day && new Date(year, month, day).toDateString() === today.toDateString()
+                const isFuture = day && isFutureDay(day)
                 return (
-                  <div key={i} style={{ background: isToday ? 'rgba(0,229,255,0.04)' : 'var(--bg-card)', border: `1px solid ${isToday ? 'rgba(0,229,255,0.25)' : 'var(--border)'}`, borderRadius: 'var(--radius-md)', padding: '16px', opacity: day ? 1 : 0.3 }}>
+                  <div key={i} style={{ background: isToday ? 'rgba(0,229,255,0.04)' : 'var(--bg-card)', border: `1px solid ${isToday ? 'rgba(0,229,255,0.25)' : 'var(--border)'}`, borderRadius: 'var(--radius-md)', padding: '16px', opacity: day ? (isFuture ? 0.45 : 1) : 0.3, position: 'relative' }}>
+                    {isFuture && (
+                      <div style={{ position: 'absolute', top: 8, right: 8, fontSize: 12 }} title="Future day — cannot edit">🔒</div>
+                    )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                       <div>
                         <div style={{ fontSize: 11, fontWeight: 700, color: isToday ? 'var(--cyan)' : 'var(--text-secondary)', letterSpacing: '0.08em' }}>{SHORT_DAYS[i]}</div>
@@ -390,8 +419,8 @@ export default function TaskTracker() {
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {tasks.map(task => (
-                        <label key={task} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: day ? 'pointer' : 'default', padding: '6px 0' }}>
-                          <input type="checkbox" checked={day ? getChecked(day, task) : false} disabled={!day} onChange={e => day && setChecked(day, task, e.target.checked)} style={{ accentColor: 'var(--cyan)', width: 15, height: 15, cursor: 'pointer' }} />
+                        <label key={task} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: day && !isFuture ? 'pointer' : 'not-allowed', padding: '6px 0' }}>
+                          <input type="checkbox" checked={day ? getChecked(day, task) : false} disabled={!day || isFuture} onChange={e => day && setChecked(day, task, e.target.checked)} style={{ accentColor: 'var(--cyan)', width: 15, height: 15, cursor: 'pointer' }} />
                           <span style={{ fontSize: 13, color: day && getChecked(day, task) ? 'var(--text-muted)' : 'var(--text-secondary)', textDecoration: day && getChecked(day, task) ? 'line-through' : 'none', lineHeight: 1.3, transition: 'all 0.15s' }}>{task}</span>
                         </label>
                       ))}

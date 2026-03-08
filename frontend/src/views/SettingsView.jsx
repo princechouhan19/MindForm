@@ -365,64 +365,58 @@ export default function SettingsView() {
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
 
       {/* Header */}
-      <div style={{ padding: '20px 24px 16px', flexShrink: 0, borderBottom: '1px solid var(--border)' }}>
-        <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 6 }}>SETTINGS</div>
-        <h1 style={{ fontSize: 28, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <SettingsIcon size={22} /> Settings
-        </h1>
-      </div>
-
-      {/* Body: sidebar + content */}
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
-        {/* Left nav */}
-        <div style={{ width: 220, flexShrink: 0, borderRight: '1px solid var(--border)', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto' }}>
-          {SECTIONS.map(({ id, label, icon: Icon, color }) => (
-            <button key={id} onClick={() => setActiveTab(id)} style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '11px 14px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-              cursor: 'pointer', textAlign: 'left', width: '100%',
-              background: activeTab === id ? color + '14' : 'transparent',
-              border: `1px solid ${activeTab === id ? color + '40' : 'transparent'}`,
-              color: activeTab === id ? color : 'var(--text-secondary)',
-              transition: 'all 0.15s',
-            }}
-              onMouseEnter={e => { if (activeTab !== id) { e.currentTarget.style.background = 'var(--bg-glass)'; e.currentTarget.style.color = 'var(--text-primary)' } }}
-              onMouseLeave={e => { if (activeTab !== id) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
-            >
-              <Icon size={15} />
-              {label}
-            </button>
-          ))}
-
-          {/* Spacer + logout */}
-          <div style={{ flex: 1 }} />
+      <div style={{ padding: '20px 28px 0', flexShrink: 0 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 6 }}>SETTINGS</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <SettingsIcon size={20} /> Settings
+          </h1>
+          {/* Logout in header */}
           <button onClick={logout} style={{
-            display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px',
+            display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px',
             borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-            background: 'transparent', border: '1px solid transparent', color: 'var(--text-muted)',
-            transition: 'all 0.15s', width: '100%',
+            background: 'rgba(255,71,87,0.06)', border: '1px solid rgba(255,71,87,0.22)',
+            color: 'var(--red)', transition: 'all 0.15s', fontFamily: 'var(--font-display)',
           }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,71,87,0.07)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'rgba(255,71,87,0.2)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'transparent' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,71,87,0.14)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,71,87,0.06)' }}
           >
-            <LogOut size={15} /> Sign Out
+            <LogOut size={14} /> Sign Out
           </button>
         </div>
 
-        {/* Right content */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '28px 32px' }}>
-          {/* Section header */}
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-              {activeInfo && <activeInfo.icon size={18} color={activeInfo.color} />}
-              <h2 style={{ fontSize: 20, fontWeight: 700 }}>{activeInfo?.label}</h2>
-            </div>
-            <div style={{ width: 32, height: 3, borderRadius: 2, background: activeInfo?.color || 'var(--cyan)' }} />
-          </div>
+        {/* Horizontal pill tabs */}
+        <div style={{
+          display: 'flex', gap: 6, borderBottom: '1px solid var(--border)',
+          paddingBottom: 0, overflowX: 'auto', scrollbarWidth: 'none',
+        }}>
+          {SECTIONS.map(({ id, label, icon: Icon, color }) => (
+            <button key={id} onClick={() => setActiveTab(id)} style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '10px 20px', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', flexShrink: 0, background: 'none',
+              color: activeTab === id ? color : 'var(--text-secondary)',
+              borderBottom: `2px solid ${activeTab === id ? color : 'transparent'}`,
+              border: 'none', borderRadius: 0,
+              transition: 'all 0.15s',
+              fontFamily: 'var(--font-display)',
+            }}>
+              <Icon size={14} /> {label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-          <div style={{ maxWidth: 640 }}>
-            {activeSection}
+      {/* Content */}
+      <div style={{ flex: 1, overflow: 'auto', padding: '28px 28px 40px' }}>
+        <div style={{ maxWidth: 640 }}>
+          {/* Section header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+            {activeInfo && <activeInfo.icon size={16} color={activeInfo.color} />}
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>{activeInfo?.label}</h2>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)', marginLeft: 8 }} />
           </div>
+          {activeSection}
         </div>
       </div>
     </div>

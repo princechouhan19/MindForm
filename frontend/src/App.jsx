@@ -6,29 +6,39 @@ import HabitTracker from './views/HabitTracker'
 import GoalsView from './views/GoalsView'
 import FaplessView from './views/FaplessView'
 import SettingsView from './views/SettingsView'
+import AIChatView from './views/AIChatView'
+import SocialView from './views/SocialView'
 import AuthPage from './views/AuthPage'
-import { Loader, CheckSquare, Activity, Target, Flame, Settings } from 'lucide-react'
+import LandingPage from './views/LandingPage'
+import { Loader, CheckSquare, Activity, Target, Flame, Settings, Sparkles, Users2 } from 'lucide-react'
 
 const NAV_ITEMS = [
   { id: 'tasks',    label: 'Tasks',   icon: CheckSquare, color: 'var(--cyan)' },
   { id: 'habits',   label: 'Habits',  icon: Activity,    color: 'var(--amber)' },
   { id: 'goals',    label: 'Goals',   icon: Target,      color: 'var(--green)' },
   { id: 'fapless',  label: 'Fapless', icon: Flame,       color: '#ff4500' },
+  { id: 'social',   label: 'Social',  icon: Users2,      color: '#f472b6' },
+  { id: 'ai',       label: 'AI Chat', icon: Sparkles,    color: '#a78bfa' },
   { id: 'settings', label: 'Settings',icon: Settings,    color: 'var(--text-secondary)' },
 ]
 
 function Dashboard() {
   const { user, loading } = useAuth()
+  const [page, setPage] = useState('landing') // 'landing' | 'auth' | 'dashboard'
   const [view, setView] = useState('tasks')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
+
+  // Once user logs in, jump to dashboard
+  useEffect(() => {
+    if (user) setPage('dashboard')
+  }, [user])
 
   // Detect screen size
   useEffect(() => {
     const check = () => {
       const mobile = window.innerWidth <= 768
       setIsMobile(mobile)
-      // On desktop, collapse sidebar by default; open on desktop sizes
       if (!mobile) setSidebarOpen(true)
       else setSidebarOpen(false)
     }
@@ -53,12 +63,23 @@ function Dashboard() {
     )
   }
 
-  if (!user) return <AuthPage />
+  // ── Landing Page ──────────────────────────────────
+  if (page === 'landing') {
+    return <LandingPage onGetStarted={() => setPage('auth')} />
+  }
 
+  // ── Auth Page (not logged in) ─────────────────────
+  if (!user) {
+    return <AuthPage onBack={() => setPage('landing')} />
+  }
+
+  // ── Dashboard ─────────────────────────────────────
   const renderView = () => {
     if (view === 'habits')   return <HabitTracker />
     if (view === 'goals')    return <GoalsView />
     if (view === 'fapless')  return <FaplessView />
+    if (view === 'social')   return <SocialView />
+    if (view === 'ai')       return <AIChatView />
     if (view === 'settings') return <SettingsView />
     return <TaskTracker />
   }

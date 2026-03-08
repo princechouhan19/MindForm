@@ -6,11 +6,12 @@ const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
 const connectDB = require('./config/db')
 
-const authRoutes = require('./routes/auth')
-const taskRoutes = require('./routes/tasks')
-const habitRoutes = require('./routes/habits')
-const goalRoutes = require('./routes/goals')
+const authRoutes    = require('./routes/auth')
+const taskRoutes    = require('./routes/tasks')
+const habitRoutes   = require('./routes/habits')
+const goalRoutes    = require('./routes/goals')
 const faplessRoutes = require('./routes/fapless')
+const aiRoutes      = require('./routes/ai')
 
 const app = express()
 
@@ -28,8 +29,8 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
-      imgSrc: ["'self'", 'data:', 'blob:'],
-      connectSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https://api.iconify.design'],
+      connectSrc: ["'self'", 'http://localhost:5000', 'https://api.iconify.design'],
       workerSrc: ["'self'", 'blob:'],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
@@ -58,12 +59,21 @@ const limiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: { success: false, message: 'Too many auth attempts, please try again later.' },
+  max: 10,
+  message: { success: false, message: 'Too many auth attempts, please slow down.' },
+})
+
+// Strict per-IP registration limiter: max 3 new accounts per hour per IP
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3,
+  message: { success: false, message: 'Too many registration attempts from this device. Please try again later.' },
+  skipSuccessfulRequests: false,
 })
 
 app.use('/api/', limiter)
 app.use('/api/auth', authLimiter)
+app.use('/api/auth/register', registerLimiter)
 
 // Body parsing
 app.use(express.json({ limit: '2mb' }))
@@ -79,12 +89,16 @@ app.get('/health', (req, res) => {
   })
 })
 
+const socialRoutes   = require('./routes/social')
+
 // API Routes
-app.use('/api/auth', authRoutes)
-app.use('/api/tasks', taskRoutes)
-app.use('/api/habits', habitRoutes)
-app.use('/api/goals', goalRoutes)
+app.use('/api/auth',    authRoutes)
+app.use('/api/tasks',   taskRoutes)
+app.use('/api/habits',  habitRoutes)
+app.use('/api/goals',   goalRoutes)
 app.use('/api/fapless', faplessRoutes)
+app.use('/api/ai',      aiRoutes)
+app.use('/api/social',  socialRoutes)
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production' || process.env.SERVE_FRONTEND === 'true') {

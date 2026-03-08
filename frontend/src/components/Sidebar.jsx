@@ -1,13 +1,15 @@
 import React from 'react'
-import { CheckSquare, Activity, Target, Settings, LogOut, User, PanelLeftClose, PanelLeftOpen, Flame } from 'lucide-react'
+import { CheckSquare, Activity, Target, Settings, LogOut, User, PanelLeftClose, PanelLeftOpen, Flame, Sparkles, Users2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const navItems = [
-  { id: 'tasks',   label: 'Task Tracker',   icon: CheckSquare, color: 'var(--cyan)' },
-  { id: 'habits',  label: 'Habit Tracker',  icon: Activity,    color: 'var(--amber)' },
-  { id: 'goals',   label: 'Goals',          icon: Target,      color: 'var(--green)' },
-  { id: 'fapless', label: 'Fapless',        icon: Flame,       color: '#ff4500' },
-  { id: 'settings',label: 'Settings',       icon: Settings,    color: 'var(--text-secondary)' },
+  { id: 'tasks',    label: 'Task Tracker',  icon: CheckSquare, color: 'var(--cyan)' },
+  { id: 'habits',   label: 'Habit Tracker', icon: Activity,    color: 'var(--amber)' },
+  { id: 'goals',    label: 'Goals',         icon: Target,      color: 'var(--green)' },
+  { id: 'fapless',  label: 'Fapless',       icon: Flame,       color: '#ff4500' },
+  { id: 'social',   label: 'Social',        icon: Users2,      color: '#f472b6', badge: 'NEW' },
+  { id: 'ai',       label: 'AI Chat',       icon: Sparkles,    color: '#a78bfa', badge: 'AI' },
+  { id: 'settings', label: 'Settings',      icon: Settings,    color: 'var(--text-secondary)' },
 ]
 
 export default function Sidebar({ active, onChange, isOpen, onToggle, isMobile }) {
@@ -59,7 +61,7 @@ export default function Sidebar({ active, onChange, isOpen, onToggle, isMobile }
       {/* Nav */}
       <nav style={{ padding: isOpen ? '14px 10px' : '14px 6px', flex: 1 }}>
         {isOpen && <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.15em', padding: '0 6px', marginBottom: 6 }}>MODULES</div>}
-        {navItems.map(({ id, label, icon: Icon, color }) => {
+        {navItems.map(({ id, label, icon: Icon, color, badge }) => {
           const isActive = active === id
           return (
             <button key={id} onClick={() => onChange(id)} title={!isOpen ? label : undefined}
@@ -67,7 +69,7 @@ export default function Sidebar({ active, onChange, isOpen, onToggle, isMobile }
               onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'var(--bg-glass-hover)'; e.currentTarget.style.color = 'var(--text-primary)' } }}
               onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' } }}>
               <Icon size={15} />
-              {isOpen && <><span>{label}</span>{isActive && <div style={{ marginLeft: 'auto', width: 5, height: 5, borderRadius: '50%', background: color, boxShadow: `0 0 6px ${color}` }} />}</>}
+              {isOpen && <><span>{label}</span>{badge && <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.08em', background: color + '22', color, border: `1px solid ${color}44`, borderRadius: 4, padding: '1px 5px', marginLeft: 2 }}>{badge}</span>}{isActive && <div style={{ marginLeft: 'auto', width: 5, height: 5, borderRadius: '50%', background: color, boxShadow: `0 0 6px ${color}` }} />}</>}
             </button>
           )
         })}
