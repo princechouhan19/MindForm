@@ -285,7 +285,7 @@ export default function FaplessView() {
         <strong style={{ color: 'var(--text-primary)' }}>Start again. Right now.</strong>
       </div>
       <button onClick={() => { setRelapseQuote(''); load() }}
-        style={{ background: 'linear-gradient(135deg, var(--cyan), #0077ff)', border: 'none', borderRadius: 12, color: '#000', padding: '12px 28px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+        style={{ background: 'var(--brand-primary)', border: 'none', borderRadius: 12, color: '#000', padding: '12px 28px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
         <RefreshCw size={16} /> Start Fresh Journey
       </button>
     </div>

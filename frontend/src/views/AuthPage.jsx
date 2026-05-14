@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Eye, EyeOff, Loader, ArrowLeft, ShieldAlert, ShieldCheck } from 'lucide-react'
+import WebGLBackground from '../components/WebGLBackground'
 
 // Client-side quick checks (backend has the full list)
 const OBVIOUS_TEMP_KEYWORDS = ['mailinator', 'guerrilla', 'yopmail', 'tempmail', 'throwaway', 'trashmail', 'fakeinbox', '10minute', 'disposable', 'burner']
@@ -20,11 +21,11 @@ function getPasswordStrength(pw) {
   if (/[A-Z]/.test(pw)) score++
   if (/[0-9]/.test(pw)) score++
   if (/[^a-zA-Z0-9]/.test(pw)) score++
-  if (score <= 1) return { score, label: 'Too weak', color: '#ff4757' }
-  if (score === 2) return { score, label: 'Weak', color: '#ff6b35' }
-  if (score === 3) return { score, label: 'Fair', color: '#ffd700' }
-  if (score === 4) return { score, label: 'Good', color: '#7bed9f' }
-  return { score, label: 'Strong', color: 'var(--green)' }
+  if (score <= 1) return { score, label: 'Too weak', color: 'var(--brand-error)' }
+  if (score === 2) return { score, label: 'Weak', color: 'var(--brand-warning)' }
+  if (score === 3) return { score, label: 'Fair', color: 'var(--brand-primary)' }
+  if (score === 4) return { score, label: 'Good', color: 'var(--brand-success)' }
+  return { score, label: 'Strong', color: 'var(--brand-success)' }
 }
 
 export default function AuthPage({ onBack }) {
@@ -34,6 +35,11 @@ export default function AuthPage({ onBack }) {
   const [showPwd, setShowPwd] = useState(false)
   const [loading, setLoading] = useState(false)
   const [localError, setLocalError] = useState('')
+  const [theme] = useState('dark') // Auth page usually looks best in dark mode for this brand
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
 
   const set = (field) => (e) => {
     setError('')
@@ -45,11 +51,9 @@ export default function AuthPage({ onBack }) {
     if (!form.email || !form.password) return
     if (mode === 'register' && !form.name) return
 
-    // ── Honeypot: bots fill hidden fields, humans don't ───────────────────────
-    if (form.honeypot) return // silently reject bots
+    if (form.honeypot) return 
 
     if (mode === 'register') {
-      // Client-side quick checks
       const emailErr = quickEmailCheck(form.email)
       if (emailErr) { setLocalError(emailErr); return }
 
@@ -68,15 +72,15 @@ export default function AuthPage({ onBack }) {
 
   const inputStyle = {
     width: '100%',
-    background: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: 12,
+    background: 'var(--bg-glass)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-md)',
     padding: '14px 18px',
-    fontSize: 16,
+    fontSize: 15,
     color: 'var(--text-primary)',
     outline: 'none',
-    transition: 'border-color 0.15s',
-    fontFamily: 'var(--font-display)',
+    transition: 'all 0.3s var(--ease-out-expo)',
+    fontFamily: 'var(--font-body)',
   }
 
   return (
@@ -86,92 +90,82 @@ export default function AuthPage({ onBack }) {
       background: 'var(--bg-base)',
       position: 'relative', overflow: 'hidden',
     }}>
-      {/* Background glow */}
-      <div style={{
-        position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)',
-        width: 600, height: 600, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(0,229,255,0.06) 0%, transparent 70%)',
-        pointerEvents: 'none',
-      }} />
+      <WebGLBackground theme={theme} />
 
       {/* Back to home */}
       {onBack && (
         <button
           onClick={onBack}
+          className="lp-btn-secondary"
           style={{
-            position: 'absolute', top: 24, left: 24,
-            display: 'flex', alignItems: 'center', gap: 6,
-            background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)',
-            borderRadius: 10, padding: '8px 14px',
-            fontSize: 13, fontWeight: 600,
-            color: 'var(--text-secondary)', cursor: 'pointer',
-            fontFamily: 'var(--font-display)',
-            transition: 'all 0.2s',
+            position: 'absolute', top: 32, left: 32,
+            padding: '10px 18px',
+            fontSize: 13,
+            gap: 8,
+            zIndex: 10,
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.09)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
         >
           <ArrowLeft size={14} /> Back to Home
         </button>
       )}
 
-      <div style={{
-        width: '100%', maxWidth: 400,
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border)',
-        borderRadius: 20,
-        padding: '40px 36px',
+      <div className="lp-card" style={{
+        width: '100%', maxWidth: 420,
+        padding: '48px 40px',
         position: 'relative',
-        animation: 'fadeIn 0.4s ease',
+        zIndex: 5,
+        backdropFilter: 'blur(16px)',
+        boxShadow: 'var(--shadow-xl)',
       }}>
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 36 }}>
-          <img src="/logo.png" alt="Mind Form" style={{ width: 48, height: 48, borderRadius: 12, objectFit: 'contain' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 40 }}>
+          <img src="/logo.png" alt="Mind Form" style={{ width: 52, height: 52, borderRadius: 14, objectFit: 'contain' }} />
           <div>
-            <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '0.04em' }}>MIND FORM</div>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.12em' }}>PRODUCTIVITY SUITE</div>
+            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '0.04em', fontFamily: 'var(--font-display)' }}>MIND FORM</div>
+            <div style={{ fontSize: 10, color: 'var(--brand-primary)', letterSpacing: '0.15em', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>PRODUCTIVITY SUITE</div>
           </div>
         </div>
 
         {/* Title */}
-        <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>
-          {mode === 'login' ? 'Welcome back' : 'Create account'}
+        <h2 style={{ fontSize: 32, fontWeight: 800, marginBottom: 12, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
+          {mode === 'login' ? 'Welcome back' : 'Join MindForm'}
         </h2>
-        <p style={{ fontSize: 15, color: 'var(--text-secondary)', marginBottom: 32 }}>
-          {mode === 'login' ? 'Sign in to your dashboard' : 'Start tracking your habits & tasks'}
+        <p style={{ fontSize: 15, color: 'var(--text-secondary)', marginBottom: 36, fontFamily: 'var(--font-body)', lineHeight: 1.6 }}>
+          {mode === 'login' ? 'Sign in to access your dashboard' : 'Start your journey to unbreakable focus'}
         </p>
 
         {/* Error */}
         {(error || localError) && (
           <div style={{
-            background: 'rgba(255,71,87,0.08)', border: '1px solid rgba(255,71,87,0.35)',
-            borderRadius: 10, padding: '12px 16px', fontSize: 13, color: 'var(--red)',
-            marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 8,
+            background: 'rgba(201,95,95,0.08)', border: '1px solid rgba(201,95,95,0.2)',
+            borderRadius: 'var(--radius-sm)', padding: '12px 16px', fontSize: 13, color: 'var(--brand-error)',
+            marginBottom: 24, display: 'flex', alignItems: 'flex-start', gap: 10,
+            fontFamily: 'var(--font-body)',
           }}>
-            <ShieldAlert size={15} style={{ marginTop: 1, flexShrink: 0 }} />
+            <ShieldAlert size={16} style={{ marginTop: 2, flexShrink: 0 }} />
             <span>{error || localError}</span>
           </div>
         )}
 
         {/* Fields */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {mode === 'register' && (
             <input
               value={form.name} onChange={set('name')}
               placeholder="Full name"
               style={inputStyle}
-              onFocus={e => e.target.style.borderColor = 'rgba(0,229,255,0.4)'}
-              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+              onFocus={e => { e.target.style.borderColor = 'var(--brand-primary)'; e.target.style.background = 'var(--bg-glass-hover)' }}
+              onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.background = 'var(--bg-glass)' }}
             />
           )}
           <input
             type="email" value={form.email} onChange={set('email')}
             placeholder="Email address"
             style={inputStyle}
-            onFocus={e => e.target.style.borderColor = 'rgba(0,229,255,0.4)'}
-            onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+            onFocus={e => { e.target.style.borderColor = 'var(--brand-primary)'; e.target.style.background = 'var(--bg-glass-hover)' }}
+            onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.background = 'var(--bg-glass)' }}
           />
-          {/* Honeypot – hidden from real users, bots fill it */}
+          {/* Honeypot */}
           <input
             value={form.honeypot}
             onChange={set('honeypot')}
@@ -183,17 +177,18 @@ export default function AuthPage({ onBack }) {
           <div style={{ position: 'relative' }}>
             <input
               type={showPwd ? 'text' : 'password'} value={form.password} onChange={set('password')}
-              placeholder={mode === 'register' ? 'Password (min 8 chars + number)' : 'Password'}
+              placeholder={mode === 'register' ? 'Password (min 8 chars)' : 'Password'}
               onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-              style={{ ...inputStyle, paddingRight: 44, width: '100%', boxSizing: 'border-box' }}
-              onFocus={e => e.target.style.borderColor = 'rgba(0,229,255,0.4)'}
-              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+              style={{ ...inputStyle, paddingRight: 48 }}
+              onFocus={e => { e.target.style.borderColor = 'var(--brand-primary)'; e.target.style.background = 'var(--bg-glass-hover)' }}
+              onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.background = 'var(--bg-glass)' }}
             />
             <button onClick={() => setShowPwd(v => !v)} style={{
-              position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
+              position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)',
               background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 0,
-            }}>
-              {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+              cursor: 'pointer', transition: 'color 0.2s',
+            }} onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+              {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
 
@@ -201,43 +196,37 @@ export default function AuthPage({ onBack }) {
           {mode === 'register' && form.password && (() => {
             const s = getPasswordStrength(form.password)
             return (
-              <div>
-                <div style={{ height: 4, background: 'var(--border)', borderRadius: 4, overflow: 'hidden', marginBottom: 4 }}>
-                  <div style={{ height: '100%', width: `${Math.min(100, (s.score / 5) * 100)}%`, background: s.color, transition: 'all 0.3s', borderRadius: 4 }} />
+              <div style={{ padding: '0 4px' }}>
+                <div style={{ height: 4, background: 'var(--border)', borderRadius: 4, overflow: 'hidden', marginBottom: 6 }}>
+                  <div style={{ height: '100%', width: `${Math.min(100, (s.score / 5) * 100)}%`, background: s.color, transition: 'all 0.5s var(--ease-out-expo)', borderRadius: 4 }} />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
-                  {s.score >= 4 ? <ShieldCheck size={11} color={s.color} /> : <ShieldAlert size={11} color={s.color} />}
-                  <span style={{ color: s.color, fontWeight: 700 }}>{s.label}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontFamily: 'var(--font-mono)' }}>
+                  {s.score >= 4 ? <ShieldCheck size={12} color={s.color} /> : <ShieldAlert size={12} color={s.color} />}
+                  <span style={{ color: s.color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</span>
                 </div>
               </div>
             )
           })()}
-        </div>{/* end fields */}
+        </div>
 
         {/* Submit */}
-        <button onClick={handleSubmit} disabled={loading} style={{
-          width: '100%', marginTop: 28,
-          background: loading ? 'var(--cyan-dim)' : 'linear-gradient(135deg, var(--cyan), #0077ff)',
-          border: 'none', borderRadius: 12,
-          padding: '15px', fontSize: 16, fontWeight: 700,
-          color: loading ? 'var(--cyan)' : '#000',
-          cursor: loading ? 'not-allowed' : 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-          transition: 'opacity 0.15s',
-          fontFamily: 'var(--font-display)',
-          letterSpacing: '0.03em',
+        <button onClick={handleSubmit} disabled={loading} className="lp-btn-primary" style={{
+          width: '100%', marginTop: 32,
+          justifyContent: 'center',
+          opacity: loading ? 0.7 : 1,
+          pointerEvents: loading ? 'none' : 'auto',
         }}>
-          {loading ? <><Loader size={18} style={{ animation: 'spin 1s linear infinite' }} /> {mode === 'login' ? 'Signing in...' : 'Creating account...'}</> : mode === 'login' ? 'Sign In' : 'Create Account'}
+          {loading ? <><Loader size={18} style={{ animation: 'spin 1s linear infinite' }} /> {mode === 'login' ? 'Authenticating...' : 'Processing...'}</> : mode === 'login' ? 'Sign In' : 'Create Account'}
         </button>
 
         {/* Toggle mode */}
-        <div style={{ textAlign: 'center', marginTop: 24, fontSize: 14, color: 'var(--text-secondary)' }}>
-          {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+        <div style={{ textAlign: 'center', marginTop: 32, fontSize: 14, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>
+          {mode === 'login' ? "New to MindForm? " : 'Already have an account? '}
           <button onClick={() => { setMode(m => m === 'login' ? 'register' : 'login'); setError('') }} style={{
-            background: 'none', color: 'var(--cyan)', fontWeight: 600, fontSize: 14,
-            cursor: 'pointer', fontFamily: 'var(--font-display)',
-          }}>
-            {mode === 'login' ? 'Sign up' : 'Sign in'}
+            background: 'none', color: 'var(--brand-primary)', fontWeight: 700, fontSize: 14,
+            cursor: 'pointer', fontFamily: 'var(--font-body)', transition: 'opacity 0.2s',
+          }} onMouseEnter={e => e.currentTarget.style.opacity = 0.8} onMouseLeave={e => e.currentTarget.style.opacity = 1}>
+            {mode === 'login' ? 'Create an account' : 'Sign in here'}
           </button>
         </div>
       </div>

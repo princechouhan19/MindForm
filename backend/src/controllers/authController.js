@@ -1,14 +1,26 @@
 const jwt = require('jsonwebtoken')
 const User = require('../models/User')
 const { validateRegistration } = require('../utils/emailValidator')
+const catchAsync = require('../utils/catchAsync')
+const AppError = require('../utils/AppError')
 
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' })
 
 const sendToken = (user, statusCode, res) => {
   const token = signToken(user._id)
+  
+  // High-level design: Use HTTP Only cookies for JWT alongside token in payload (optional for frontend fallback)
+  const cookieOptions = {
+    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  }
+  res.cookie('jwt', token, cookieOptions)
+
   res.status(statusCode).json({
-    success: true,
+    status: 'success',
     token,
     user: {
       id: user._id,
@@ -21,75 +33,52 @@ const sendToken = (user, statusCode, res) => {
 }
 
 // POST /api/auth/register
-const register = async (req, res) => {
-  try {
-    const { name, email, password } = req.body
+const register = catchAsync(async (req, res, next) => {
+  const { name, email, password } = req.body
 
-    // ── Basic presence check ─────────────────────────────────────────────────
-    if (!name || !email || !password) {
-      return res.status(400).json({ success: false, message: 'Please provide name, email and password.' })
-    }
-
-    // ── Anti-fake validation (disposable mail, fake names, bad TLDs) ─────────
-    const { valid, errors } = validateRegistration({ name, email })
-    if (!valid) {
-      return res.status(400).json({
-        success: false,
-        message: errors[0],  // show first error to keep UX clean
-        blocked: true,       // frontend can detect this flag
-      })
-    }
-
-    // ── Password strength (min 8 chars, at least one number or special) ──────
-    const pwStrong = /^(?=.*[a-zA-Z])(?=.*[\d\W]).{8,}$/.test(password)
-    if (!pwStrong) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password must be at least 8 characters and include letters plus a number or symbol.',
-      })
-    }
-
-    // ── Duplicate email ───────────────────────────────────────────────────────
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() })
-    if (existingUser) {
-      return res.status(400).json({ success: false, message: 'Email already registered.' })
-    }
-
-    const user = await User.create({ name: name.trim(), email: email.toLowerCase().trim(), password })
-    sendToken(user, 201, res)
-  } catch (error) {
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map((e) => e.message)
-      return res.status(400).json({ success: false, message: messages.join('. ') })
-    }
-    res.status(500).json({ success: false, message: 'Server error during registration.' })
+  if (!name || !email || !password) {
+    return next(new AppError('Please provide name, email and password.', 400))
   }
-}
+
+  const { valid, errors } = validateRegistration({ name, email })
+  if (!valid) {
+    return next(new AppError(errors[0], 400))
+  }
+
+  const pwStrong = /^(?=.*[a-zA-Z])(?=.*[\d\W]).{8,}$/.test(password)
+  if (!pwStrong) {
+    return next(new AppError('Password must be at least 8 characters and include letters plus a number or symbol.', 400))
+  }
+
+  const existingUser = await User.findOne({ email: email.toLowerCase().trim() })
+  if (existingUser) {
+    return next(new AppError('Email already registered.', 400))
+  }
+
+  const user = await User.create({ name: name.trim(), email: email.toLowerCase().trim(), password })
+  sendToken(user, 201, res)
+})
 
 // POST /api/auth/login
-const login = async (req, res) => {
-  try {
-    const { email, password } = req.body
+const login = catchAsync(async (req, res, next) => {
+  const { email, password } = req.body
 
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Please provide email and password.' })
-    }
-
-    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password')
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password.' })
-    }
-
-    sendToken(user, 200, res)
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error during login.' })
+  if (!email || !password) {
+    return next(new AppError('Please provide email and password.', 400))
   }
-}
+
+  const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password')
+  if (!user || !(await user.comparePassword(password))) {
+    return next(new AppError('Invalid email or password.', 401))
+  }
+
+  sendToken(user, 200, res)
+})
 
 // GET /api/auth/me
-const getMe = async (req, res) => {
+const getMe = catchAsync(async (req, res, next) => {
   res.status(200).json({
-    success: true,
+    status: 'success',
     user: {
       id: req.user._id,
       name: req.user.name,
@@ -98,6 +87,6 @@ const getMe = async (req, res) => {
       createdAt: req.user.createdAt,
     },
   })
-}
+})
 
 module.exports = { register, login, getMe }

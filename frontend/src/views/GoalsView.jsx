@@ -148,7 +148,7 @@ function GoalForm({ onSave, onCancel, initial, availableTasks, availableHabits }
 
       <div style={{ display: 'flex', gap: 10 }}>
         <button onClick={handleSave} disabled={saving || !form.title.trim() || !form.deadline}
-          style={{ background: 'linear-gradient(135deg, var(--cyan), #0077ff)', border: 'none', borderRadius: 10, color: '#000', padding: '10px 22px', fontSize: 14, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: saving ? 0.7 : 1 }}>
+          style={{ background: 'var(--brand-primary)', border: 'none', borderRadius: 10, color: '#000', padding: '10px 22px', fontSize: 14, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: saving ? 0.7 : 1 }}>
           {saving ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={14} />}
           {saving ? 'Saving...' : 'Save Goal'}
         </button>

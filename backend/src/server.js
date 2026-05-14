@@ -4,6 +4,9 @@ const path = require('path')
 const cors = require('cors')
 const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
+const mongoSanitize = require('express-mongo-sanitize')
+const compression = require('compression')
+const morgan = require('morgan')
 const connectDB = require('./config/db')
 
 const authRoutes    = require('./routes/auth')
@@ -75,9 +78,21 @@ app.use('/api/', limiter)
 app.use('/api/auth', authLimiter)
 app.use('/api/auth/register', registerLimiter)
 
+// Development logging
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'))
+}
+
 // Body parsing
 app.use(express.json({ limit: '2mb' }))
 app.use(express.urlencoded({ extended: true }))
+app.use(require('cookie-parser')())
+
+// Data sanitization against NoSQL query injection
+app.use(mongoSanitize())
+
+// Compress responses
+app.use(compression())
 
 // Health check
 app.get('/health', (req, res) => {
@@ -115,14 +130,9 @@ if (process.env.NODE_ENV === 'production' || process.env.SERVE_FRONTEND === 'tru
 }
 
 // Global error handler
-app.use((err, req, res, next) => {
-  console.error('Global error:', err)
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || 'Internal server error.',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
-  })
-})
+const globalErrorHandler = require('./middleware/errorController');
+app.use(globalErrorHandler);
+
 
 const PORT = process.env.PORT || 5000
 app.listen(PORT, () => {

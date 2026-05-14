@@ -200,7 +200,8 @@ export default function TaskTracker() {
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
                     padding: '8px 10px', borderRadius: 12, flexShrink: 0, cursor: 'pointer',
                     background: isSel ? 'var(--cyan-dim)' : 'var(--bg-card)',
-                    border: `1px solid ${isSel ? 'var(--cyan)' : isToday ? 'rgba(0,229,255,0.25)' : 'var(--border)'}`,
+                    border: `1px solid ${isSel ? 'var(--cyan)' : isToday ? 'var(--brand-primary-glow)' : 'var(--border)'}`,
+
                     transition: 'all 0.15s', minWidth: 42,
                   }}>
                   <span style={{ fontSize: 9, fontWeight: 600, color: isSel ? 'var(--cyan)' : 'var(--text-muted)', letterSpacing: '0.05em' }}>{SHORT_DAYS[i]}</span>
@@ -283,7 +284,7 @@ export default function TaskTracker() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <span style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>TASKS THIS WEEK</span>
                 {weekNum > 1 && (
-                  <button onClick={copyFromLastWeek} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--cyan)', background: 'var(--cyan-dim)', border: '1px solid rgba(0,229,255,0.25)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>
+                  <button onClick={copyFromLastWeek} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--cyan)', background: 'var(--cyan-dim)', border: '1px solid var(--brand-primary-glow)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>
                     <Copy size={11} /> Copy Wk {weekNum - 1}
                   </button>
                 )}
@@ -301,7 +302,7 @@ export default function TaskTracker() {
               <div style={{ display: 'flex', gap: 8 }}>
                 <input value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTask()}
                   placeholder="Add task..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: 'var(--text-primary)' }} />
-                <button onClick={addTask} style={{ background: 'var(--cyan-dim)', border: '1px solid rgba(0,229,255,0.2)', borderRadius: 10, color: 'var(--cyan)', padding: '12px 16px', display: 'flex', alignItems: 'center' }}><Plus size={18} /></button>
+                <button onClick={addTask} style={{ background: 'var(--cyan-dim)', border: '1px solid var(--brand-primary-glow)', borderRadius: 10, color: 'var(--cyan)', padding: '12px 16px', display: 'flex', alignItems: 'center' }}><Plus size={18} /></button>
               </div>
             </div>
           ) : (
@@ -406,7 +407,7 @@ export default function TaskTracker() {
                 const isToday = day && new Date(year, month, day).toDateString() === today.toDateString()
                 const isFuture = day && isFutureDay(day)
                 return (
-                  <div key={i} style={{ background: isToday ? 'rgba(0,229,255,0.04)' : 'var(--bg-card)', border: `1px solid ${isToday ? 'rgba(0,229,255,0.25)' : 'var(--border)'}`, borderRadius: 'var(--radius-md)', padding: '16px', opacity: day ? (isFuture ? 0.45 : 1) : 0.3, position: 'relative' }}>
+                  <div key={i} style={{ background: isToday ? 'var(--brand-primary-dim)' : 'var(--bg-card)', border: `1px solid ${isToday ? 'var(--brand-primary-glow)' : 'var(--border)'}`, borderRadius: 'var(--radius-md)', padding: '16px', opacity: day ? (isFuture ? 0.45 : 1) : 0.3, position: 'relative' }}>
                     {isFuture && (
                       <div style={{ position: 'absolute', top: 8, right: 8, fontSize: 12 }} title="Future day — cannot edit">🔒</div>
                     )}
@@ -439,9 +440,9 @@ export default function TaskTracker() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                   <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>MANAGE TASKS</div>
                   {weekNum > 1 && (
-                    <button onClick={copyFromLastWeek} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: 'var(--cyan)', background: 'var(--cyan-dim)', border: '1px solid rgba(0,229,255,0.25)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer', transition: 'all 0.15s' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,229,255,0.18)'; e.currentTarget.style.borderColor = 'var(--cyan)' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'var(--cyan-dim)'; e.currentTarget.style.borderColor = 'rgba(0,229,255,0.25)' }}>
+                    <button onClick={copyFromLastWeek} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: 'var(--cyan)', background: 'var(--cyan-dim)', border: '1px solid var(--brand-primary-glow)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer', transition: 'all 0.15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--brand-primary-dim)'; e.currentTarget.style.borderColor = 'var(--cyan)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'var(--cyan-dim)'; e.currentTarget.style.borderColor = 'var(--brand-primary-glow)' }}>
                       <Copy size={12} /> Copy from Week {weekNum - 1}
                     </button>
                   )}
@@ -458,7 +459,7 @@ export default function TaskTracker() {
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <input value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTask()} placeholder="Add task..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text-primary)' }} />
-                  <button onClick={addTask} style={{ background: 'var(--cyan-dim)', border: '1px solid rgba(0,229,255,0.2)', borderRadius: 8, color: 'var(--cyan)', padding: '10px 16px', display: 'flex', alignItems: 'center' }}><Plus size={18} /></button>
+                  <button onClick={addTask} style={{ background: 'var(--cyan-dim)', border: '1px solid var(--brand-primary-glow)', borderRadius: 8, color: 'var(--cyan)', padding: '10px 16px', display: 'flex', alignItems: 'center' }}><Plus size={18} /></button>
                 </div>
               </div>
               <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '20px' }}>

@@ -332,8 +332,8 @@ function Bubble({ msg }) {
       )}
       <div style={{
         maxWidth: '78%',
-        background: isUser ? 'linear-gradient(135deg, var(--cyan-dim), rgba(0,119,255,0.12))' : 'var(--bg-card)',
-        border: `1px solid ${isUser ? 'rgba(0,229,255,0.25)' : 'var(--border)'}`,
+        background: isUser ? 'var(--brand-primary-dim)' : 'var(--bg-card)',
+        border: `1px solid ${isUser ? 'var(--brand-primary-glow)' : 'var(--border)'}`,
         borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
         padding: '12px 16px',
       }}>
@@ -451,7 +451,7 @@ export default function AIChatView() {
       {/* ── Header ── */}
       <div style={{ padding: '16px 20px 12px', flexShrink: 0, borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 38, height: 38, borderRadius: 12, background: 'linear-gradient(135deg, var(--cyan-dim), rgba(167,139,250,0.18))', border: '1px solid rgba(0,229,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--brand-primary-dim)', border: '1px solid var(--brand-primary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Sparkles size={18} color="var(--cyan)" />
           </div>
           <div>
@@ -472,7 +472,7 @@ export default function AIChatView() {
               <Trash2 size={13} />
             </button>
           )}
-          <button onClick={() => setShowSettings(true)} style={{ background: isReady ? 'var(--bg-glass)' : 'var(--cyan-dim)', border: `1px solid ${isReady ? 'var(--border)' : 'rgba(0,229,255,0.3)'}`, borderRadius: 8, color: isReady ? 'var(--text-secondary)' : 'var(--cyan)', padding: '7px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
+          <button onClick={() => setShowSettings(true)} style={{ background: isReady ? 'var(--bg-glass)' : 'var(--cyan-dim)', border: `1px solid ${isReady ? 'var(--border)' : 'var(--brand-primary-glow)'}`, borderRadius: 8, color: isReady ? 'var(--text-secondary)' : 'var(--cyan)', padding: '7px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, transition: 'all 0.15s' }}>
             <Key size={13} /> {isReady ? 'Settings' : 'Add API Key'}
           </button>
         </div>
@@ -592,7 +592,7 @@ export default function AIChatView() {
             style={{
               width: 44, height: 44, borderRadius: 12, flexShrink: 0,
               background: isReady && input.trim() && !loading
-                ? `linear-gradient(135deg, var(--cyan), #0077ff)`
+                ? `linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))`
                 : 'var(--bg-glass)',
               border: `1px solid ${isReady && input.trim() ? 'transparent' : 'var(--border)'}`,
               color: isReady && input.trim() && !loading ? '#000' : 'var(--text-muted)',
