@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Flame, Shield, Trophy, AlertTriangle, RotateCcw, Zap, Star,
   ChevronDown, ChevronUp, CheckCircle2, XCircle, Lightbulb,
@@ -8,16 +8,31 @@ import { faplessAPI } from '../api/client'
 
 // ─── LEVEL SYSTEM ────────────────────────────────────────────────────────────
 const LEVELS = [
-  { id: 'clown',        label: '🤡 Clown',              minDays: 0,   maxDays: 0,    auraPerDay: 0,   color: '#a0a0a0', desc: 'Day 0 — The journey begins today.' },
-  { id: 'noob',         label: '😐 Noob',               minDays: 1,   maxDays: 6,    auraPerDay: 10,  color: '#cd7f32', desc: 'You took the first step. Most people never do.' },
-  { id: 'novice',       label: '🌱 Novice',             minDays: 7,   maxDays: 13,   auraPerDay: 20,  color: '#8fbc8f', desc: 'One week strong. Your brain is starting to rewire.' },
-  { id: 'average',      label: '🙂 Average',            minDays: 14,  maxDays: 29,   auraPerDay: 35,  color: '#6495ed', desc: 'Two weeks. Dopamine receptors are healing.' },
-  { id: 'advanced',     label: '⚡ Advanced',            minDays: 30,  maxDays: 44,   auraPerDay: 55,  color: '#9370db', desc: '30 days — The infamous "30-day mark". Brain fog is lifting.' },
-  { id: 'sigma',        label: '🔱 Sigma',              minDays: 45,  maxDays: 59,   auraPerDay: 80,  color: '#00bfff', desc: '45 days. Confidence, energy, and clarity are surging.' },
-  { id: 'chad',         label: '💪 Chad',               minDays: 60,  maxDays: 89,   auraPerDay: 110, color: '#ffd700', desc: '60 days. People notice the change. You are becoming.' },
-  { id: 'absolute_chad',label: '🦁 Absolute Chad',      minDays: 90,  maxDays: 119,  auraPerDay: 150, color: '#ff8c00', desc: '90-day reboot complete. This is real transformation.' },
-  { id: 'gigachad',     label: '👑 Giga Chad',          minDays: 120, maxDays: 364,  auraPerDay: 200, color: '#ff4500', desc: '120+ days. You operate on a different frequency.' },
-  { id: 'abs_gigachad', label: '🌌 Absolute Giga Chad', minDays: 365, maxDays: Infinity, auraPerDay: 365, color: '#ff00ff', desc: '365 days. You have completely transcended. A new human.' },
+  { id: 'clown',        label: 'Clown',              minDays: 0,   maxDays: 0,    auraPerDay: 0,   color: '#a0a0a0', desc: 'Day 0 — The journey begins today.', image: '/levels/clown.png' },
+  { id: 'noob',         label: 'Noob',               minDays: 1,   maxDays: 6,    auraPerDay: 10,  color: '#cd7f32', desc: 'You took the first step. Most people never do.', image: '/levels/noob.png' },
+  { id: 'novice',       label: 'Novice',             minDays: 7,   maxDays: 13,   auraPerDay: 20,  color: '#8fbc8f', desc: 'One week strong. Your brain is starting to rewire.', image: '/levels/novice.png' },
+  { id: 'average',      label: 'Average',            minDays: 14,  maxDays: 29,   auraPerDay: 35,  color: '#6495ed', desc: 'Two weeks. Dopamine receptors are healing.', image: '/levels/average.png' },
+  { id: 'advanced',     label: 'Advanced',            minDays: 30,  maxDays: 44,   auraPerDay: 55,  color: '#9370db', desc: '30 days — The infamous "30-day mark". Brain fog is lifting.', image: '/levels/advanced.png' },
+  { id: 'sigma',        label: 'Sigma',              minDays: 45,  maxDays: 59,   auraPerDay: 80,  color: '#00bfff', desc: '45 days. Confidence, energy, and clarity are surging.', image: '/levels/sigma.png' },
+  { id: 'chad',         label: 'Chad',               minDays: 60,  maxDays: 89,   auraPerDay: 110, color: '#ffd700', desc: '60 days. People notice the change. You are becoming.', image: '/levels/chad.png' },
+  { id: 'absolute_chad',label: 'Absolute Chad',      minDays: 90,  maxDays: 119,  auraPerDay: 150, color: '#ff8c00', desc: '90-day reboot complete. This is real transformation.', image: '/levels/absolute_chad.png' },
+  { id: 'gigachad',     label: 'Giga Chad',          minDays: 120, maxDays: 364,  auraPerDay: 200, color: '#ff4500', desc: '120+ days. You operate on a different frequency.', image: '/levels/gigachad.png' },
+  { id: 'abs_gigachad', label: 'Absolute Giga Chad', minDays: 365, maxDays: Infinity, auraPerDay: 365, color: '#ff00ff', desc: '365 days. You have completely transcended. A new human.', image: '/levels/abs_gigachad.png' },
+]
+
+// ─── MILESTONES ──────────────────────────────────────────────────────────────
+const MILESTONES = [
+  { day: 1, label: 'First Step', bonus: 50, desc: 'Complete 24 hours of self-control' },
+  { day: 3, label: 'Urge Breaker', bonus: 100, desc: 'Survive the first 3 critical days' },
+  { day: 7, label: 'One Week Strong', bonus: 250, desc: '7 days of discipline' },
+  { day: 14, label: 'Fortnight Freedom', bonus: 500, desc: '14 days of rewiring' },
+  { day: 30, label: 'Monthly Mastery', bonus: 1000, desc: '30 days of clarity' },
+  { day: 45, label: 'Sigma Transcended', bonus: 1500, desc: '45 days of powerful focus' },
+  { day: 60, label: 'Chad Awakening', bonus: 2000, desc: '60 days of transformation' },
+  { day: 90, label: 'Full Brain Reboot', bonus: 3000, desc: '90 days - completely reset dopamine' },
+  { day: 120, label: 'Elite Focus', bonus: 5000, desc: '120 days of power' },
+  { day: 180, label: 'Diamond Shield', bonus: 8000, desc: 'Half a year of pure mastery' },
+  { day: 365, label: 'The Annual Ascendant', bonus: 15000, desc: '1 year of legendary commitment' },
 ]
 
 function getLevel(days) {
@@ -43,6 +58,14 @@ function calcAura(days) {
     aura += daysInLevel * lvl.auraPerDay
   }
   return aura
+}
+
+function getCompletedMilestones(days) {
+  return MILESTONES.filter(m => days >= m.day)
+}
+
+function calcMilestoneAura(days) {
+  return getCompletedMilestones(days).reduce((sum, m) => sum + m.bonus, 0)
 }
 
 // ─── LEVEL BENEFITS ───────────────────────────────────────────────────────────
@@ -189,13 +212,56 @@ export default function FaplessView() {
   const currentLevel = getLevel(streakDays)
   const nextLevel = getNextLevel(streakDays)
   
-  // 1 aura point per second + bonuses from challenges
-  const baseAura = Math.floor(totalMs / 1000)
-  const challengeBonus = data?.relapses?.reduce((acc, r) => acc + (r.bonusEarned || 0), 0) || 0
-  const auraPoints = baseAura + challengeBonus
+  const streakAura = calcAura(streakDays)
+  const milestoneAura = calcMilestoneAura(streakDays)
+  
+  // challenge bonus: current active challenge completed + previous relapse challenges
+  let currentChallengeBonus = 0
+  if (data?.activeChallenge) {
+    const ch = CHALLENGES.find(c => c.id === data.activeChallenge)
+    if (ch && streakDays >= ch.duration) {
+      currentChallengeBonus = ch.auraBonus
+    }
+  }
+  const challengeBonus = currentChallengeBonus + (data?.relapses?.reduce((acc, r) => acc + (r.bonusEarned || 0), 0) || 0)
+  
+  const auraPoints = streakAura + milestoneAura + challengeBonus
+  
   const progressToNext = nextLevel
     ? Math.round(((streakDays - currentLevel.minDays) / (nextLevel.minDays - currentLevel.minDays)) * 100)
     : 100
+
+  // Relapse analysis helper
+  const relapseStats = useMemo(() => {
+    if (!data?.relapses || data.relapses.length === 0) return null
+    const relapses = data.relapses
+    const total = relapses.length
+    
+    // Average streak length
+    const totalDays = relapses.reduce((sum, r) => sum + r.dayCount, 0)
+    const avgStreak = (totalDays / total).toFixed(1)
+    
+    // Find most common triggers
+    const triggerMap = {}
+    relapses.forEach(r => {
+      if (!r.reason) return
+      const words = r.reason.toLowerCase()
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+        .split(/\s+/)
+      words.forEach(w => {
+        if (w.length > 2 && !['and', 'the', 'for', 'with', 'was', 'this'].includes(w)) {
+          triggerMap[w] = (triggerMap[w] || 0) + 1
+        }
+      })
+    })
+    
+    const topTriggers = Object.entries(triggerMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(entry => entry[0])
+      
+    return { total, avgStreak, topTriggers }
+  }, [data?.relapses])
 
   // ─── Actions ───────────────────────────────────────────────────────────────
   const handleStart = async () => {
@@ -318,7 +384,7 @@ export default function FaplessView() {
           <div style={{
              fontSize: 10, fontWeight: 800, color: '#ffd700', background: 'rgba(255,215,0,0.1)',
              padding: '4px 10px', borderRadius: 20, animation: 'aura-plus 1s ease-out infinite'
-          }}>+1 AURA/SEC</div>
+          }}>+{currentLevel.auraPerDay} AURA/DAY</div>
         </div>
 
         {/* Mobile Hero */}
@@ -334,12 +400,17 @@ export default function FaplessView() {
           }}>
             <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 30% 50%, ${currentLevel.color}06 0%, transparent 70%)`, pointerEvents: 'none' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              {/* Level Image */}
+              <div style={{ width: 64, height: 64, borderRadius: 12, overflow: 'hidden', border: `2px solid ${currentLevel.color}`, boxShadow: `0 0 10px ${currentLevel.color}33`, flexShrink: 0, background: 'rgba(0,0,0,0.2)' }}>
+                <img src={currentLevel.image} alt={currentLevel.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+
               {/* Days + time */}
               <div style={{ textAlign: 'center', flexShrink: 0 }}>
                 <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 2 }}>STREAK</div>
-                <div style={{ fontSize: 56, fontWeight: 900, fontFamily: 'var(--font-mono)', color: currentLevel.color, lineHeight: 1, animation: 'auraFloat 4s ease infinite' }}>{streakDays}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>days</div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                <div style={{ fontSize: 44, fontWeight: 900, fontFamily: 'var(--font-mono)', color: currentLevel.color, lineHeight: 1, animation: 'auraFloat 4s ease infinite' }}>{streakDays}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4 }}>days</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
                   {[
                     { v: streakHrs, l: 'H' },
                     { v: streakMins, l: 'M' },
@@ -347,10 +418,10 @@ export default function FaplessView() {
                   ].map((t, i) => (
                     <React.Fragment key={t.l}>
                       <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-mono)', color: currentLevel.color, opacity: 0.8 }}>{String(t.v).padStart(2,'0')}</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-mono)', color: currentLevel.color, opacity: 0.8 }}>{String(t.v).padStart(2,'0')}</div>
                         <div style={{ fontSize: 7, color: 'var(--text-muted)', fontWeight: 800 }}>{t.l}</div>
                       </div>
-                      {i < 2 && <div style={{ fontSize: 12, color: currentLevel.color, opacity: 0.2, marginTop: -8 }}>:</div>}
+                      {i < 2 && <div style={{ fontSize: 11, color: currentLevel.color, opacity: 0.2, marginTop: -8 }}>:</div>}
                     </React.Fragment>
                   ))}
                 </div>
@@ -362,13 +433,13 @@ export default function FaplessView() {
               {/* Level + Aura */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 4 }}>CURRENT LEVEL</div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: currentLevel.color, marginBottom: 4, lineHeight: 1.2 }}>{currentLevel.label}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.4 }}>{currentLevel.desc}</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: currentLevel.color, marginBottom: 4, lineHeight: 1.2 }}>{currentLevel.label}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.4 }}>{currentLevel.desc}</div>
                 {nextLevel && (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>→ {nextLevel.label.split(' ').slice(1).join(' ')}</span>
-                      <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{nextLevel.minDays - streakDays}d left</span>
+                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>→ {nextLevel.label}</span>
+                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{nextLevel.minDays - streakDays}d left</span>
                     </div>
                     <div style={{ height: 4, background: 'var(--border)', borderRadius: 2 }}>
                       <div style={{ height: '100%', width: `${progressToNext}%`, background: `linear-gradient(90deg, ${currentLevel.color}, ${nextLevel.color})`, borderRadius: 2, transition: 'width 0.5s' }} />
@@ -377,7 +448,7 @@ export default function FaplessView() {
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
                   <Zap size={13} color="#ffd700" fill="#ffd700" />
-                  <span style={{ fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#ffd700' }}>{auraPoints.toLocaleString()}</span>
+                  <span style={{ fontSize: 15, fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#ffd700' }}>{auraPoints.toLocaleString()}</span>
                   <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>aura</span>
                 </div>
               </div>
@@ -454,7 +525,9 @@ export default function FaplessView() {
                 const isLocked = streakDays < lvl.minDays
                 return (
                   <div key={lvl.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < LEVELS.length - 1 ? '1px solid var(--border)' : 'none', opacity: isLocked ? 0.4 : 1 }}>
-                    <div style={{ fontSize: 20, flexShrink: 0 }}>{isLocked ? '🔒' : isActive ? lvl.label.split(' ')[0] : '✅'}</div>
+                    <div style={{ width: 28, height: 28, borderRadius: 6, overflow: 'hidden', border: `1px solid ${isActive ? lvl.color : 'var(--border)'}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.2)' }}>
+                      {isLocked ? '🔒' : <img src={lvl.image} alt={lvl.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                    </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ fontSize: 13, fontWeight: 700, color: isActive ? lvl.color : 'var(--text-primary)' }}>{lvl.label}</span>
@@ -462,6 +535,36 @@ export default function FaplessView() {
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{lvl.maxDays === Infinity ? `${lvl.minDays}+ days` : lvl.minDays === lvl.maxDays ? `Day ${lvl.minDays}` : `${lvl.minDays}–${lvl.maxDays} days`} · +{lvl.auraPerDay} aura/day</div>
                     </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Milestones */}
+          <button onClick={() => toggle('milestones')} style={sec('milestones')}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Star size={15} color="#ffd700" /> Milestones ({getCompletedMilestones(streakDays).length}/{MILESTONES.length})</span>
+            {expandedSection === 'milestones' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+          </button>
+          {expandedSection === 'milestones' && (
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {MILESTONES.map(m => {
+                const isCompleted = streakDays >= m.day
+                return (
+                  <div key={m.day} style={{
+                    padding: '10px 12px', borderRadius: 8,
+                    background: isCompleted ? 'rgba(46,213,115,0.08)' : 'var(--bg-glass)',
+                    border: `1px solid ${isCompleted ? '#2ed573' : 'var(--border)'}`,
+                    display: 'flex', alignItems: 'center', gap: 12
+                  }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: isCompleted ? '#2ed57322' : 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isCompleted ? '#2ed573' : 'var(--text-muted)', fontSize: 12, fontWeight: 'bold' }}>
+                      {isCompleted ? '✓' : `${m.day}d`}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: isCompleted ? '#2ed573' : 'var(--text-primary)' }}>{m.label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{m.desc}</div>
+                    </div>
+                    <div style={{ fontSize: 11, color: '#ffd700', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}>+{m.bonus}</div>
                   </div>
                 )
               })}
@@ -484,7 +587,7 @@ export default function FaplessView() {
                     background: isActive ? 'rgba(255,69,0,0.08)' : 'var(--bg-glass)',
                     border: `1px solid ${isActive ? '#ff4500' : 'var(--border)'}`,
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifycontent: 'space-between', marginBottom: 4 }}>
                       <span style={{ fontSize: 14, fontWeight: 700, color: isActive ? '#ff4500' : 'var(--text-primary)' }}>{ch.label}</span>
                       {isActive && <span style={{ fontSize: 9, background: isComplete ? 'var(--green)' : '#ff4500', color: isComplete ? '#000' : '#fff', borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>{isComplete ? 'DONE ✅' : 'ACTIVE'}</span>}
                     </div>
@@ -547,13 +650,30 @@ export default function FaplessView() {
               </button>
               {expandedSection === 'history' && (
                 <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px', marginBottom: 10 }}>
-                  {[...data.relapses].reverse().map((r, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '10px 0', borderBottom: i < data.relapses.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>{new Date(r.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</div>
-                      <div style={{ flex: 1, fontSize: 13, color: 'var(--text-secondary)' }}>{r.reason || '—'}</div>
-                      <div style={{ fontSize: 11, color: 'var(--red)', fontWeight: 700, flexShrink: 0 }}>Day {r.dayCount}</div>
+                  {relapseStats && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
+                      <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: 8, borderRadius: 8, textAlign: 'center' }}>
+                        <div style={{ fontSize: 8, color: 'var(--text-muted)', fontWeight: 700 }}>AVG STREAK</div>
+                        <div style={{ fontSize: 14, fontWeight: 900, color: 'var(--green)', marginTop: 2 }}>{relapseStats.avgStreak}d</div>
+                      </div>
+                      <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: 8, borderRadius: 8, textAlign: 'center' }}>
+                        <div style={{ fontSize: 8, color: 'var(--text-muted)', fontWeight: 700 }}>TRIGGERS</div>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-primary)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {relapseStats.topTriggers.slice(0,2).join(', ') || 'None'}
+                        </div>
+                      </div>
                     </div>
-                  ))}
+                  )}
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {[...data.relapses].reverse().map((r, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderBottom: i < data.relapses.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>{new Date(r.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</div>
+                        <div style={{ flex: 1, fontSize: 13, color: 'var(--text-secondary)' }}>{r.reason || '—'}</div>
+                        <div style={{ fontSize: 11, color: 'var(--red)', fontWeight: 700, flexShrink: 0 }}>Day {r.dayCount}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </>
@@ -609,7 +729,7 @@ export default function FaplessView() {
         <div style={{
            fontSize: 12, fontWeight: 800, color: '#ffd700', background: 'rgba(255,215,0,0.1)',
            padding: '6px 14px', borderRadius: 20, animation: 'aura-plus 1s ease-out infinite'
-        }}>+1 AURA PER SECOND</div>
+        }}>+{currentLevel.auraPerDay} AURA PER DAY</div>
       </div>
 
       {/* Header */}
@@ -708,27 +828,35 @@ export default function FaplessView() {
           <div style={{ 
             ...card, textAlign: 'center', border: `1px solid ${currentLevel.color}44`, 
             background: `linear-gradient(180deg, var(--bg-card), ${currentLevel.color}10)`,
-            display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 240, position: 'relative', overflow: 'hidden'
+            display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 24, minHeight: 240, position: 'relative', overflow: 'hidden'
           }}>
-            <div style={{ fontSize: 48, position: 'absolute', top: -10, right: -10, opacity: 0.1, transform: 'rotate(15deg)' }}>{currentLevel.label.split(' ')[0]}</div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.2em', fontWeight: 800, marginBottom: 20 }}>CURRENT IDENTITY</div>
-            <div style={{ fontSize: 42, fontWeight: 900, color: currentLevel.color, marginBottom: 8, letterSpacing: '-1px' }}>{currentLevel.label.split(' ').slice(1).join(' ')}</div>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6, maxWidth: '80%', margin: '0 auto 24px' }}>{currentLevel.desc}</div>
+            <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 75% 50%, ${currentLevel.color}0a 0%, transparent 70%)`, pointerEvents: 'none' }} />
             
-            <div style={{ padding: '0 24px' }}>
-              {nextLevel ? (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>Next: {nextLevel.label.split(' ').slice(1).join(' ')}</span>
-                    <span style={{ fontSize: 11, color: currentLevel.color, fontWeight: 800 }}>{nextLevel.minDays - streakDays}D REMAINING</span>
-                  </div>
-                  <div style={{ height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ height: '100%', width: `${progressToNext}%`, background: `linear-gradient(90deg, ${currentLevel.color}, ${nextLevel.color})`, transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} />
-                  </div>
-                </>
-              ) : (
-                <div style={{ fontSize: 12, color: '#ffd700', fontWeight: 900, letterSpacing: '0.1em' }}>🏆 ASCENDED GIGACHAD</div>
-              )}
+            {/* Level Physique Image */}
+            <div style={{ width: 110, height: 110, borderRadius: 16, overflow: 'hidden', border: `3px solid ${currentLevel.color}`, boxShadow: `0 0 20px ${currentLevel.color}44`, flexShrink: 0, background: 'rgba(0,0,0,0.3)', margin: '0 0 0 8px' }}>
+              <img src={currentLevel.image} alt={currentLevel.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+
+            <div style={{ flex: 1, textAlign: 'left' }}>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.2em', fontWeight: 800, marginBottom: 8 }}>CURRENT IDENTITY</div>
+              <div style={{ fontSize: 26, fontWeight: 900, color: currentLevel.color, marginBottom: 8, letterSpacing: '-1px' }}>{currentLevel.label}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.6 }}>{currentLevel.desc}</div>
+              
+              <div style={{ paddingRight: 16 }}>
+                {nextLevel ? (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>Next: {nextLevel.label}</span>
+                      <span style={{ fontSize: 11, color: currentLevel.color, fontWeight: 800 }}>{nextLevel.minDays - streakDays}D REMAINING</span>
+                    </div>
+                    <div style={{ height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ height: '100%', width: `${progressToNext}%`, background: `linear-gradient(90deg, ${currentLevel.color}, ${nextLevel.color})`, transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} />
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ fontSize: 12, color: '#ffd700', fontWeight: 900, letterSpacing: '0.1em' }}>🏆 ASCENDED GIGACHAD</div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -765,7 +893,6 @@ export default function FaplessView() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {LEVELS.map((lvl, i) => {
                 const isActive = lvl.id === currentLevel.id
-                const isPassed = streakDays >= lvl.minDays && lvl.id !== currentLevel.id && lvl.maxDays < Infinity
                 const isLocked = streakDays < lvl.minDays
                 return (
                   <div key={lvl.id} style={{
@@ -774,8 +901,8 @@ export default function FaplessView() {
                     background: isActive ? lvl.color + '12' : 'var(--bg-glass)',
                     opacity: isLocked ? 0.45 : 1, transition: 'all 0.15s',
                   }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: isActive ? lvl.color + '22' : 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0, border: `2px solid ${isActive ? lvl.color : 'transparent'}` }}>
-                      {isLocked ? '🔒' : isPassed ? '✅' : lvl.label.split(' ')[0]}
+                    <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', border: `2px solid ${isActive ? lvl.color : 'var(--border)'}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.2)' }}>
+                      {isLocked ? '🔒' : <img src={lvl.image} alt={lvl.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -795,9 +922,42 @@ export default function FaplessView() {
           </div>
         )}
 
+        {/* ── Milestones ── */}
+        <button onClick={() => setExpandedSection(s => s === 'milestones' ? '' : 'milestones')} style={sectionBtn('milestones')}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Star size={15} color="#ffd700" /> Milestone Bonuses ({getCompletedMilestones(streakDays).length}/{MILESTONES.length})</span>
+          {expandedSection === 'milestones' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+        </button>
+        {expandedSection === 'milestones' && (
+          <div style={{ ...card, marginBottom: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+              {MILESTONES.map(m => {
+                const isCompleted = streakDays >= m.day
+                return (
+                  <div key={m.day} style={{
+                    padding: '14px', borderRadius: 12,
+                    background: isCompleted ? 'rgba(46,213,115,0.08)' : 'var(--bg-glass)',
+                    border: `1px solid ${isCompleted ? '#2ed573' : 'var(--border)'}`,
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    transition: 'all 0.2s'
+                  }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: isCompleted ? '#2ed57322' : 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isCompleted ? '#2ed573' : 'var(--text-muted)', fontSize: 13, fontWeight: 'bold', flexShrink: 0 }}>
+                      {isCompleted ? '✓' : `${m.day}d`}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: isCompleted ? '#2ed573' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.label}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{m.desc}</div>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#ffd700', fontWeight: 'bold', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>+{m.bonus}</div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ── Benefits ── */}
         <button onClick={() => setExpandedSection(s => s === 'benefits' ? '' : 'benefits')} style={sectionBtn('benefits')}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Star size={15} color="var(--amber)" /> Benefits at Your Level ({currentLevel.label.split(' ').slice(1).join(' ')})</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Star size={15} color="var(--amber)" /> Benefits at Your Level ({currentLevel.label})</span>
           {expandedSection === 'benefits' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
         </button>
         {expandedSection === 'benefits' && (
@@ -906,19 +1066,46 @@ export default function FaplessView() {
         {data?.relapses?.length > 0 && (
           <>
             <button onClick={() => setExpandedSection(s => s === 'history' ? '' : 'history')} style={sectionBtn('history')}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Calendar size={15} color="var(--text-muted)" /> Relapse History ({data.relapses.length})</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Calendar size={15} color="var(--text-muted)" /> Relapse Analytics & History ({data.relapses.length})</span>
               {expandedSection === 'history' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
             </button>
             {expandedSection === 'history' && (
               <div style={{ ...card, marginBottom: 12 }}>
+                {relapseStats && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: 16, marginBottom: 20, borderBottom: '1px solid var(--border)', paddingBottom: 20 }}>
+                    <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', padding: '14px', borderRadius: 10, textAlign: 'center' }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>AVERAGE STREAK</div>
+                      <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--green)', marginTop: 6 }}>{relapseStats.avgStreak} Days</div>
+                    </div>
+                    <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', padding: '14px', borderRadius: 10, textAlign: 'center' }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>TOTAL RESET EVENTS</div>
+                      <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--red)', marginTop: 6 }}>{relapseStats.total} Times</div>
+                    </div>
+                    <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', padding: '14px', borderRadius: 10 }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 6 }}>TOP TRIGGER CATEGORIES / INSIGHTS</div>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+                        {relapseStats.topTriggers.length > 0 ? (
+                          relapseStats.topTriggers.map((t, idx) => (
+                            <span key={idx} style={{ background: 'rgba(255,71,87,0.1)', color: 'var(--red)', border: '1px solid rgba(255,71,87,0.2)', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
+                              🚨 {t}
+                            </span>
+                          ))
+                        ) : (
+                          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>No recurring triggers detected yet. Maintain honest tracking.</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[...data.relapses].reverse().map((r, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 14, padding: '12px 14px', background: 'rgba(255,71,87,0.05)', borderRadius: 8, border: '1px solid rgba(255,71,87,0.15)' }}>
-                      <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', minWidth: 100, flexShrink: 0 }}>
-                        {new Date(r.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
+                    <div key={i} style={{ display: 'flex', gap: 14, padding: '12px 14px', background: 'rgba(255,71,87,0.05)', borderRadius: 8, border: '1px solid rgba(255,71,87,0.15)', alignItems: 'center' }}>
+                      <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', minWidth: 100, flexShrink: 0 }}>
+                        {new Date(r.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </div>
                       <div style={{ flex: 1, fontSize: 13, color: 'var(--text-secondary)' }}>{r.reason || '—'}</div>
-                      <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--red)', fontWeight: 700 }}>Day {r.dayCount}</div>
+                      <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--red)', fontWeight: 700, flexShrink: 0 }}>Day {r.dayCount}</div>
                     </div>
                   ))}
                 </div>

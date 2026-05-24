@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
-import { Plus, Trash2, ChevronLeft, ChevronRight, Download, Trophy, Cloud, Loader, CheckCircle2, Circle, BarChart2 } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts'
+import { Plus, Trash2, ChevronLeft, ChevronRight, Download, Trophy, Cloud, Loader, CheckCircle2, Circle, BarChart2, Pencil, Check, X } from 'lucide-react'
 import { habitsAPI } from '../api/client'
 import { useSync } from '../hooks/useSync'
 import { DonutChart } from '../components/StatCard'
@@ -41,6 +41,35 @@ function useIsMobile() {
   return mobile
 }
 
+// Custom Shadcn UI styled tooltip content
+const ShadcnTooltip = ({ active, payload, label, prefix = '', suffix = '%' }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div style={{
+        background: 'rgba(10,11,15,0.92)',
+        backdropFilter: 'blur(8px)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        padding: '8px 12px',
+        borderRadius: '8px',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4
+      }}>
+        <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>{prefix}{label}</div>
+        {payload.map((p, idx) => (
+          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700 }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: p.color || p.fill || 'var(--amber)' }} />
+            <span style={{ color: 'var(--text-secondary)' }}>{p.name}:</span>
+            <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{p.value}{suffix}</span>
+          </div>
+        ))}
+      </div>
+    )
+  }
+  return null
+}
+
 export default function HabitTracker() {
   const today = new Date()
   const isMobile = useIsMobile()
@@ -54,6 +83,9 @@ export default function HabitTracker() {
   const [newHabit, setNewHabit] = useState('')
   const [newEmoji, setNewEmoji] = useState('✨')
   const [selectedDay, setSelectedDay] = useState(today.getDate())
+  const [editingHabit, setEditingHabit] = useState(null)
+  const [editText, setEditText] = useState('')
+  const [editEmoji, setEditEmoji] = useState('✨')
   const [mobileTab, setMobileTab] = useState('today') // 'today' | 'stats' | 'manage'
 
   const monthKey = `${year}-${month}`
@@ -86,7 +118,7 @@ export default function HabitTracker() {
   }
   const getChecked = (day, name) => checks[`${day}-${name}`] || false
   const toggleCheck = (day, name, val) => {
-    if (isFutureDay(day)) return   // block future days
+    if (isFutureDay(day)) return
     setChecks(prev => ({ ...prev, [`${day}-${name}`]: val }))
   }
   const getMentalVal = (day, type) => mental[`${day}-${type}`] || ''
@@ -135,6 +167,32 @@ export default function HabitTracker() {
     setNewHabit('')
   }
   const removeHabit = (name) => setHabits(prev => prev.filter(h => h.name !== name))
+  const handleSaveRename = (oldName) => {
+    if (!editText.trim()) {
+      setEditingHabit(null)
+      return
+    }
+    const trimmedName = editText.trim()
+    if (trimmedName !== oldName && habits.some(h => h.name === trimmedName)) {
+      alert("A habit with this name already exists.")
+      return
+    }
+    const newHabits = habits.map(h => h.name === oldName ? { ...h, name: trimmedName, emoji: editEmoji || h.emoji } : h)
+    const newChecks = {}
+    Object.entries(checks).forEach(([k, v]) => {
+      const parts = k.split('-')
+      const day = parts[0]
+      const habitName = parts.slice(1).join('-')
+      if (habitName === oldName) {
+        newChecks[`${day}-${trimmedName}`] = v
+      } else {
+        newChecks[k] = v
+      }
+    })
+    setHabits(newHabits)
+    setChecks(newChecks)
+    setEditingHabit(null)
+  }
 
   const exportCSV = () => {
     let csv = `Habit Tracker - ${monthName} ${year}\n\nHabit,${Array.from({ length: totalDays }, (_, i) => i + 1).join(',')},Done,Goal,%\n`
@@ -142,8 +200,6 @@ export default function HabitTracker() {
     const blob = new Blob([csv], { type: 'text/csv' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `habits-${year}-${month + 1}.csv`; a.click()
   }
-
-  const tt = { background: '#13151d', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontFamily: 'var(--font-mono)', fontSize: 11 }
 
   const SyncBadge = () => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: syncStatus === 'error' ? 'var(--red)' : syncStatus === 'saving' ? 'var(--amber)' : syncStatus === 'saved' ? 'var(--green)' : 'var(--text-muted)' }}>
@@ -162,9 +218,9 @@ export default function HabitTracker() {
         <div style={{ padding: '14px 14px 0', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '6px 10px' }}>
-              <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1) }} style={{ background: 'none', color: 'var(--text-secondary)', display: 'flex', padding: 2 }}><ChevronLeft size={16} /></button>
+              <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1) }} style={{ background: 'none', color: 'var(--text-secondary)', display: 'flex', padding: 2, cursor: 'pointer' }}><ChevronLeft size={16} /></button>
               <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--amber)', fontWeight: 700 }}>{monthName.slice(0, 3)} {year}</span>
-              <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1) }} style={{ background: 'none', color: 'var(--text-secondary)', display: 'flex', padding: 2 }}><ChevronRight size={16} /></button>
+              <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1) }} style={{ background: 'none', color: 'var(--text-secondary)', display: 'flex', padding: 2, cursor: 'pointer' }}><ChevronRight size={16} /></button>
             </div>
             <SyncBadge />
           </div>
@@ -189,75 +245,73 @@ export default function HabitTracker() {
           </div>
 
           {/* Day strip */}
-          <div style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none', marginBottom: 2 }}>
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none', marginBottom: 2 }}>
             {Array.from({ length: totalDays }, (_, i) => {
               const d = i + 1
-              const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear()
+              const isToday = d === today.getDate() && month === today.getMonth()
               const isSel = d === selectedDay
+              const dayDone = habits.filter(h => getChecked(d, h.name)).length
+              const dayPct = habits.length ? Math.round((dayDone / habits.length) * 100) : 0
               const isFuture = isFutureDay(d)
-              const done = habits.filter(h => getChecked(d, h.name)).length
-              const pct = habits.length ? Math.round((done / habits.length) * 100) : 0
-              const col = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : pct > 0 ? 'var(--red)' : null
+              const col = dayPct >= 80 ? 'var(--green)' : dayPct >= 50 ? 'var(--amber)' : dayPct > 0 ? 'var(--red)' : 'var(--text-muted)'
               return (
-                <button key={d} onClick={() => !isFuture && setSelectedDay(d)} style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                  padding: '6px 8px', borderRadius: 10, flexShrink: 0, cursor: isFuture ? 'not-allowed' : 'pointer', minWidth: 38,
-                  background: isSel ? 'var(--amber-dim)' : 'var(--bg-card)',
-                  border: `1px solid ${isSel ? 'var(--amber)' : isToday ? 'rgba(255,183,0,0.35)' : 'var(--border)'}`,
-                  opacity: isFuture ? 0.4 : 1,
-                }}>
-                  <span style={{ fontSize: 8, color: isSel ? 'var(--amber)' : 'var(--text-muted)', fontWeight: 700 }}>
-                    {isFuture ? '🔒' : ['S','M','T','W','T','F','S'][new Date(year, month, d).getDay()]}
-                  </span>
-                  <span style={{ fontSize: 14, fontWeight: 800, fontFamily: 'var(--font-mono)', color: isSel ? 'var(--amber)' : isToday ? 'var(--text-primary)' : 'var(--text-secondary)', lineHeight: 1 }}>{d}</span>
-                  <div style={{ width: 16, height: 3, borderRadius: 2, background: col || 'var(--border)' }} />
+                <button
+                  key={d}
+                  onClick={() => setSelectedDay(d)}
+                  disabled={isFuture}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                    padding: '8px 10px', borderRadius: 10, flexShrink: 0, cursor: isFuture ? 'not-allowed' : 'pointer',
+                    background: isSel ? 'var(--amber-dim)' : 'var(--bg-card)',
+                    border: `1px solid ${isSel ? 'var(--amber)' : isToday ? 'var(--brand-primary-glow)' : 'var(--border)'}`,
+                    transition: 'all 0.15s', minWidth: 36, opacity: isFuture ? 0.35 : 1
+                  }}>
+                  <span style={{ fontSize: 8, fontWeight: 600, color: isSel ? 'var(--amber)' : 'var(--text-muted)' }}>D</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-mono)', color: isSel ? 'var(--amber)' : 'var(--text-secondary)' }}>{d}</span>
+                  {dayPct > 0 && <div style={{ width: 14, height: 3, borderRadius: 2, background: col }} />}
+                  {dayPct === 0 && !isFuture && <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--border)' }} />}
+                  {isFuture && <span style={{ fontSize: 8 }}>🔒</span>}
                 </button>
               )
             })}
           </div>
         </div>
 
-        {/* Tab bar */}
+        {/* Tab Bar */}
         <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', flexShrink: 0, padding: '0 14px' }}>
-          {[['today', '✓ Habits'], ['stats', '📊 Stats'], ['manage', '⚙️ Manage']].map(([tab, label]) => (
+          {[['today', 'Today'], ['stats', 'Stats'], ['manage', 'Manage Habits']].map(([tab, label]) => (
             <button key={tab} onClick={() => setMobileTab(tab)} style={{
-              flex: 1, padding: '10px 0', fontSize: 11, fontWeight: 600, background: 'none',
+              flex: 1, padding: '10px 0', fontSize: 12, fontWeight: 600, background: 'none',
               color: mobileTab === tab ? 'var(--amber)' : 'var(--text-muted)',
               borderBottom: `2px solid ${mobileTab === tab ? 'var(--amber)' : 'transparent'}`,
-              transition: 'all 0.15s',
+              transition: 'all 0.15s', letterSpacing: '0.05em'
             }}>{label}</button>
           ))}
         </div>
 
-        {/* Content */}
+        {/* Mobile Tab Content */}
         <div style={{ flex: 1, overflow: 'auto', padding: '16px 14px 80px' }}>
           {loading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-secondary)', gap: 8 }}>
-              <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> Loading habits...
-            </div>
-          ) : mobileTab === 'today' && isFutureDay(selectedDay) ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 200, gap: 12, color: 'var(--text-muted)' }}>
-              <div style={{ fontSize: 36 }}>🔒</div>
-              <div style={{ fontSize: 14, textAlign: 'center', lineHeight: 1.6 }}>Future day<br /><span style={{ fontSize: 12 }}>You can only log habits for today or past days.</span></div>
+              <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> Loading...
             </div>
           ) : mobileTab === 'today' ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, animation: 'fadeUp 0.25s ease' }}>
-              {habits.map((habit) => {
+            <div style={{ animation: 'fadeUp 0.25s ease', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {habits.map(habit => {
                 const done = getChecked(selectedDay, habit.name)
                 return (
                   <button
                     key={habit.name}
                     onClick={() => toggleCheck(selectedDay, habit.name, !done)}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 16,
-                      padding: '16px 18px', borderRadius: 14, cursor: 'pointer', width: '100%', textAlign: 'left',
-                      background: done ? 'rgba(0,255,136,0.06)' : 'var(--bg-card)',
-                      border: `1px solid ${done ? 'rgba(0,255,136,0.3)' : 'var(--border)'}`,
-                      transition: 'all 0.2s',
+                      display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+                      background: done ? 'rgba(255,183,0,0.04)' : 'var(--bg-card)',
+                      border: `1px solid ${done ? 'rgba(255,183,0,0.2)' : 'var(--border)'}`,
+                      borderRadius: 12, textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s', width: '100%'
                     }}>
-                    <span style={{ fontSize: 26, flexShrink: 0 }}>{habit.emoji}</span>
+                    <span style={{ fontSize: 20 }}>{habit.emoji}</span>
                     <span style={{
-                      flex: 1, fontSize: 15, fontWeight: 500,
+                      flex: 1, fontSize: 14, fontWeight: 600,
                       color: done ? 'var(--text-muted)' : 'var(--text-primary)',
                       textDecoration: done ? 'line-through' : 'none',
                       transition: 'all 0.2s',
@@ -279,8 +333,9 @@ export default function HabitTracker() {
                 <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 10 }}>DAILY PROGRESS — {monthName}</div>
                 <ResponsiveContainer width="100%" height={80}>
                   <BarChart data={dailyData} barSize={5}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                     <XAxis dataKey="label" tick={false} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={tt} formatter={v => [`${v}%`, 'Score']} labelFormatter={l => `Day ${l}`} />
+                    <Tooltip content={<ShadcnTooltip prefix="Day " />} />
                     <Bar dataKey="pct" fill="var(--amber)" radius={[2, 2, 0, 0]} opacity={0.85} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -319,27 +374,43 @@ export default function HabitTracker() {
                     </div>
                     <input type="range" min={1} max={10} value={getMentalVal(selectedDay, type) || 0}
                       onChange={e => setMentalVal(selectedDay, type, e.target.value)}
-                      style={{ width: '100%', accentColor: color.replace('var(', '').replace(')', '') === '--cyan' ? '#00e5ff' : '#ffb700', cursor: 'pointer' }} />
+                      style={{ width: '100%', accentColor: color, cursor: 'pointer' }} />
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div style={{ animation: 'fadeUp 0.25s ease', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 4 }}>MY HABITS</div>
-              {habits.map(h => (
-                <div key={h.name} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12 }}>
-                  <span style={{ fontSize: 22 }}>{h.emoji}</span>
-                  <span style={{ flex: 1, fontSize: 14, color: 'var(--text-primary)', fontWeight: 500 }}>{h.name}</span>
-                  <button onClick={() => removeHabit(h.name)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 8, borderRadius: 8 }}
-                    onTouchStart={e => e.currentTarget.style.color = 'var(--red)'}
-                    onTouchEnd={e => e.currentTarget.style.color = 'var(--text-muted)'}><Trash2 size={16} /></button>
-                </div>
-              ))}
-              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <div style={{ animation: 'fadeUp 0.25s ease' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+                {habits.map((habit) => {
+                  const isEditing = editingHabit === habit.name
+                  return (
+                    <div key={habit.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--bg-card)', borderRadius: 12, border: isEditing ? '1px solid var(--amber)' : '1px solid var(--border)' }}>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%' }}>
+                          <input value={editEmoji} onChange={e => setEditEmoji(e.target.value)} style={{ width: 34, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px', fontSize: 14, color: 'var(--text-primary)', textAlign: 'center' }} />
+                          <input value={editText} onChange={e => setEditText(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSaveRename(habit.name)} style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', fontSize: 14, color: 'var(--text-primary)' }} autoFocus />
+                          <button onClick={() => handleSaveRename(habit.name)} style={{ background: 'none', color: 'var(--green)', display: 'flex', padding: 6 }}><Check size={16} /></button>
+                          <button onClick={() => setEditingHabit(null)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 6 }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <>
+                          <span style={{ fontSize: 18 }}>{habit.emoji}</span>
+                          <span style={{ fontSize: 14, color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{habit.name}</span>
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <button onClick={() => { setEditingHabit(habit.name); setEditText(habit.name); setEditEmoji(habit.emoji) }} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 6, borderRadius: 6 }}><Pencil size={15} /></button>
+                            <button onClick={() => removeHabit(habit.name)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 6, borderRadius: 6 }}><Trash2 size={15} /></button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
                 <input value={newEmoji} onChange={e => setNewEmoji(e.target.value)} style={{ width: 52, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 8px', fontSize: 18, color: 'var(--text-primary)', textAlign: 'center' }} placeholder="✨" />
                 <input value={newHabit} onChange={e => setNewHabit(e.target.value)} onKeyDown={e => e.key === 'Enter' && addHabit()} placeholder="Add a habit..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }} />
-                <button onClick={addHabit} style={{ background: 'var(--amber-dim)', border: '1px solid rgba(255,183,0,0.25)', borderRadius: 10, color: 'var(--amber)', padding: '12px 16px', display: 'flex', alignItems: 'center' }}><Plus size={20} /></button>
+                <button onClick={addHabit} style={{ background: 'var(--amber-dim)', border: '1px solid rgba(255,183,0,0.25)', borderRadius: 10, color: 'var(--amber)', padding: '12px 16px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}><Plus size={20} /></button>
               </div>
             </div>
           )}
@@ -348,7 +419,7 @@ export default function HabitTracker() {
     )
   }
 
-  // ─── DESKTOP LAYOUT (Original, untouched) ──────────────────────────────────
+  // ─── DESKTOP LAYOUT (Original, styled with premium graphics & options) ──────────────────
   const top10 = [...habitStats].sort((a, b) => b.pct - a.pct).slice(0, 10)
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -363,11 +434,11 @@ export default function HabitTracker() {
           </div>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '6px 12px' }}>
-              <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1) }} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex' }}><ChevronLeft size={18} /></button>
+              <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1) }} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex', cursor: 'pointer' }}><ChevronLeft size={18} /></button>
               <span style={{ fontSize: 14, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', minWidth: 90, textAlign: 'center' }}>{monthName.slice(0, 3)} {year}</span>
-              <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1) }} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex' }}><ChevronRight size={18} /></button>
+              <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1) }} style={{ background: 'none', color: 'var(--text-secondary)', padding: '2px', display: 'flex', cursor: 'pointer' }}><ChevronRight size={18} /></button>
             </div>
-            <button onClick={exportCSV} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text-secondary)', padding: '8px 14px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}
+            <button onClick={exportCSV} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text-secondary)', padding: '8px 14px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
               onMouseEnter={e => e.currentTarget.style.color = 'var(--amber)'}
               onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
               <Download size={14} /> Export
@@ -380,8 +451,9 @@ export default function HabitTracker() {
             <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 10 }}>DAILY PROGRESS</div>
             <ResponsiveContainer width="100%" height={55}>
               <BarChart data={dailyData} barSize={4}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                 <XAxis dataKey="label" tick={false} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tt} formatter={v => [`${v}%`, 'Score']} labelFormatter={l => `Day ${l}`} />
+                <Tooltip content={<ShadcnTooltip prefix="Day " />} />
                 <Bar dataKey="pct" fill="var(--amber)" radius={[2, 2, 0, 0]} opacity={0.8} />
               </BarChart>
             </ResponsiveContainer>
@@ -390,8 +462,9 @@ export default function HabitTracker() {
             <div style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 8 }}>WEEKLY PROGRESS</div>
             <ResponsiveContainer width="100%" height={55}>
               <BarChart data={weeklyData} barSize={24}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#6b7280', fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tt} formatter={v => [`${v}%`, 'Score']} />
+                <Tooltip content={<ShadcnTooltip />} />
                 <Bar dataKey="pct" fill="var(--amber)" radius={[3, 3, 0, 0]} opacity={0.85} />
               </BarChart>
             </ResponsiveContainer>
@@ -436,16 +509,47 @@ export default function HabitTracker() {
                     <tbody>
                       {habits.map((habit, hi) => {
                         const stats = habitStats[hi]
+                        const isEditing = editingHabit === habit.name
                         return (
                           <tr key={habit.name} style={{ background: hi % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,183,0,0.03)'}
-                            onMouseLeave={e => e.currentTarget.style.background = hi % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'}>
+                            onMouseEnter={e => !isEditing && (e.currentTarget.style.background = 'rgba(255,183,0,0.03)')}
+                            onMouseLeave={e => !isEditing && (e.currentTarget.style.background = hi % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)')}>
                             <td style={{ padding: '10px 16px', fontSize: 14, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 1, whiteSpace: 'nowrap' }}>
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, minWidth: 220 }}>
-                                <span>{habit.emoji} {habit.name}</span>
-                                <button onClick={() => removeHabit(habit.name)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 2, flexShrink: 0 }}
-                                  onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
-                                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}><Trash2 size={14} /></button>
+                                {isEditing ? (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%' }}>
+                                    <input
+                                      value={editEmoji}
+                                      onChange={e => setEditEmoji(e.target.value)}
+                                      style={{ width: 32, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px', fontSize: 14, color: 'var(--text-primary)', textAlign: 'center' }}
+                                    />
+                                    <input
+                                      value={editText}
+                                      onChange={e => setEditText(e.target.value)}
+                                      onKeyDown={e => e.key === 'Enter' && handleSaveRename(habit.name)}
+                                      style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px', fontSize: 14, color: 'var(--text-primary)' }}
+                                      autoFocus
+                                    />
+                                    <button onClick={() => handleSaveRename(habit.name)} style={{ background: 'none', color: 'var(--green)', display: 'flex', padding: 4, cursor: 'pointer' }}>
+                                      <Check size={14} />
+                                    </button>
+                                    <button onClick={() => setEditingHabit(null)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 4, cursor: 'pointer' }}>
+                                      <X size={14} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <span>{habit.emoji} {habit.name}</span>
+                                    <div style={{ display: 'flex', gap: 4 }}>
+                                      <button onClick={() => { setEditingHabit(habit.name); setEditText(habit.name); setEditEmoji(habit.emoji) }} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 2, flexShrink: 0, cursor: 'pointer' }}
+                                        onMouseEnter={e => e.currentTarget.style.color = 'var(--amber)'}
+                                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}><Pencil size={14} /></button>
+                                      <button onClick={() => removeHabit(habit.name)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 2, flexShrink: 0, cursor: 'pointer' }}
+                                        onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
+                                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}><Trash2 size={14} /></button>
+                                    </div>
+                                  </>
+                                )}
                               </div>
                             </td>
                             {weekGroups.map(wg => wg.days.map((d, di) => (
@@ -465,7 +569,7 @@ export default function HabitTracker() {
                 <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: 10 }}>
                   <input value={newEmoji} onChange={e => setNewEmoji(e.target.value)} style={{ width: 44, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px', fontSize: 16, color: 'var(--text-primary)', textAlign: 'center' }} placeholder="✨" />
                   <input value={newHabit} onChange={e => setNewHabit(e.target.value)} onKeyDown={e => e.key === 'Enter' && addHabit()} placeholder="Add new habit..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 14px', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }} />
-                  <button onClick={addHabit} style={{ background: 'var(--amber-dim)', border: '1px solid rgba(255,183,0,0.2)', borderRadius: 8, color: 'var(--amber)', padding: '8px 18px', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display)', fontWeight: 600 }}>
+                  <button onClick={addHabit} style={{ background: 'var(--amber-dim)', border: '1px solid rgba(255,183,0,0.2)', borderRadius: 8, color: 'var(--amber)', padding: '8px 18px', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display)', fontWeight: 600, cursor: 'pointer' }}>
                     <Plus size={16} /> Add
                   </button>
                 </div>
@@ -500,17 +604,18 @@ export default function HabitTracker() {
                   <AreaChart data={mentalData}>
                     <defs>
                       <linearGradient id="moodGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--cyan)" stopOpacity={0.3} />
+                        <stop offset="0%" stopColor="var(--cyan)" stopOpacity={0.15} />
                         <stop offset="100%" stopColor="var(--cyan)" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="motGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--amber)" stopOpacity={0.3} />
+                        <stop offset="0%" stopColor="var(--amber)" stopOpacity={0.15} />
                         <stop offset="100%" stopColor="var(--amber)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                     <XAxis dataKey="label" tick={false} axisLine={false} tickLine={false} />
                     <YAxis domain={[0, 10]} tick={{ fontSize: 9, fill: '#6b7280', fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={20} />
-                    <Tooltip contentStyle={tt} labelFormatter={l => `Day ${l}`} />
+                    <Tooltip content={<ShadcnTooltip prefix="Day " suffix="/10" />} />
                     <Area type="monotone" dataKey="mood" stroke="var(--cyan)" strokeWidth={1.5} fill="url(#moodGrad)" dot={false} name="Mood" connectNulls />
                     <Area type="monotone" dataKey="motivation" stroke="var(--amber)" strokeWidth={1.5} fill="url(#motGrad)" dot={false} name="Motivation" connectNulls />
                   </AreaChart>
