@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import {
-  User, LogOut, Mail, AtSign
+  User, LogOut, Mail, AtSign, Bell, MapPin, Volume2, ShieldCheck
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -17,6 +17,80 @@ function useIsMobile() {
 export default function SettingsView() {
   const { user, logout } = useAuth()
   const isMobile = useIsMobile()
+
+  const [notifPermission, setNotifPermission] = useState(
+    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default'
+  )
+  const [geoStatus, setGeoStatus] = useState('unknown')
+  const [geoCoords, setGeoCoords] = useState(null)
+  const [audioStatus, setAudioStatus] = useState('suspended')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' }).then(p => {
+        setGeoStatus(p.state)
+        p.onchange = () => setGeoStatus(p.state)
+      }).catch(() => {})
+    }
+  }, [])
+
+  const requestNotif = async () => {
+    if (!('Notification' in window)) {
+      alert('Notifications are not supported on this browser.')
+      return
+    }
+    const res = await Notification.requestPermission()
+    setNotifPermission(res)
+  }
+
+  const requestGeo = () => {
+    if (!('geolocation' in navigator)) {
+      alert('Geolocation is not supported by your browser.')
+      return
+    }
+    setGeoStatus('prompting...')
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeoStatus('granted')
+        setGeoCoords(`${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`)
+      },
+      (err) => {
+        console.warn(err)
+        setGeoStatus('denied')
+        setGeoCoords(null)
+      }
+    )
+  }
+
+  const testAudio = () => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)()
+      if (ctx.state === 'suspended') {
+        ctx.resume().then(() => {
+          setAudioStatus(ctx.state)
+          playTestSound(ctx)
+        })
+      } else {
+        setAudioStatus(ctx.state)
+        playTestSound(ctx)
+      }
+    } catch (e) {
+      alert('Web Audio API not supported.')
+    }
+  }
+
+  const playTestSound = (ctx) => {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(880, ctx.currentTime)
+    gain.gain.setValueAtTime(0.1, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4)
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.4)
+  }
 
   const AccountPanel = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -73,6 +147,103 @@ export default function SettingsView() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Mobile & App Permissions */}
+      <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.12em' }}>APP PERMISSIONS</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <ShieldCheck size={12} color="var(--brand-primary)" />
+            <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>SECURE</span>
+          </div>
+        </div>
+
+        {/* Notification Permission Row */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 14,
+          padding: '16px 20px',
+          borderBottom: '1px solid var(--border)',
+        }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: 'var(--bg-glass)', border: '1px solid var(--border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <Bell size={15} color={notifPermission === 'granted' ? 'var(--green)' : 'var(--text-muted)'} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Push Notifications</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+              Status: <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: notifPermission === 'granted' ? 'var(--green)' : notifPermission === 'denied' ? 'var(--red)' : 'var(--amber)' }}>{notifPermission}</span>
+            </div>
+          </div>
+          <button onClick={requestNotif} style={{
+            background: notifPermission === 'granted' ? 'rgba(91,168,143,0.06)' : 'var(--bg-glass)',
+            border: `1px solid ${notifPermission === 'granted' ? 'var(--green)' : 'var(--border)'}`,
+            color: notifPermission === 'granted' ? 'var(--green)' : 'var(--text-primary)',
+            padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s'
+          }}>
+            {notifPermission === 'granted' ? 'Allowed' : 'Request'}
+          </button>
+        </div>
+
+        {/* Geolocation Permission Row */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 14,
+          padding: '16px 20px',
+          borderBottom: '1px solid var(--border)',
+        }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: 'var(--bg-glass)', border: '1px solid var(--border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <MapPin size={15} color={geoStatus === 'granted' ? 'var(--brand-primary)' : 'var(--text-muted)'} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Location Access</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {geoCoords ? `Coords: ${geoCoords}` : `Status: ${geoStatus}`}
+            </div>
+          </div>
+          <button onClick={requestGeo} style={{
+            background: geoStatus === 'granted' ? 'var(--brand-primary-dim)' : 'var(--bg-glass)',
+            border: `1px solid ${geoStatus === 'granted' ? 'var(--brand-primary)' : 'var(--border)'}`,
+            color: geoStatus === 'granted' ? 'var(--brand-primary)' : 'var(--text-primary)',
+            padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s'
+          }}>
+            {geoStatus === 'granted' ? 'Enabled' : 'Request'}
+          </button>
+        </div>
+
+        {/* Web Audio Context Row */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 14,
+          padding: '16px 20px',
+        }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: 'var(--bg-glass)', border: '1px solid var(--border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <Volume2 size={15} color={audioStatus === 'running' ? 'var(--amber)' : 'var(--text-muted)'} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Audio Alerts Context</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+              Engine Status: <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: audioStatus === 'running' ? 'var(--green)' : 'var(--text-muted)' }}>{audioStatus}</span>
+            </div>
+          </div>
+          <button onClick={testAudio} style={{
+            background: 'var(--bg-glass)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-primary)',
+            padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s'
+          }}>
+            Test Sound
+          </button>
+        </div>
       </div>
 
       {/* Danger zone */}

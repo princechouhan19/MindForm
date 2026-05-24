@@ -6,13 +6,13 @@ import { useSync } from '../hooks/useSync'
 import { DonutChart } from '../components/StatCard'
 
 const DEFAULT_HABITS = [
-  { name: 'Wake up at 06:00', emoji: '⏰' },
-  { name: 'Meditation', emoji: '🧘' },
-  { name: 'GYM', emoji: '💪' },
-  { name: 'Cold Shower', emoji: '🚿' },
-  { name: 'Read 10 pages', emoji: '📖' },
-  { name: 'No sugar', emoji: '🍬' },
-  { name: 'Sleep before 11:00', emoji: '🌙' },
+  { name: 'Wake up at 06:00', emoji: '⏰', time: '06:00' },
+  { name: 'Meditation', emoji: '🧘', time: '07:00' },
+  { name: 'GYM', emoji: '💪', time: '08:00' },
+  { name: 'Cold Shower', emoji: '🚿', time: '09:00' },
+  { name: 'Read 10 pages', emoji: '📖', time: '21:00' },
+  { name: 'No sugar', emoji: '🍬', time: '' },
+  { name: 'Sleep before 11:00', emoji: '🌙', time: '23:00' },
 ]
 
 function getDaysInMonth(year, month) { return new Date(year, month + 1, 0).getDate() }
@@ -82,10 +82,12 @@ export default function HabitTracker() {
   const [mental, setMental] = useState({})
   const [newHabit, setNewHabit] = useState('')
   const [newEmoji, setNewEmoji] = useState('✨')
+  const [newTime, setNewTime] = useState('')
   const [selectedDay, setSelectedDay] = useState(today.getDate())
   const [editingHabit, setEditingHabit] = useState(null)
   const [editText, setEditText] = useState('')
   const [editEmoji, setEditEmoji] = useState('✨')
+  const [editTime, setEditTime] = useState('')
   const [mobileTab, setMobileTab] = useState('today') // 'today' | 'stats' | 'manage'
 
   const monthKey = `${year}-${month}`
@@ -163,8 +165,9 @@ export default function HabitTracker() {
 
   const addHabit = () => {
     if (!newHabit.trim()) return
-    setHabits(prev => [...prev, { name: newHabit.trim(), emoji: newEmoji }])
+    setHabits(prev => [...prev, { name: newHabit.trim(), emoji: newEmoji, time: newTime }])
     setNewHabit('')
+    setNewTime('')
   }
   const removeHabit = (name) => setHabits(prev => prev.filter(h => h.name !== name))
   const handleSaveRename = (oldName) => {
@@ -177,7 +180,7 @@ export default function HabitTracker() {
       alert("A habit with this name already exists.")
       return
     }
-    const newHabits = habits.map(h => h.name === oldName ? { ...h, name: trimmedName, emoji: editEmoji || h.emoji } : h)
+    const newHabits = habits.map(h => h.name === oldName ? { ...h, name: trimmedName, emoji: editEmoji || h.emoji, time: editTime } : h)
     const newChecks = {}
     Object.entries(checks).forEach(([k, v]) => {
       const parts = k.split('-')
@@ -310,12 +313,21 @@ export default function HabitTracker() {
                       borderRadius: 12, textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s', width: '100%'
                     }}>
                     <span style={{ fontSize: 20 }}>{habit.emoji}</span>
-                    <span style={{
-                      flex: 1, fontSize: 14, fontWeight: 600,
-                      color: done ? 'var(--text-muted)' : 'var(--text-primary)',
-                      textDecoration: done ? 'line-through' : 'none',
-                      transition: 'all 0.2s',
-                    }}>{habit.name}</span>
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0 }}>
+                      <span style={{
+                        fontSize: 14, fontWeight: 600,
+                        color: done ? 'var(--text-muted)' : 'var(--text-primary)',
+                        textDecoration: done ? 'line-through' : 'none',
+                        transition: 'all 0.2s',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                      }}>{habit.name}</span>
+                      {habit.time && (
+                        <span style={{
+                          fontSize: 11, background: 'rgba(255,183,0,0.08)', color: 'var(--amber)',
+                          borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-mono)', flexShrink: 0, marginLeft: 8
+                        }}>{habit.time}</span>
+                      )}
+                    </div>
                     <div style={{ flexShrink: 0 }}>
                       {done
                         ? <CheckCircle2 size={24} color="var(--green)" />
@@ -387,18 +399,24 @@ export default function HabitTracker() {
                   return (
                     <div key={habit.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--bg-card)', borderRadius: 12, border: isEditing ? '1px solid var(--amber)' : '1px solid var(--border)' }}>
                       {isEditing ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%' }}>
-                          <input value={editEmoji} onChange={e => setEditEmoji(e.target.value)} style={{ width: 34, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px', fontSize: 14, color: 'var(--text-primary)', textAlign: 'center' }} />
-                          <input value={editText} onChange={e => setEditText(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSaveRename(habit.name)} style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', fontSize: 14, color: 'var(--text-primary)' }} autoFocus />
-                          <button onClick={() => handleSaveRename(habit.name)} style={{ background: 'none', color: 'var(--green)', display: 'flex', padding: 6 }}><Check size={16} /></button>
-                          <button onClick={() => setEditingHabit(null)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 6 }}><X size={16} /></button>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+                          <div style={{ display: 'flex', gap: 6, width: '100%' }}>
+                            <input value={editEmoji} onChange={e => setEditEmoji(e.target.value)} style={{ width: 34, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px', fontSize: 14, color: 'var(--text-primary)', textAlign: 'center' }} />
+                            <input value={editText} onChange={e => setEditText(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSaveRename(habit.name)} style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', fontSize: 14, color: 'var(--text-primary)' }} autoFocus />
+                            <input type="time" value={editTime} onChange={e => setEditTime(e.target.value)} style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 8px', color: 'var(--amber)', fontFamily: 'var(--font-mono)', fontSize: 13 }} />
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                            <button onClick={() => handleSaveRename(habit.name)} style={{ background: 'var(--green-dim)', border: '1px solid var(--green)', color: 'var(--green)', borderRadius: 8, padding: '4px 12px', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><Check size={14} /> Save</button>
+                            <button onClick={() => setEditingHabit(null)} style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-muted)', borderRadius: 8, padding: '4px 12px', fontSize: 12 }}>Cancel</button>
+                          </div>
                         </div>
                       ) : (
                         <>
                           <span style={{ fontSize: 18 }}>{habit.emoji}</span>
                           <span style={{ fontSize: 14, color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{habit.name}</span>
+                          {habit.time && <span style={{ fontSize: 11, background: 'rgba(255,183,0,0.08)', color: 'var(--amber)', borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-mono)' }}>{habit.time}</span>}
                           <div style={{ display: 'flex', gap: 4 }}>
-                            <button onClick={() => { setEditingHabit(habit.name); setEditText(habit.name); setEditEmoji(habit.emoji) }} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 6, borderRadius: 6 }}><Pencil size={15} /></button>
+                            <button onClick={() => { setEditingHabit(habit.name); setEditText(habit.name); setEditEmoji(habit.emoji); setEditTime(habit.time || '') }} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 6, borderRadius: 6 }}><Pencil size={15} /></button>
                             <button onClick={() => removeHabit(habit.name)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 6, borderRadius: 6 }}><Trash2 size={15} /></button>
                           </div>
                         </>
@@ -407,10 +425,13 @@ export default function HabitTracker() {
                   )
                 })}
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input value={newEmoji} onChange={e => setNewEmoji(e.target.value)} style={{ width: 52, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 8px', fontSize: 18, color: 'var(--text-primary)', textAlign: 'center' }} placeholder="✨" />
-                <input value={newHabit} onChange={e => setNewHabit(e.target.value)} onKeyDown={e => e.key === 'Enter' && addHabit()} placeholder="Add a habit..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }} />
-                <button onClick={addHabit} style={{ background: 'var(--amber-dim)', border: '1px solid rgba(255,183,0,0.25)', borderRadius: 10, color: 'var(--amber)', padding: '12px 16px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}><Plus size={20} /></button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input value={newEmoji} onChange={e => setNewEmoji(e.target.value)} style={{ width: 52, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 8px', fontSize: 18, color: 'var(--text-primary)', textAlign: 'center' }} placeholder="✨" />
+                  <input value={newHabit} onChange={e => setNewHabit(e.target.value)} onKeyDown={e => e.key === 'Enter' && addHabit()} placeholder="Add a habit..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }} />
+                  <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 8px', color: 'var(--amber)', fontFamily: 'var(--font-mono)', fontSize: 13 }} />
+                </div>
+                <button onClick={addHabit} style={{ background: 'var(--amber-dim)', border: '1px solid rgba(255,183,0,0.25)', borderRadius: 10, color: 'var(--amber)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', fontWeight: 600 }}><Plus size={20} /> Add Habit</button>
               </div>
             </div>
           )}
@@ -530,6 +551,12 @@ export default function HabitTracker() {
                                       style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px', fontSize: 14, color: 'var(--text-primary)' }}
                                       autoFocus
                                     />
+                                    <input
+                                      type="time"
+                                      value={editTime}
+                                      onChange={e => setEditTime(e.target.value)}
+                                      style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 6px', color: 'var(--amber)', fontFamily: 'var(--font-mono)', fontSize: 12, outline: 'none' }}
+                                    />
                                     <button onClick={() => handleSaveRename(habit.name)} style={{ background: 'none', color: 'var(--green)', display: 'flex', padding: 4, cursor: 'pointer' }}>
                                       <Check size={14} />
                                     </button>
@@ -539,9 +566,16 @@ export default function HabitTracker() {
                                   </div>
                                 ) : (
                                   <>
-                                    <span>{habit.emoji} {habit.name}</span>
-                                    <div style={{ display: 'flex', gap: 4 }}>
-                                      <button onClick={() => { setEditingHabit(habit.name); setEditText(habit.name); setEditEmoji(habit.emoji) }} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 2, flexShrink: 0, cursor: 'pointer' }}
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      <span>{habit.emoji} {habit.name}</span>
+                                      {habit.time && (
+                                        <span style={{ fontSize: 11, background: 'rgba(255,183,0,0.08)', color: 'var(--amber)', borderRadius: 4, padding: '1px 6px', fontFamily: 'var(--font-mono)' }}>
+                                          {habit.time}
+                                        </span>
+                                      )}
+                                    </span>
+                                    <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                                      <button onClick={() => { setEditingHabit(habit.name); setEditText(habit.name); setEditEmoji(habit.emoji); setEditTime(habit.time || '') }} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 2, flexShrink: 0, cursor: 'pointer' }}
                                         onMouseEnter={e => e.currentTarget.style.color = 'var(--amber)'}
                                         onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}><Pencil size={14} /></button>
                                       <button onClick={() => removeHabit(habit.name)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 2, flexShrink: 0, cursor: 'pointer' }}
@@ -569,6 +603,7 @@ export default function HabitTracker() {
                 <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: 10 }}>
                   <input value={newEmoji} onChange={e => setNewEmoji(e.target.value)} style={{ width: 44, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px', fontSize: 16, color: 'var(--text-primary)', textAlign: 'center' }} placeholder="✨" />
                   <input value={newHabit} onChange={e => setNewHabit(e.target.value)} onKeyDown={e => e.key === 'Enter' && addHabit()} placeholder="Add new habit..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 14px', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }} />
+                  <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px', color: 'var(--amber)', fontFamily: 'var(--font-mono)', fontSize: 13 }} />
                   <button onClick={addHabit} style={{ background: 'var(--amber-dim)', border: '1px solid rgba(255,183,0,0.2)', borderRadius: 8, color: 'var(--amber)', padding: '8px 18px', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display)', fontWeight: 600, cursor: 'pointer' }}>
                     <Plus size={16} /> Add
                   </button>

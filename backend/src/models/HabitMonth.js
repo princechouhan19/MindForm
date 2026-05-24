@@ -16,6 +16,7 @@ const habitMonthSchema = new mongoose.Schema({
       {
         name: { type: String, required: true },
         emoji: { type: String, default: '✨' },
+        time: { type: String, default: '' },
       },
     ],
     default: [],
