@@ -1,5 +1,5 @@
 import React from 'react'
-import { CheckSquare, Activity, Target, Settings, LogOut, User, PanelLeftClose, PanelLeftOpen, Flame, Sparkles, Users2 } from 'lucide-react'
+import { CheckSquare, Activity, Target, Settings, LogOut, User, PanelLeftClose, PanelLeftOpen, Flame, Sparkles, Users2, Sun, Moon } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const navItems = [
@@ -12,7 +12,7 @@ const navItems = [
   { id: 'settings', label: 'Settings',      icon: Settings,    color: 'var(--text-secondary)' },
 ]
 
-export default function Sidebar({ active, onChange, isOpen, onToggle, isMobile }) {
+export default function Sidebar({ active, onChange, isOpen, onToggle, isMobile, theme, setTheme }) {
   const { user, logout } = useAuth()
 
   return (
@@ -132,6 +132,33 @@ export default function Sidebar({ active, onChange, isOpen, onToggle, isMobile }
 
       {/* User & Logout */}
       <div style={{ borderTop: '1px solid var(--border)', padding: isOpen ? '16px' : '16px 8px' }}>
+        {/* Theme Toggle Button */}
+        <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: isOpen ? 'flex-start' : 'center',
+            gap: 10,
+            padding: isOpen ? '10px 12px' : '12px 0',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-glass)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-secondary)',
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'all 0.3s var(--ease-out-expo)',
+            fontFamily: 'var(--font-body)',
+            marginBottom: 10,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-glass-hover)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-glass)'; e.currentTarget.style.color = 'var(--text-secondary)' }}>
+          {theme === 'dark' ? <Sun size={16} color="var(--brand-primary)" /> : <Moon size={16} color="var(--brand-primary)" />}
+          {isOpen && (theme === 'dark' ? 'Light Mode' : 'Dark Mode')}
+        </button>
+
         {user && isOpen && (
           <div style={{ padding: '12px', background: 'var(--bg-glass)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

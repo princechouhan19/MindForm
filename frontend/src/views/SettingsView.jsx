@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import {
-  User, LogOut, Mail, AtSign, Bell, MapPin, Volume2, ShieldCheck
+  User, LogOut, Mail, AtSign, Bell, MapPin, Volume2, ShieldCheck, Sun, Moon
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -14,7 +14,7 @@ function useIsMobile() {
   return m
 }
 
-export default function SettingsView() {
+export default function SettingsView({ theme, setTheme }) {
   const { user, logout } = useAuth()
   const isMobile = useIsMobile()
 
@@ -242,6 +242,38 @@ export default function SettingsView() {
             padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s'
           }}>
             Test Sound
+          </button>
+        </div>
+      </div>
+
+      {/* Appearance Selection */}
+      <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.12em' }}>APPEARANCE</div>
+        </div>
+        <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Interface Theme</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Customize how MindForm looks on your device</div>
+          </div>
+          <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={{
+            background: 'var(--bg-glass)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-primary)',
+            padding: '8px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
+            display: 'flex', alignItems: 'center', gap: 8
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-glass-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-glass)'}>
+            {theme === 'dark' ? (
+              <>
+                <Sun size={14} color="var(--brand-primary)" /> Light Mode
+              </>
+            ) : (
+              <>
+                <Moon size={14} color="var(--brand-primary)" /> Dark Mode
+              </>
+            )}
           </button>
         </div>
       </div>

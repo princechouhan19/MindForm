@@ -144,8 +144,7 @@ function HowStep({ step, index }) {
 }
 
 /* ── Main Landing Page ─────────────────────────────────────── */
-export default function LandingPage({ onGetStarted }) {
-  const [theme, setTheme]   = useState('dark')
+export default function LandingPage({ onGetStarted, theme, setTheme }) {
   const [mobileMenu, setMobileMenu] = useState(false)
   const [scrolled, setScrolled]     = useState(false)
   const scrollRef = useRef(null)
@@ -154,11 +153,6 @@ export default function LandingPage({ onGetStarted }) {
   const heroSub   = useRef(null)
   const heroCta   = useRef(null)
   const lenisRef  = useRef(null)
-
-  /* ── Apply theme ─── */
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-  }, [theme])
 
   /* ── Lenis smooth scroll ─── */
   useEffect(() => {

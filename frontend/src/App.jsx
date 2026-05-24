@@ -29,10 +29,20 @@ function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
 
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('mindform-theme') || 'dark'
+  })
+
   // Once user logs in, jump to dashboard
   useEffect(() => {
     if (user) setPage('dashboard')
   }, [user])
+
+  // Sync theme to root class/attribute
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('mindform-theme', theme)
+  }, [theme])
 
   // Detect screen size
   useEffect(() => {
@@ -65,7 +75,7 @@ function Dashboard() {
 
   // ── Landing Page ──────────────────────────────────
   if (page === 'landing') {
-    return <LandingPage onGetStarted={() => setPage('auth')} />
+    return <LandingPage onGetStarted={() => setPage('auth')} theme={theme} setTheme={setTheme} />
   }
 
   // ── Auth Page (not logged in) ─────────────────────
@@ -80,7 +90,7 @@ function Dashboard() {
     if (view === 'fapless')  return <FaplessView />
     if (view === 'social')   return <SocialView />
     if (view === 'ai')       return <AIChatView />
-    if (view === 'settings') return <SettingsView />
+    if (view === 'settings') return <SettingsView theme={theme} setTheme={setTheme} />
     return <TaskTracker />
   }
 
@@ -102,6 +112,8 @@ function Dashboard() {
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(o => !o)}
           isMobile={isMobile}
+          theme={theme}
+          setTheme={setTheme}
         />
       </div>
 
