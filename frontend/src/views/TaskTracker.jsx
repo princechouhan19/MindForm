@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
-import { Plus, Trash2, ChevronLeft, ChevronRight, Star, AlertTriangle, Download, Cloud, CloudOff, Loader, Copy, CheckCircle2, Circle, Pencil, Check, X, Clock, Zap } from 'lucide-react'
+import { Plus, Trash2, ChevronLeft, ChevronRight, Star, AlertTriangle, Download, Cloud, CloudOff, Loader, Copy, CheckCircle2, Circle, Pencil, Check, X, Clock, Zap, GripVertical, ChevronUp, ChevronDown } from 'lucide-react'
 import { tasksAPI } from '../api/client'
 import { useSync } from '../hooks/useSync'
 import { DonutChart } from '../components/StatCard'
@@ -99,6 +99,36 @@ export default function TaskTracker() {
   const [editingTask, setEditingTask] = useState(null)
   const [editText, setEditText] = useState('')
   const [editTime, setEditTime] = useState('')
+  const [draggedIndex, setDraggedIndex] = useState(null)
+
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', index)
+  }
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = (e, index) => {
+    e.preventDefault()
+    if (draggedIndex === null || draggedIndex === index) return
+    const reordered = [...tasks]
+    const [draggedItem] = reordered.splice(draggedIndex, 1)
+    reordered.splice(index, 0, draggedItem)
+    updateWeek({ tasks: reordered })
+    setDraggedIndex(null)
+  }
+
+  const moveTask = (index, direction) => {
+    const newIndex = index + direction
+    if (newIndex < 0 || newIndex >= tasks.length) return
+    const reordered = [...tasks]
+    const [item] = reordered.splice(index, 1)
+    reordered.splice(newIndex, 0, item)
+    updateWeek({ tasks: reordered })
+  }
 
   // Notifications and live countdown state
   const [toasts, setToasts] = useState([])
@@ -522,16 +552,29 @@ export default function TaskTracker() {
 
               {/* Task cards */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {parsedTasks.map(task => {
+                {parsedTasks.map((task, idx) => {
                   const done = getChecked(selectedDay, task.name)
+                  const isDragged = draggedIndex === idx
                   return (
-                    <label key={task.id} style={{
-                      display: 'flex', alignItems: 'center', gap: 14,
-                      padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
-                      background: done ? 'rgba(0,255,136,0.05)' : 'var(--bg-card)',
-                      border: `1px solid ${done ? 'rgba(0,255,136,0.25)' : 'var(--border)'}`,
-                      transition: 'all 0.2s',
-                    }}>
+                    <label key={task.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, idx)}
+                      onDragOver={(e) => handleDragOver(e, idx)}
+                      onDrop={(e) => handleDrop(e, idx)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 14,
+                        padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
+                        background: done ? 'rgba(0,255,136,0.05)' : 'var(--bg-card)',
+                        border: `1px solid ${done ? 'rgba(0,255,136,0.25)' : 'var(--border)'}`,
+                        opacity: isDragged ? 0.5 : 1,
+                        transition: 'all 0.2s',
+                      }}>
+                      <div
+                        style={{ cursor: 'grab', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', marginRight: -4 }}
+                        onMouseDown={e => e.stopPropagation()}
+                      >
+                        <GripVertical size={16} />
+                      </div>
                       <input type="checkbox" checked={done}
                         onChange={e => setChecked(selectedDay, task.name, e.target.checked)}
                         style={{ display: 'none' }} />
@@ -549,12 +592,22 @@ export default function TaskTracker() {
                           lineHeight: 1.4, transition: 'all 0.2s',
                           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                         }}>{task.name}</span>
-                        {task.time && (
-                          <span style={{
-                            fontSize: 11, background: 'rgba(0,229,255,0.08)', color: 'var(--cyan)',
-                            borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-mono)', flexShrink: 0
-                          }}>{task.time}</span>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                          {task.time && (
+                            <span style={{
+                              fontSize: 11, background: 'rgba(0,229,255,0.08)', color: 'var(--cyan)',
+                              borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-mono)'
+                            }}>{task.time}</span>
+                          )}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); moveTask(idx, -1); }} disabled={idx === 0} style={{ background: 'none', color: idx === 0 ? 'var(--text-muted)' : 'var(--cyan)', padding: 2, display: 'flex', cursor: idx === 0 ? 'not-allowed' : 'pointer' }}>
+                              <ChevronUp size={12} />
+                            </button>
+                            <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); moveTask(idx, 1); }} disabled={idx === parsedTasks.length - 1} style={{ background: 'none', color: idx === parsedTasks.length - 1 ? 'var(--text-muted)' : 'var(--cyan)', padding: 2, display: 'flex', cursor: idx === parsedTasks.length - 1 ? 'not-allowed' : 'pointer' }}>
+                              <ChevronDown size={12} />
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </label>
                   )
@@ -572,10 +625,21 @@ export default function TaskTracker() {
                 )}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-                {parsedTasks.map((t) => {
+                {parsedTasks.map((t, idx) => {
                   const isEditing = editingTask === t.name
+                  const isDragged = draggedIndex === idx
                   return (
-                    <div key={t.id} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', background: 'var(--bg-card)', borderRadius: 12, border: isEditing ? '1px solid var(--cyan)' : '1px solid var(--border)' }}>
+                    <div key={t.id}
+                      draggable={!isEditing}
+                      onDragStart={(e) => handleDragStart(e, idx)}
+                      onDragOver={(e) => handleDragOver(e, idx)}
+                      onDrop={(e) => handleDrop(e, idx)}
+                      style={{
+                        display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px',
+                        background: 'var(--bg-card)', borderRadius: 12,
+                        border: isEditing ? '1px solid var(--cyan)' : '1px solid var(--border)',
+                        opacity: isDragged ? 0.5 : 1,
+                      }}>
                       {isEditing ? (
                         <>
                           <div style={{ display: 'flex', gap: 8 }}>
@@ -604,9 +668,15 @@ export default function TaskTracker() {
                         </>
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ cursor: 'grab', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                            <GripVertical size={16} />
+                          </div>
                           <span style={{ fontSize: 14, color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
                           {t.time && <span style={{ fontSize: 11, background: 'rgba(0,229,255,0.08)', color: 'var(--cyan)', borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-mono)' }}>{t.time}</span>}
-                          <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                            <button onClick={() => moveTask(idx, -1)} disabled={idx === 0} style={{ background: 'none', color: idx === 0 ? 'var(--text-muted)' : 'var(--cyan)', padding: 4 }}><ChevronUp size={14} /></button>
+                            <button onClick={() => moveTask(idx, 1)} disabled={idx === parsedTasks.length - 1} style={{ background: 'none', color: idx === parsedTasks.length - 1 ? 'var(--text-muted)' : 'var(--cyan)', padding: 4 }}><ChevronDown size={14} /></button>
+                            <div style={{ width: 1, height: 12, background: 'var(--border)' }} />
                             <button onClick={() => { setEditingTask(t.name); setEditText(t.name); setEditTime(t.time) }} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 6, borderRadius: 6 }}><Pencil size={15} /></button>
                             <button onClick={() => removeTask(t)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 6, borderRadius: 6 }}><Trash2 size={15} /></button>
                           </div>
@@ -839,10 +909,21 @@ export default function TaskTracker() {
                   )}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-                  {parsedTasks.map((t) => {
+                  {parsedTasks.map((t, idx) => {
                     const isEditing = editingTask === t.name
+                    const isDragged = draggedIndex === idx
                     return (
-                      <div key={t.id} style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 12px', background: 'var(--bg-glass)', borderRadius: 8, border: isEditing ? '1px solid var(--cyan)' : '1px solid var(--border)' }}>
+                      <div key={t.id}
+                        draggable={!isEditing}
+                        onDragStart={(e) => handleDragStart(e, idx)}
+                        onDragOver={(e) => handleDragOver(e, idx)}
+                        onDrop={(e) => handleDrop(e, idx)}
+                        style={{
+                          display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 12px',
+                          background: 'var(--bg-glass)', borderRadius: 8,
+                          border: isEditing ? '1px solid var(--cyan)' : '1px solid var(--border)',
+                          opacity: isDragged ? 0.5 : 1,
+                        }}>
                         {isEditing ? (
                           <>
                             <div style={{ display: 'flex', gap: 8 }}>
@@ -871,9 +952,15 @@ export default function TaskTracker() {
                           </>
                         ) : (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ cursor: 'grab', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                              <GripVertical size={14} />
+                            </div>
                             <span style={{ flex: 1, fontSize: 14, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
                             {t.time && <span style={{ fontSize: 11, background: 'rgba(0,229,255,0.08)', color: 'var(--cyan)', borderRadius: 4, padding: '2px 6px', fontFamily: 'var(--font-mono)' }}>{t.time}</span>}
-                            <div style={{ display: 'flex', gap: 4 }}>
+                            <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                              <button onClick={() => moveTask(idx, -1)} disabled={idx === 0} style={{ background: 'none', color: idx === 0 ? 'var(--text-muted)' : 'var(--cyan)', padding: 2, display: 'flex', cursor: idx === 0 ? 'not-allowed' : 'pointer' }} title="Move Up"><ChevronUp size={13} /></button>
+                              <button onClick={() => moveTask(idx, 1)} disabled={idx === parsedTasks.length - 1} style={{ background: 'none', color: idx === parsedTasks.length - 1 ? 'var(--text-muted)' : 'var(--cyan)', padding: 2, display: 'flex', cursor: idx === parsedTasks.length - 1 ? 'not-allowed' : 'pointer' }} title="Move Down"><ChevronDown size={13} /></button>
+                              <div style={{ width: 1, height: 10, background: 'var(--border)', margin: '0 4px' }} />
                               <button onClick={() => { setEditingTask(t.name); setEditText(t.name); setEditTime(t.time) }} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 4, cursor: 'pointer' }}
                                 onMouseEnter={e => e.currentTarget.style.color = 'var(--cyan)'}
                                 onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}><Pencil size={15} /></button>

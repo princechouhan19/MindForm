@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts'
-import { Plus, Trash2, ChevronLeft, ChevronRight, Download, Trophy, Cloud, Loader, CheckCircle2, Circle, BarChart2, Pencil, Check, X } from 'lucide-react'
+import { Plus, Trash2, ChevronLeft, ChevronRight, Download, Trophy, Cloud, Loader, CheckCircle2, Circle, BarChart2, Pencil, Check, X, GripVertical, ChevronUp, ChevronDown } from 'lucide-react'
 import { habitsAPI } from '../api/client'
 import { useSync } from '../hooks/useSync'
 import { DonutChart } from '../components/StatCard'
@@ -88,6 +88,37 @@ export default function HabitTracker() {
   const [editText, setEditText] = useState('')
   const [editEmoji, setEditEmoji] = useState('✨')
   const [editTime, setEditTime] = useState('')
+  const [draggedIndex, setDraggedIndex] = useState(null)
+
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', index)
+  }
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = (e, index) => {
+    e.preventDefault()
+    if (draggedIndex === null || draggedIndex === index) return
+    const reordered = [...habits]
+    const [draggedItem] = reordered.splice(draggedIndex, 1)
+    reordered.splice(index, 0, draggedItem)
+    setHabits(reordered)
+    setDraggedIndex(null)
+  }
+
+  const moveHabit = (index, direction) => {
+    const newIndex = index + direction
+    if (newIndex < 0 || newIndex >= habits.length) return
+    const reordered = [...habits]
+    const [item] = reordered.splice(index, 1)
+    reordered.splice(newIndex, 0, item)
+    setHabits(reordered)
+  }
+
   const [mobileTab, setMobileTab] = useState('today') // 'today' | 'stats' | 'manage'
 
   const monthKey = `${year}-${month}`
@@ -300,20 +331,29 @@ export default function HabitTracker() {
             </div>
           ) : mobileTab === 'today' ? (
             <div style={{ animation: 'fadeUp 0.25s ease', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {habits.map(habit => {
+              {habits.map((habit, idx) => {
                 const done = getChecked(selectedDay, habit.name)
+                const isDragged = draggedIndex === idx
                 return (
-                  <button
+                  <div
                     key={habit.name}
-                    onClick={() => toggleCheck(selectedDay, habit.name, !done)}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, idx)}
+                    onDragOver={(e) => handleDragOver(e, idx)}
+                    onDrop={(e) => handleDrop(e, idx)}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+                      display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px',
                       background: done ? 'rgba(255,183,0,0.04)' : 'var(--bg-card)',
                       border: `1px solid ${done ? 'rgba(255,183,0,0.2)' : 'var(--border)'}`,
-                      borderRadius: 12, textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s', width: '100%'
+                      borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s', width: '100%',
+                      opacity: isDragged ? 0.5 : 1,
+                      boxSizing: 'border-box'
                     }}>
-                    <span style={{ fontSize: 20 }}>{habit.emoji}</span>
-                    <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0 }}>
+                    <div style={{ cursor: 'grab', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }} onMouseDown={e => e.stopPropagation()}>
+                      <GripVertical size={16} />
+                    </div>
+                    <span style={{ fontSize: 20 }} onClick={() => toggleCheck(selectedDay, habit.name, !done)}>{habit.emoji}</span>
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0 }} onClick={() => toggleCheck(selectedDay, habit.name, !done)}>
                       <span style={{
                         fontSize: 14, fontWeight: 600,
                         color: done ? 'var(--text-muted)' : 'var(--text-primary)',
@@ -328,13 +368,19 @@ export default function HabitTracker() {
                         }}>{habit.time}</span>
                       )}
                     </div>
-                    <div style={{ flexShrink: 0 }}>
-                      {done
-                        ? <CheckCircle2 size={24} color="var(--green)" />
-                        : <Circle size={24} color="var(--border-bright)" />
-                      }
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); moveHabit(idx, -1); }} disabled={idx === 0} style={{ background: 'none', color: idx === 0 ? 'var(--text-muted)' : 'var(--amber)', padding: 2, display: 'flex', cursor: idx === 0 ? 'not-allowed' : 'pointer' }}><ChevronUp size={12} /></button>
+                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); moveHabit(idx, 1); }} disabled={idx === habits.length - 1} style={{ background: 'none', color: idx === habits.length - 1 ? 'var(--text-muted)' : 'var(--amber)', padding: 2, display: 'flex', cursor: idx === habits.length - 1 ? 'not-allowed' : 'pointer' }}><ChevronDown size={12} /></button>
+                      </div>
+                      <div onClick={() => toggleCheck(selectedDay, habit.name, !done)}>
+                        {done
+                          ? <CheckCircle2 size={24} color="var(--green)" />
+                          : <Circle size={24} color="var(--border-bright)" />
+                        }
+                      </div>
                     </div>
-                  </button>
+                  </div>
                 )
               })}
             </div>
@@ -394,10 +440,21 @@ export default function HabitTracker() {
           ) : (
             <div style={{ animation: 'fadeUp 0.25s ease' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-                {habits.map((habit) => {
+                {habits.map((habit, idx) => {
                   const isEditing = editingHabit === habit.name
+                  const isDragged = draggedIndex === idx
                   return (
-                    <div key={habit.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--bg-card)', borderRadius: 12, border: isEditing ? '1px solid var(--amber)' : '1px solid var(--border)' }}>
+                    <div key={habit.name}
+                      draggable={!isEditing}
+                      onDragStart={(e) => handleDragStart(e, idx)}
+                      onDragOver={(e) => handleDragOver(e, idx)}
+                      onDrop={(e) => handleDrop(e, idx)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                        background: 'var(--bg-card)', borderRadius: 12,
+                        border: isEditing ? '1px solid var(--amber)' : '1px solid var(--border)',
+                        opacity: isDragged ? 0.5 : 1,
+                      }}>
                       {isEditing ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
                           <div style={{ display: 'flex', gap: 6, width: '100%' }}>
@@ -412,10 +469,16 @@ export default function HabitTracker() {
                         </div>
                       ) : (
                         <>
+                          <div style={{ cursor: 'grab', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                            <GripVertical size={16} />
+                          </div>
                           <span style={{ fontSize: 18 }}>{habit.emoji}</span>
                           <span style={{ fontSize: 14, color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{habit.name}</span>
                           {habit.time && <span style={{ fontSize: 11, background: 'rgba(255,183,0,0.08)', color: 'var(--amber)', borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-mono)' }}>{habit.time}</span>}
-                          <div style={{ display: 'flex', gap: 4 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                            <button onClick={() => moveHabit(idx, -1)} disabled={idx === 0} style={{ background: 'none', color: idx === 0 ? 'var(--text-muted)' : 'var(--amber)', padding: 4 }}><ChevronUp size={14} /></button>
+                            <button onClick={() => moveHabit(idx, 1)} disabled={idx === habits.length - 1} style={{ background: 'none', color: idx === habits.length - 1 ? 'var(--text-muted)' : 'var(--amber)', padding: 4 }}><ChevronDown size={14} /></button>
+                            <div style={{ width: 1, height: 12, background: 'var(--border)' }} />
                             <button onClick={() => { setEditingHabit(habit.name); setEditText(habit.name); setEditEmoji(habit.emoji); setEditTime(habit.time || '') }} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 6, borderRadius: 6 }}><Pencil size={15} /></button>
                             <button onClick={() => removeHabit(habit.name)} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 6, borderRadius: 6 }}><Trash2 size={15} /></button>
                           </div>
@@ -531,8 +594,17 @@ export default function HabitTracker() {
                       {habits.map((habit, hi) => {
                         const stats = habitStats[hi]
                         const isEditing = editingHabit === habit.name
+                        const isDragged = draggedIndex === hi
                         return (
-                          <tr key={habit.name} style={{ background: hi % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}
+                          <tr key={habit.name}
+                            draggable={!isEditing}
+                            onDragStart={(e) => handleDragStart(e, hi)}
+                            onDragOver={(e) => handleDragOver(e, hi)}
+                            onDrop={(e) => handleDrop(e, hi)}
+                            style={{
+                              background: hi % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)',
+                              opacity: isDragged ? 0.5 : 1,
+                            }}
                             onMouseEnter={e => !isEditing && (e.currentTarget.style.background = 'rgba(255,183,0,0.03)')}
                             onMouseLeave={e => !isEditing && (e.currentTarget.style.background = hi % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)')}>
                             <td style={{ padding: '10px 16px', fontSize: 14, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 1, whiteSpace: 'nowrap' }}>
@@ -567,6 +639,9 @@ export default function HabitTracker() {
                                 ) : (
                                   <>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      <div style={{ cursor: 'grab', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                                        <GripVertical size={14} />
+                                      </div>
                                       <span>{habit.emoji} {habit.name}</span>
                                       {habit.time && (
                                         <span style={{ fontSize: 11, background: 'rgba(255,183,0,0.08)', color: 'var(--amber)', borderRadius: 4, padding: '1px 6px', fontFamily: 'var(--font-mono)' }}>
@@ -574,7 +649,10 @@ export default function HabitTracker() {
                                         </span>
                                       )}
                                     </span>
-                                    <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                                    <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }}>
+                                      <button onClick={() => moveHabit(hi, -1)} disabled={hi === 0} style={{ background: 'none', color: hi === 0 ? 'var(--text-muted)' : 'var(--amber)', padding: 2, display: 'flex', cursor: hi === 0 ? 'not-allowed' : 'pointer' }} title="Move Up"><ChevronUp size={13} /></button>
+                                      <button onClick={() => moveHabit(hi, 1)} disabled={hi === habits.length - 1} style={{ background: 'none', color: hi === habits.length - 1 ? 'var(--text-muted)' : 'var(--amber)', padding: 2, display: 'flex', cursor: hi === habits.length - 1 ? 'not-allowed' : 'pointer' }} title="Move Down"><ChevronDown size={13} /></button>
+                                      <div style={{ width: 1, height: 10, background: 'var(--border)', margin: '0 4px' }} />
                                       <button onClick={() => { setEditingHabit(habit.name); setEditText(habit.name); setEditEmoji(habit.emoji); setEditTime(habit.time || '') }} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 2, flexShrink: 0, cursor: 'pointer' }}
                                         onMouseEnter={e => e.currentTarget.style.color = 'var(--amber)'}
                                         onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}><Pencil size={14} /></button>
