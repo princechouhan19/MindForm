@@ -4,6 +4,9 @@ const HabitMonth = require('../models/HabitMonth')
 const getMonth = async (req, res) => {
   try {
     const { monthKey } = req.params
+    if (!/^\d{4}-\d{1,2}$/.test(monthKey)) {
+      return res.status(400).json({ success: false, message: 'Invalid month key format.' })
+    }
     const doc = await HabitMonth.findOne({ user: req.user._id, monthKey })
 
     if (!doc) {

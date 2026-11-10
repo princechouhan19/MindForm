@@ -15,6 +15,7 @@ const habitRoutes   = require('./routes/habits')
 const goalRoutes    = require('./routes/goals')
 const faplessRoutes = require('./routes/fapless')
 const aiRoutes      = require('./routes/ai')
+const socialRoutes  = require('./routes/social')
 
 const app = express()
 
@@ -94,6 +95,14 @@ app.use(mongoSanitize())
 // Compress responses
 app.use(compression())
 
+// Malformed JSON → clean 400 (otherwise body-parser throws a raw 500)
+app.use((err, req, res, next) => {
+  if (err?.type === 'entity.parse.failed' || err instanceof SyntaxError) {
+    return res.status(400).json({ success: false, message: 'Invalid JSON in request body.' })
+  }
+  next(err)
+})
+
 // Health check
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -104,8 +113,6 @@ app.get('/health', (req, res) => {
   })
 })
 
-const socialRoutes   = require('./routes/social')
-
 // API Routes
 app.use('/api/auth',    authRoutes)
 app.use('/api/tasks',   taskRoutes)
@@ -115,6 +122,43 @@ app.use('/api/fapless', faplessRoutes)
 app.use('/api/ai',      aiRoutes)
 app.use('/api/social',  socialRoutes)
 
+// Cross-module aggregate — powers the Overview ("Today") page in one round-trip
+app.get('/api/stats/summary', require('./middleware/auth').protect, async (req, res) => {
+  try {
+    const now = new Date()
+    const monthKey = `${now.getFullYear()}-${now.getMonth()}`
+
+    const [goals, TaskWeek, HabitMonth, Fapless] = await Promise.all([
+      require('../models/Goal').countDocuments({ user: req.user.id, status: 'active' }),
+      require('../models/TaskWeek').countDocuments({ user: req.user.id, weekKey: { $regex: `^${monthKey}-w` } }),
+      require('../models/HabitMonth').countDocuments({ user: req.user.id, monthKey }),
+      require('../models/Fapless').findOne({ user: req.user.id }).lean(),
+    ])
+
+    const { computeStreakStats } = require('./utils/aura')
+    const streak = computeStreakStats(Fapless || {})
+
+    res.json({
+      success: true,
+      data: {
+        activeGoals: goals,
+        plannedWeeks: TaskWeek,
+        trackedMonths: HabitMonth,
+        streakDays: streak.streakDays,
+        aura: streak.aura,
+        level: streak.level,
+      },
+    })
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to compute summary.' })
+  }
+})
+
+// API 404 — must come after routes; returns JSON, never the SPA shell
+app.use('/api', (req, res) => {
+  res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found.` })
+})
+
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production' || process.env.SERVE_FRONTEND === 'true') {
   app.use(express.static(path.join(__dirname, '../public')))
@@ -122,20 +166,15 @@ if (process.env.NODE_ENV === 'production' || process.env.SERVE_FRONTEND === 'tru
   app.get('*', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../public', 'index.html'))
   })
-} else {
-  // 404 handler for API
-  app.use('*', (req, res) => {
-    res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found.` })
-  })
 }
 
 // Global error handler
-const globalErrorHandler = require('./middleware/errorController');
-app.use(globalErrorHandler);
+const globalErrorHandler = require('./middleware/errorController')
+app.use(globalErrorHandler)
 
 
 const PORT = process.env.PORT || 5000
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`)
 
   // Keep Render free tier alive — ping self every 45 seconds
@@ -154,3 +193,12 @@ app.listen(PORT, () => {
     console.log(`🏓 Self-ping active → ${SELF_URL}/health every 45s`)
   }
 })
+
+// Graceful shutdown
+const shutdown = (signal) => {
+  console.log(`\n${signal} received — closing server…`)
+  server.close(() => process.exit(0))
+  setTimeout(() => process.exit(1), 8000).unref()
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'))
+process.on('SIGINT', () => shutdown('SIGINT'))

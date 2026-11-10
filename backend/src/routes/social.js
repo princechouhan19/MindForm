@@ -4,6 +4,7 @@ const User = require('../models/User')
 const Fapless = require('../models/Fapless')
 const ForumMessage = require('../models/ForumMessage')
 const { protect } = require('../middleware/auth')
+const { computeStreakStats } = require('../utils/aura')
 
 // ── Admin middleware ──────────────────────────────────────────────────────────
 const adminOnly = (req, res, next) => {
@@ -28,17 +29,16 @@ router.get('/leaderboard', async (req, res) => {
     const entries = publicFapless
       .filter(f => f.user)  // only public users
       .map(f => {
-        const totalMs = Date.now() - new Date(f.startDate).getTime()
-        const streakDays = Math.max(0, Math.floor(totalMs / 86400000))
-        const aura = Math.floor(totalMs / 1000)
+        const stats = computeStreakStats(f)
         return {
           userId: f.user._id,
           name: f.user.name,
           country: f.user.country || '',
           badges: f.user.badges || [],
           avatar: f.user.avatar || '',
-          streakDays,
-          aura,
+          streakDays: stats.streakDays,
+          aura: stats.aura,
+          level: stats.level,
           activeChallenge: f.activeChallenge,
         }
       })
@@ -66,14 +66,9 @@ router.get('/profile/:userId', protect, async (req, res) => {
     }
 
     const fapless = await Fapless.findOne({ user: target._id })
-    let streakDays = 0, aura = 0
-    if (fapless?.startDate) {
-      const totalMs = Date.now() - new Date(fapless.startDate).getTime()
-      streakDays = Math.max(0, Math.floor(totalMs / 86400000))
-      aura = Math.floor(totalMs / 1000)
-    }
+    const stats = computeStreakStats(fapless || {})
 
-    res.json({ success: true, profile: { ...target.toObject(), streakDays, aura } })
+    res.json({ success: true, profile: { ...target.toObject(), streakDays: stats.streakDays, aura: stats.aura, level: stats.level } })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
   }

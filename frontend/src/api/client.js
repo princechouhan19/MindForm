@@ -1,8 +1,21 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
-const getToken = () => localStorage.getItem('prince_token')
+export const TOKEN_KEY = 'mf_token'
 
-async function request(method, path, body = null) {
+const getToken = () => localStorage.getItem(TOKEN_KEY)
+const setToken = (t) => localStorage.setItem(TOKEN_KEY, t)
+const clearToken = () => localStorage.removeItem(TOKEN_KEY)
+
+// Backwards compatibility: migrate legacy token key once
+try {
+  const legacy = localStorage.getItem('prince_token')
+  if (legacy && !localStorage.getItem(TOKEN_KEY)) {
+    localStorage.setItem(TOKEN_KEY, legacy)
+    localStorage.removeItem('prince_token')
+  }
+} catch { /* private mode */ }
+
+async function request(method, path, body = null, { timeout = 15000 } = {}) {
   const headers = { 'Content-Type': 'application/json' }
   const token = getToken()
   if (token) headers['Authorization'] = `Bearer ${token}`
@@ -10,11 +23,42 @@ async function request(method, path, body = null) {
   const config = { method, headers }
   if (body) config.body = JSON.stringify(body)
 
-  const res = await fetch(`${BASE_URL}${path}`, config)
-  const data = await res.json()
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeout)
+  config.signal = controller.signal
+
+  let res
+  try {
+    res = await fetch(`${BASE_URL}${path}`, config)
+  } catch (err) {
+    clearTimeout(timer)
+    if (err.name === 'AbortError') throw new Error('Request timed out. Check your connection and try again.')
+    throw new Error('Failed to fetch — is the server running?')
+  }
+  clearTimeout(timer)
+
+  // Safe body parse: never crash on empty/HTML responses
+  let data = null
+  try { data = await res.json() } catch { data = null }
 
   if (!res.ok) {
-    throw new Error(data.message || 'Request failed')
+    // Session expired → clean logout so the user sees the auth screen
+    if (res.status === 401 && getToken()) {
+      clearToken()
+      // Soft reload so AuthContext re-evaluates from a clean state
+      if (typeof window !== 'undefined' && !window.__mfLoggingOut) {
+        window.__mfLoggingOut = true
+        window.location.reload()
+      }
+    }
+    const message = data?.message
+      || (res.status === 401 ? 'Session expired. Please sign in again.'
+        : res.status === 429 ? 'Too many requests — slow down and try again.'
+        : res.status >= 500 ? 'Server error. Please try again shortly.'
+        : 'Request failed.')
+    const error = new Error(message)
+    error.status = res.status
+    throw error
   }
   return data
 }
@@ -26,6 +70,7 @@ export const authAPI = {
   login: (email, password) =>
     request('POST', '/auth/login', { email, password }),
   me: () => request('GET', '/auth/me'),
+  setToken, clearToken, getToken,
 }
 
 // Tasks
@@ -70,7 +115,7 @@ export const socialAPI = {
   postForumMessage: (text) => request('POST', '/social/forum', { text }),
 }
 
-// Admin (only works if user is princechouhan4606@gmail.com)
+// Admin
 export const adminAPI = {
   getUsers: () => request('GET', '/social/admin/users'),
   getBadges: () => request('GET', '/social/admin/badges'),
@@ -79,3 +124,7 @@ export const adminAPI = {
   deleteForumMsg: (msgId) => request('DELETE', `/social/admin/forum/${msgId}`),
 }
 
+// Cross-module aggregate for the Overview page
+export const statsAPI = {
+  summary: () => request('GET', '/stats/summary'),
+}

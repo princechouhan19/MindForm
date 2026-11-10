@@ -1,9 +1,15 @@
 const TaskWeek = require('../models/TaskWeek')
 
+// weekKey format: "2025-0-w1" — guard against injection/dupes
+const WEEK_KEY_RE = /^\d{4}-\d{1,2}-w\d{1,2}$/
+
 // GET /api/tasks/:weekKey
 const getWeek = async (req, res) => {
   try {
     const { weekKey } = req.params
+    if (!WEEK_KEY_RE.test(weekKey)) {
+      return res.status(400).json({ success: false, message: 'Invalid week key format.' })
+    }
     const doc = await TaskWeek.findOne({ user: req.user._id, weekKey })
 
     if (!doc) {
@@ -29,7 +35,13 @@ const getWeek = async (req, res) => {
 const upsertWeek = async (req, res) => {
   try {
     const { weekKey } = req.params
+    if (!WEEK_KEY_RE.test(weekKey)) {
+      return res.status(400).json({ success: false, message: 'Invalid week key format.' })
+    }
     const { tasks, checks, reflection } = req.body
+    if (tasks !== undefined && !Array.isArray(tasks)) {
+      return res.status(400).json({ success: false, message: 'Tasks must be an array.' })
+    }
 
     const doc = await TaskWeek.findOneAndUpdate(
       { user: req.user._id, weekKey },
@@ -63,6 +75,9 @@ const upsertWeek = async (req, res) => {
 const getMonth = async (req, res) => {
   try {
     const { monthKey } = req.params
+    if (!/^\d{4}-\d{1,2}$/.test(monthKey)) {
+      return res.status(400).json({ success: false, message: 'Invalid month key format.' })
+    }
     // weekKey format: "2025-0-w1", "2025-0-w2", etc.
     const docs = await TaskWeek.find({
       user: req.user._id,

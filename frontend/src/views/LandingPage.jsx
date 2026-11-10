@@ -1,51 +1,116 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { SplitText } from 'gsap/SplitText'
 import Lenis from 'lenis'
-import { ArrowRight, CheckSquare, Activity, Target, Flame, Zap, Shield, BarChart2, Sun, Moon, Menu, X } from 'lucide-react'
-import WebGLBackground from '../components/WebGLBackground'
+import {
+  ArrowRight, CheckSquare, Activity, Target, Flame, Zap, Shield,
+  ChevronRight, Sun, Moon, Lock, Bell, BarChart3, Sparkles, Users2,
+} from 'lucide-react'
 
-gsap.registerPlugin(ScrollTrigger, SplitText)
+gsap.registerPlugin(ScrollTrigger)
 
-/* ── Custom Cursor ─────────────────────────────────────────── */
-function Cursor() {
-  const dot  = useRef(null)
-  const ring = useRef(null)
+/* ── Data ──────────────────────────────────────────────────── */
+const SCENES = [
+  {
+    id: 'tasks',
+    tag: 'Task Tracker',
+    icon: CheckSquare,
+    color: 'var(--cyan)',
+    title: 'Plan your day\nto the minute.',
+    desc: 'Schedule tasks with exact times, tick them off day by day, and let the Week Score show how strong your week really is. Every plan stays synced across your devices.',
+    image: '/shots/tasks.png',
+  },
+  {
+    id: 'habits',
+    tag: 'Habit Tracker',
+    icon: Activity,
+    color: 'var(--amber)',
+    title: 'Build chains\nthat don’t break.',
+    desc: 'A 30-day matrix keeps every streak visible at a glance. Track mood and motivation alongside, and watch consistency compound into identity.',
+    image: '/shots/habits.png',
+  },
+  {
+    id: 'goals',
+    tag: 'Goals',
+    icon: Target,
+    color: 'var(--brand-secondary)',
+    title: 'Progress\nyou can see.',
+    desc: 'Connect goals to the tasks and habits that drive them. MindForm computes progress automatically, so the finish line is never a mystery.',
+    image: '/shots/goals.png',
+  },
+  {
+    id: 'fapless',
+    tag: 'Fapless',
+    icon: Flame,
+    color: 'var(--red)',
+    title: 'Reclaim\nyour focus.',
+    desc: 'A streak engine with ten identity levels, milestone bonuses and challenges. Discipline stops being willpower and becomes a game you’re winning.',
+    image: '/shots/fapless.png',
+  },
+]
+
+const RIBBON = [
+  { icon: Bell,    color: 'var(--cyan)',     title: 'Smart reminders',  desc: 'Chimes and notifications when a task is due — never miss a block.' },
+  { icon: BarChart3, color: 'var(--amber)',  title: 'Real insights',    desc: 'Week scores, completion rates and trends computed for you.' },
+  { icon: Users2,  color: 'var(--pink)',     title: 'Accountability',   desc: 'Optional public streaks, a global leaderboard and a 2-day forum.' },
+  { icon: Lock,    color: 'var(--green)',    title: 'Private by design', desc: 'Your data is scoped to your account. Chats auto-delete in 24h.' },
+]
+
+const STATS = [
+  { value: 5,    suffix: '',     label: 'Core modules' },
+  { value: 30,   suffix: ' days', label: 'Visible habit grid' },
+  { value: 10,   suffix: '',     label: 'Identity levels' },
+  { value: 100,  suffix: '%',    label: 'Free & open source' },
+]
+
+const FOOTER_COLS = [
+  {
+    title: 'Product',
+    links: ['Task Tracker', 'Habit Tracker', 'Goals', 'Fapless', 'Social', 'AI Coach'],
+  },
+  {
+    title: 'Resources',
+    links: ['How it works', 'Privacy model', 'Self-hosting', 'FAQ'],
+  },
+  {
+    title: 'Community',
+    links: ['Leaderboard', 'Forum', 'Contribute'],
+  },
+]
+
+/* ── Reveal helper ─────────────────────────────────────────── */
+function useReveal(options = {}) {
+  const ref = useRef(null)
   useEffect(() => {
-    let rx = 0, ry = 0
-    const move = (e) => {
-      gsap.to(dot.current,  { x: e.clientX, y: e.clientY, duration: 0.1 })
-      gsap.to(ring.current, { x: e.clientX - 20, y: e.clientY - 20, duration: 0.35, ease: 'power2.out' })
-    }
-    const grow = () => gsap.to(ring.current, { scale: 2.5, opacity: 0.3, duration: 0.3 })
-    const shrink = () => gsap.to(ring.current, { scale: 1, opacity: 0.5, duration: 0.3 })
-    window.addEventListener('mousemove', move)
-    document.querySelectorAll('button,a').forEach(el => { el.addEventListener('mouseenter', grow); el.addEventListener('mouseleave', shrink) })
-    return () => window.removeEventListener('mousemove', move)
+    const el = ref.current
+    if (!el) return
+    const ctx = gsap.context(() => {
+      gsap.fromTo(el,
+        { opacity: 0, y: 44 },
+        {
+          opacity: 1, y: 0,
+          duration: options.duration || 0.9,
+          ease: 'power3.out',
+          scrollTrigger: { trigger: el, start: options.start || 'top 88%' },
+        })
+    })
+    return () => ctx.revert()
   }, [])
-  if (window.matchMedia('(hover: none)').matches) return null
-  return (
-    <>
-      <div ref={dot}  className="lp-cursor" style={{ transform: 'translate(-50%,-50%)' }} />
-      <div ref={ring} className="lp-cursor-ring" />
-    </>
-  )
+  return ref
 }
 
-/* ── Progress Bar ──────────────────────────────────────────── */
-function ProgressBar({ scrollEl }) {
+/* ── Progress bar ──────────────────────────────────────────── */
+function ProgressBar() {
   const fill = useRef(null)
   useEffect(() => {
-    if (!scrollEl) return
-    const el = scrollEl
     const onScroll = () => {
-      const pct = el.scrollTop / (el.scrollHeight - el.clientHeight)
-      if (fill.current) fill.current.style.transform = `scaleX(${pct})`
+      const max = document.documentElement.scrollHeight - window.innerHeight
+      if (fill.current) fill.current.style.transform = `scaleX(${max > 0 ? window.scrollY / max : 0})`
     }
-    el.addEventListener('scroll', onScroll)
-    return () => el.removeEventListener('scroll', onScroll)
-  }, [scrollEl])
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
   return (
     <div className="lp-progress-bar">
       <div ref={fill} className="lp-progress-fill" style={{ transform: 'scaleX(0)' }} />
@@ -53,92 +118,146 @@ function ProgressBar({ scrollEl }) {
   )
 }
 
-/* ── Marquee ───────────────────────────────────────────────── */
-const MARQUEE_ITEMS = ['Task Tracker','Habit Builder','Goal Setting','Focus Mode','Streak Tracking','Aura System','Deep Work','Daily Rituals']
-function Marquee() {
-  const items = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS]
+/* ── Product window frame ──────────────────────────────────── */
+function ProductFrame({ image, alt, glow = 'var(--brand-primary)' }) {
   return (
-    <div style={{ overflow:'hidden', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)', padding:'14px 0', background:'var(--bg-surface)' }}>
-      <div className="lp-marquee-inner" style={{ whiteSpace:'nowrap' }}>
-        {items.map((item, i) => (
-          <span key={i} style={{ display:'inline-flex', alignItems:'center', gap:24, padding:'0 32px', fontSize:12, fontFamily:'var(--font-mono)', fontWeight:500, letterSpacing:'0.12em', color:'var(--text-secondary)', textTransform:'uppercase' }}>
-            <span style={{ width:4, height:4, borderRadius:'50%', background:'var(--brand-primary)', display:'inline-block', flexShrink:0 }} />
-            {item}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-/* ── Data ──────────────────────────────────────────────────── */
-const FEATURES = [
-  { icon: CheckSquare, color: 'var(--cyan)',    title: 'Task Tracker',  desc: 'Capture, organize, and crush your daily tasks with Kanban & list views.',      image: '/TaskTracker.png'  },
-  { icon: Activity,   color: 'var(--amber)',   title: 'Habit Tracker', desc: 'Build unbreakable chains. Track streaks, completion rates, and momentum.',       image: '/Habit-Tracker.png'},
-  { icon: Target,     color: 'var(--green)',   title: 'Goals',         desc: 'Set ambitious goals, link habits and tasks, watch your progress compound.',       image: '/Goals.png'        },
-  { icon: Flame,      color: 'var(--red)',     title: 'Fapless Mode',  desc: 'Take back control. Track your streak, level up your aura, stay accountable.',     image: '/fapless.png'      },
-]
-
-const STATS = [
-  { value: '4',    label: 'Core Modules',   icon: Zap,      color: 'var(--cyan)'   },
-  { value: '∞',   label: 'Daily Habits',   icon: Activity,  color: 'var(--amber)'  },
-  { value: '100%',label: 'Open Source',    icon: Shield,    color: 'var(--green)'  },
-  { value: '0',   label: 'Distractions',   icon: BarChart2, color: 'var(--purple)' },
-]
-
-const HOW_STEPS = [
-  { num:'01', title:'Sign up free',       desc:'Create your account in under 30 seconds. No credit card.' },
-  { num:'02', title:'Set your intentions',desc:'Add tasks, habits, and long-term goals that matter to you.' },
-  { num:'03', title:'Build your rituals', desc:'Track daily, stay consistent, and watch your aura grow.'  },
-]
-
-/* ── Feature Card ──────────────────────────────────────────── */
-function FeatureCard({ feature, index }) {
-  const ref = useRef(null)
-  const Icon = feature.icon
-  useEffect(() => {
-    gsap.fromTo(ref.current,
-      { opacity:0, y:50 },
-      { opacity:1, y:0, duration:0.7, ease:'power3.out', delay: index * 0.1,
-        scrollTrigger: { trigger: ref.current, start:'top 85%' } })
-  }, [index])
-  return (
-    <div ref={ref} className="lp-card" style={{ overflow:'hidden', opacity:0 }}>
-      <div style={{ height:200, overflow:'hidden', position:'relative', borderBottom:'1px solid var(--border)' }}>
-        <img src={feature.image} alt={feature.title} style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'top', transition:'transform 0.6s var(--ease-out-expo)' }}
-          onMouseEnter={e => gsap.to(e.target, { scale:1.06, duration:0.6, ease:'power2.out' })}
-          onMouseLeave={e => gsap.to(e.target, { scale:1, duration:0.6, ease:'power2.out' })} />
-        <div style={{ position:'absolute', inset:0, background:`linear-gradient(to bottom, transparent 50%, ${feature.color}18)` }} />
-      </div>
-      <div style={{ padding:'22px 24px 26px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
-          <div style={{ width:36, height:36, borderRadius:10, background:feature.color+'18', display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <Icon size={17} style={{ color:feature.color }} />
-          </div>
-          <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:15, letterSpacing:'0.01em' }}>{feature.title}</span>
+    <div style={{ position: 'relative', maxWidth: 980, margin: '0 auto', width: '100%' }}>
+      {/* ambient glow */}
+      <div aria-hidden style={{
+        position: 'absolute', inset: '-8% -12%',
+        background: `radial-gradient(ellipse at center, ${glow}26 0%, transparent 65%)`,
+        filter: 'blur(20px)', zIndex: 0,
+      }} />
+      <div style={{
+        position: 'relative', zIndex: 1,
+        borderRadius: '20px',
+        border: '1px solid var(--border-bright)',
+        background: 'var(--bg-elevated)',
+        boxShadow: '0 40px 100px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04) inset',
+        overflow: 'hidden',
+      }}>
+        {/* window chrome */}
+        <div style={{
+          height: 40, display: 'flex', alignItems: 'center', gap: 8,
+          padding: '0 16px', background: 'var(--bg-surface)',
+          borderBottom: '1px solid var(--border)', flexShrink: 0,
+        }}>
+          <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#ff5f57' }} />
+          <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#febc2e' }} />
+          <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#28c840' }} />
+          <span style={{
+            marginLeft: 12, fontSize: 12, color: 'var(--text-muted)',
+            fontFamily: 'var(--font-body)', letterSpacing: '0.02em',
+          }}>MindForm</span>
         </div>
-        <p style={{ fontSize:13.5, color:'var(--text-secondary)', lineHeight:1.65, fontFamily:'var(--font-body)' }}>{feature.desc}</p>
+        <img
+          src={image}
+          alt={alt}
+          loading="lazy"
+          onError={(e) => { e.currentTarget.style.display = 'none' }}
+          style={{ width: '100%', display: 'block', aspectRatio: '16 / 9.6', objectFit: 'cover', objectPosition: 'top' }}
+        />
       </div>
     </div>
   )
 }
 
-/* ── How Step ──────────────────────────────────────────────── */
-function HowStep({ step, index }) {
+/* ── Scene (scroll storytelling section) ───────────────────── */
+function Scene({ scene, index }) {
+  const wrapRef = useRef(null)
+  const textRef = useRef(null)
+  const imgRef  = useRef(null)
+  const Icon = scene.icon
+  const flip = index % 2 === 1
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(textRef.current,
+        { opacity: 0, y: 56 },
+        { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out',
+          scrollTrigger: { trigger: wrapRef.current, start: 'top 76%' } })
+      gsap.fromTo(imgRef.current,
+        { opacity: 0, y: 72, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 1.1, ease: 'power3.out',
+          scrollTrigger: { trigger: wrapRef.current, start: 'top 74%' } })
+    })
+    return () => ctx.revert()
+  }, [])
+
+  return (
+    <section ref={wrapRef} style={{
+      padding: '110px clamp(20px,5vw,80px)',
+      maxWidth: 1200, margin: '0 auto',
+      display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(420px, 100%), 1fr))',
+      gap: 'clamp(32px, 6vw, 88px)', alignItems: 'center',
+    }}>
+      {/* Text */}
+      <div ref={textRef} style={{ opacity: 0, order: flip ? 2 : 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: 12,
+            background: `color-mix(in srgb, ${scene.color} 14%, transparent)`,
+            border: `1px solid color-mix(in srgb, ${scene.color} 30%, transparent)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Icon size={19} style={{ color: scene.color }} />
+          </div>
+          <span style={{
+            fontSize: 14, fontWeight: 600, letterSpacing: '0.04em',
+            color: scene.color, textTransform: 'uppercase',
+          }}>{scene.tag}</span>
+        </div>
+        <h2 className="lp-h2" style={{ whiteSpace: 'pre-line', marginBottom: 20 }}>
+          {scene.title}
+        </h2>
+        <p className="lp-body" style={{ maxWidth: 460, marginBottom: 26 }}>{scene.desc}</p>
+        <span className="lp-link">Learn more <ChevronRight size={16} /></span>
+      </div>
+
+      {/* Image */}
+      <div ref={imgRef} style={{ opacity: 0, order: flip ? 1 : 2 }}>
+        <div style={{
+          borderRadius: '18px', overflow: 'hidden',
+          border: '1px solid var(--border-bright)',
+          boxShadow: 'var(--shadow-xl)',
+          background: 'var(--bg-elevated)',
+          transform: `perspective(1400px) rotateY(${flip ? -4 : 4}deg) rotateX(1.5deg)`,
+        }}>
+          <img
+            src={scene.image}
+            alt={scene.tag}
+            loading="lazy"
+            onError={(e) => { e.currentTarget.style.display = 'none' }}
+            style={{ width: '100%', display: 'block', aspectRatio: '16/10.6', objectFit: 'cover', objectPosition: 'top' }}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ── Stat counter ──────────────────────────────────────────── */
+function Stat({ stat }) {
   const ref = useRef(null)
   useEffect(() => {
-    gsap.fromTo(ref.current,
-      { opacity:0, x: index % 2 === 0 ? -40 : 40 },
-      { opacity:1, x:0, duration:0.7, ease:'power3.out',
-        scrollTrigger: { trigger: ref.current, start:'top 85%' } })
-  }, [index])
+    const el = ref.current
+    if (!el) return
+    const ctx = gsap.context(() => {
+      const obj = { v: 0 }
+      gsap.to(obj, {
+        v: stat.value, duration: 1.4, ease: 'power2.out',
+        scrollTrigger: { trigger: el, start: 'top 88%' },
+        onUpdate: () => { el.textContent = Math.round(obj.v).toString() },
+      })
+    })
+    return () => ctx.revert()
+  }, [stat.value])
   return (
-    <div ref={ref} style={{ display:'flex', gap:24, alignItems:'flex-start', opacity:0 }}>
-      <div style={{ fontSize:'clamp(2.5rem,5vw,4rem)', fontFamily:'var(--font-display)', fontWeight:800, color:'var(--brand-primary-glow)', lineHeight:1, flexShrink:0, minWidth:64 }}>{step.num}</div>
-      <div style={{ paddingTop:8 }}>
-        <h3 style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:'clamp(1.1rem,2vw,1.35rem)', marginBottom:8, letterSpacing:'-0.01em' }}>{step.title}</h3>
-        <p style={{ fontSize:14.5, color:'var(--text-secondary)', lineHeight:1.7, fontFamily:'var(--font-body)' }}>{step.desc}</p>
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ fontSize: 'clamp(2.4rem,4.5vw,3.6rem)', fontFamily: 'var(--font-display)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1, color: 'var(--text-primary)' }}>
+        <span ref={ref}>0</span><span style={{ fontSize: '0.55em', color: 'var(--text-secondary)', fontWeight: 600 }}>{stat.suffix}</span>
       </div>
+      <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 10, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>{stat.label}</div>
     </div>
   )
 }
@@ -146,258 +265,321 @@ function HowStep({ step, index }) {
 /* ── Main Landing Page ─────────────────────────────────────── */
 export default function LandingPage({ onGetStarted, theme, setTheme }) {
   const [mobileMenu, setMobileMenu] = useState(false)
-  const [scrolled, setScrolled]     = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const scrollRef = useRef(null)
-  const heroRef   = useRef(null)
-  const heroTitle = useRef(null)
-  const heroSub   = useRef(null)
-  const heroCta   = useRef(null)
-  const lenisRef  = useRef(null)
+  const heroImgRef = useRef(null)
+  const heroTextRef = useRef(null)
+  const lenisRef = useRef(null)
 
-  /* ── Lenis smooth scroll ─── */
+  /* ── Native window scroll + Lenis (window mode) ─── */
   useEffect(() => {
-    const el = scrollRef.current
-    if (!el) return
-    const lenis = new Lenis({ wrapper: el, content: el, lerp: 0.09, smoothWheel: true })
+    // the app shell hides body overflow — landing needs native viewport scrolling.
+    // html overflow must stay 'visible' so body overflow propagates to the viewport.
+    document.body.style.overflow = 'auto'
+    const lenis = new Lenis({ lerp: 0.095, smoothWheel: true })
     lenisRef.current = lenis
-    const raf = (time) => { lenis.raf(time); requestAnimationFrame(raf) }
-    requestAnimationFrame(raf)
-    lenis.on('scroll', ({ scroll, limit }) => {
-      setScrolled(scroll > 30)
-      ScrollTrigger.update()
-    })
-    ScrollTrigger.scrollerProxy(el, {
-      scrollTop(v) { return arguments.length ? lenis.scrollTo(v, { immediate:true }) : el.scrollTop },
-      getBoundingClientRect() { return { top:0, left:0, width:window.innerWidth, height:window.innerHeight } },
-    })
-    ScrollTrigger.defaults({ scroller: el })
-    return () => { lenis.destroy(); ScrollTrigger.killAll() }
+    window.__lenis = lenis // exposed for e2e tooling / debugging
+    let raf = 0
+    const loop = (time) => { lenis.raf(time); raf = requestAnimationFrame(loop) }
+    raf = requestAnimationFrame(loop)
+    const onLenisScroll = () => setScrolled(window.scrollY > 24)
+    lenis.on('scroll', onLenisScroll)
+    // recalc triggers once fonts/images settle
+    const t1 = setTimeout(() => ScrollTrigger.refresh(), 300)
+    const t2 = setTimeout(() => ScrollTrigger.refresh(), 1200)
+    return () => {
+      cancelAnimationFrame(raf)
+      lenis.destroy()
+      clearTimeout(t1); clearTimeout(t2)
+      document.body.style.overflow = 'hidden'
+      ScrollTrigger.getAll().forEach(st => st.kill())
+    }
   }, [])
 
-  /* ── GSAP hero animations ─── */
+  /* ── Hero entrance: masked line reveal (Apple keynote) ─── */
   useEffect(() => {
-    if (!heroTitle.current) return
-    const tl = gsap.timeline({ delay: 0.2 })
-
-    // Split hero title into chars
-    const split = new SplitText(heroTitle.current, { type:'chars,words' })
-    tl.fromTo(split.chars,
-      { opacity:0, y:60, rotateX:-40 },
-      { opacity:1, y:0, rotateX:0, duration:0.8, ease:'power4.out', stagger:0.022 })
-      .fromTo(heroSub.current,
-        { opacity:0, y:30 },
-        { opacity:1, y:0, duration:0.6, ease:'power3.out' }, '-=0.4')
-      .fromTo(heroCta.current,
-        { opacity:0, y:20 },
-        { opacity:1, y:0, duration:0.5, ease:'power2.out' }, '-=0.3')
-
-    return () => { split.revert(); tl.kill() }
+    if (!heroTextRef.current) return
+    const lines = heroTextRef.current.querySelectorAll('.lp-line-mask > span')
+    const pill = heroTextRef.current.querySelector('.lp-pill')
+    const tl = gsap.timeline({ delay: 0.15 })
+    tl.fromTo(pill, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' })
+    tl.fromTo(lines,
+      { yPercent: 110, opacity: 0 },
+      { yPercent: 0, opacity: 1, duration: 1.05, ease: 'power4.out', stagger: 0.12 }, '-=0.35')
+    tl.fromTo(heroImgRef.current,
+      { opacity: 0, y: 90, scale: 0.965 },
+      { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: 'power3.out' }, '-=0.55')
+    return () => tl.kill()
   }, [])
 
-  /* ── GSAP stats counter ─── */
+  /* ── Hero product parallax out ─── */
   useEffect(() => {
-    const els = document.querySelectorAll('.lp-stat-num')
-    els.forEach(el => {
-      ScrollTrigger.create({
-        trigger: el,
-        start: 'top 85%',
-        onEnter: () => gsap.fromTo(el, { opacity:0, y:20 }, { opacity:1, y:0, duration:0.5, ease:'power3.out' }),
+    if (!heroImgRef.current) return
+    const ctx = gsap.context(() => {
+      gsap.to(heroImgRef.current, {
+        y: -70, scale: 0.97, opacity: 0.35, ease: 'none',
+        scrollTrigger: { trigger: heroImgRef.current, start: 'top 40%', end: 'bottom 20%', scrub: 0.6 },
       })
     })
+    return () => ctx.revert()
   }, [])
+
+  const goTo = useCallback((id) => {
+    const node = document.getElementById(id)
+    if (node && lenisRef.current) lenisRef.current.scrollTo(node, { offset: -64, duration: 1.2 })
+    else if (node) node.scrollIntoView({ behavior: 'smooth' })
+    setMobileMenu(false)
+  }, [])
+
+  const NAV_LINKS = [
+    { label: 'Overview', id: 'lp-overview' },
+    { label: 'Features', id: 'lp-scenes' },
+    { label: 'Privacy', id: 'lp-privacy' },
+  ]
 
   return (
     <div
       ref={scrollRef}
-      style={{ height:'100vh', width:'100vw', overflowY:'auto', overflowX:'hidden', background:'var(--bg-base)', position:'relative' }}
+      style={{ width: '100%', minHeight: '100vh', background: 'var(--bg-base)', position: 'relative' }}
     >
-      {/* WebGL Background */}
-      <WebGLBackground theme={theme} />
+      <ProgressBar />
 
-      {/* Custom cursor */}
-      <Cursor />
-
-      {/* Progress bar */}
-      <ProgressBar scrollEl={scrollRef.current} />
-
-      {/* ── Navbar ────────────────────────────────────────── */}
+      {/* ── Nav ────────────────────────────────────────────── */}
       <nav style={{
-        position:'sticky', top:0, zIndex:100,
-        display:'flex', alignItems:'center', justifyContent:'space-between',
-        padding:'0 clamp(16px,3vw,40px)', height:68, gap:12,
+        position: 'sticky', top: 0, zIndex: 100,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 clamp(20px,4vw,44px)', height: 'var(--nav-height)', gap: 12,
         background: scrolled ? 'var(--bg-overlay)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(20px)' : 'none',
+        backdropFilter: scrolled ? 'saturate(180%) blur(20px)' : 'none',
+        WebkitBackdropFilter: scrolled ? 'saturate(180%) blur(20px)' : 'none',
         borderBottom: scrolled ? '1px solid var(--border)' : '1px solid transparent',
-        transition:'all 0.4s var(--ease-out-expo)',
+        transition: 'all 0.4s var(--ease-out-expo)',
       }}>
-        {/* Logo */}
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <img src="/logo.png" alt="MindForm" style={{ width:30, height:30, borderRadius:8, objectFit:'contain' }} />
-          <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:16, letterSpacing:'0.06em' }}>MIND FORM</span>
-        </div>
+        <button onClick={() => goTo('lp-top')} style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'none' }}>
+          <img src="/logo.png" alt="MindForm" style={{ width: 26, height: 26, borderRadius: 7, objectFit: 'contain' }} />
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 17, letterSpacing: '-0.01em' }}>MindForm</span>
+        </button>
 
-        {/* Desktop nav links */}
-        <div className="hide-xs" style={{ display:'flex', alignItems:'center', gap:32 }}>
-          {['Features','How it Works','Open Source'].map(label => (
-            <button key={label}
-              onClick={() => document.getElementById('lp-'+label.toLowerCase().replace(/ /g,'-'))?.scrollIntoView({ behavior:'smooth' })}
-              style={{ background:'none', color:'var(--text-secondary)', fontSize:13.5, fontWeight:500, fontFamily:'var(--font-body)', letterSpacing:'0.01em', transition:'color 0.2s' }}
-              onMouseEnter={e => e.currentTarget.style.color='var(--text-primary)'}
-              onMouseLeave={e => e.currentTarget.style.color='var(--text-secondary)'}
+        <div className="hide-xs" style={{ display: 'flex', alignItems: 'center', gap: 34 }}>
+          {NAV_LINKS.map(({ label, id }) => (
+            <button key={id} onClick={() => goTo(id)}
+              style={{ background: 'none', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, fontFamily: 'var(--font-body)', transition: 'color 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
             >{label}</button>
           ))}
         </div>
 
-        {/* Right controls */}
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             aria-label="Toggle theme"
             onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-            style={{ background:'var(--bg-glass)', border:'1px solid var(--border)', borderRadius:10, padding:9, color:'var(--text-secondary)', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s' }}
-            onMouseEnter={e => { e.currentTarget.style.background='var(--bg-glass-hover)'; e.currentTarget.style.color='var(--text-primary)' }}
-            onMouseLeave={e => { e.currentTarget.style.background='var(--bg-glass)'; e.currentTarget.style.color='var(--text-secondary)' }}
+            style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: '50%', width: 34, height: 34, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)' }}
           >
-            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
           </button>
-          <button className="lp-btn-primary" onClick={onGetStarted} style={{ padding:'9px 20px', fontSize:13.5, borderRadius:10 }}>
-            Sign In <ArrowRight size={14} />
+          <button className="lp-btn-primary" onClick={onGetStarted} style={{ padding: '8px 20px', fontSize: 14, minHeight: 34 }}>
+            Sign in
           </button>
-          <button className="hide-xs" onClick={() => setMobileMenu(v => !v)} style={{ display:'none', background:'none', color:'var(--text-primary)', padding:6 }}>
-            {mobileMenu ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          {mobileMenu && (
+            <div style={{
+              position: 'absolute', top: 'var(--nav-height)', left: 0, right: 0,
+              background: 'var(--bg-overlay)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)',
+              display: 'flex', flexDirection: 'column', padding: 20, gap: 4,
+            }}>
+              {NAV_LINKS.map(({ label, id }) => (
+                <button key={id} onClick={() => goTo(id)} style={{ background: 'none', textAlign: 'left', padding: '12px 8px', fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', borderRadius: 10 }}>{label}</button>
+              ))}
+            </div>
+          )}
         </div>
       </nav>
 
-      {/* ── Hero ──────────────────────────────────────────── */}
-      <section ref={heroRef} style={{ minHeight:'calc(100vh - 68px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', textAlign:'center', padding:'60px clamp(16px,5vw,80px) 100px', position:'relative' }}>
-        {/* Badge */}
-        <div className="lp-pill" style={{ marginBottom:32 }}>
-          <Zap size={11} fill="currentColor" /> Your personal productivity suite
+      {/* ── Hero ───────────────────────────────────────────── */}
+      <section id="lp-top" style={{
+        minHeight: 'calc(100vh - var(--nav-height))',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'flex-start', textAlign: 'center',
+        padding: 'clamp(64px,10vh,120px) clamp(20px,5vw,80px) 60px',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        {/* Ambient gradient — Apple keynote backdrop */}
+        <div aria-hidden style={{
+          position: 'absolute', top: '-30%', left: '50%', transform: 'translateX(-50%)',
+          width: '140vw', maxWidth: 1600, height: 900,
+          background: 'radial-gradient(ellipse at center, rgba(10,132,255,0.16) 0%, rgba(94,92,230,0.10) 34%, transparent 68%)',
+          filter: 'blur(28px)', pointerEvents: 'none',
+        }} />
+
+        <div ref={heroTextRef} style={{ position: 'relative', zIndex: 1 }}>
+          <div className="lp-pill" style={{ marginBottom: 28, opacity: 0 }} id="lp-hero-pill">
+            <Sparkles size={12} style={{ color: 'var(--brand-primary)' }} />
+            Meet your new discipline engine
+          </div>
+
+          <h1 className="lp-display" style={{ maxWidth: 1000, marginBottom: 24 }}>
+            <span className="lp-line-mask" style={{ display: 'block', overflow: 'hidden' }}><span style={{ display: 'block' }}>MindForm.</span></span>
+            <span className="lp-line-mask" style={{ display: 'block', overflow: 'hidden' }}><span style={{ display: 'block', color: 'var(--text-secondary)' }}>Built for the mind</span></span>
+            <span className="lp-line-mask" style={{ display: 'block', overflow: 'hidden' }}><span style={{ display: 'block', color: 'var(--text-secondary)' }}>you want to live with.</span></span>
+          </h1>
+
+          <p className="lp-body" style={{ maxWidth: 560, margin: '0 auto 40px' }}>
+            Tasks, habits, goals and discipline — one private, focused dashboard
+            that makes consistency feel effortless.
+          </p>
+
+          <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
+            <button className="lp-btn-primary" onClick={onGetStarted}>
+              Get started free <ArrowRight size={16} />
+            </button>
+            <button className="lp-link" onClick={() => goTo('lp-scenes')}>
+              Explore features <ChevronRight size={15} />
+            </button>
+          </div>
         </div>
 
-        {/* Headline */}
-        <h1 ref={heroTitle} className="lp-display" style={{ maxWidth:900, marginBottom:20, perspective:800 }}>
-          Build the mind you<br />
-          <span className="lp-gradient-text">want to live with.</span>
-        </h1>
-
-        {/* Sub */}
-        <p ref={heroSub} className="lp-body" style={{ maxWidth:520, marginBottom:44, opacity:0 }}>
-          Tasks, habits, goals, and self-discipline — all in one deeply focused dashboard. No fluff, no noise, no distractions.
-        </p>
-
-        {/* CTAs */}
-        <div ref={heroCta} style={{ display:'flex', gap:14, flexWrap:'wrap', justifyContent:'center', opacity:0 }}>
-          <button className="lp-btn-primary" onClick={onGetStarted}>
-            Get Started Free <ArrowRight size={16} />
-          </button>
-          <button className="lp-btn-secondary"
-            onClick={() => document.getElementById('lp-features')?.scrollIntoView({ behavior:'smooth' })}>
-            Explore Features
-          </button>
+        {/* Product shot */}
+        <div ref={heroImgRef} style={{ width: '100%', marginTop: 'clamp(48px,8vh,84px)', opacity: 0, position: 'relative', zIndex: 1 }}>
+          <ProductFrame image="/shots/tasks.png" alt="MindForm task tracker" glow="var(--brand-primary)" />
         </div>
-
-        {/* Scroll hint */}
-        <div style={{ position:'absolute', bottom:32, display:'flex', flexDirection:'column', alignItems:'center', gap:6, color:'var(--text-muted)', fontSize:10, letterSpacing:'0.14em', fontFamily:'var(--font-mono)', animation:'lp-scroll-hint 2.2s ease-in-out infinite' }}>
-          <div style={{ width:1, height:40, background:'linear-gradient(to bottom, transparent, var(--brand-primary))' }} />
-          SCROLL
-        </div>
-
-        <style>{`
-          @keyframes lp-scroll-hint {
-            0%,100% { transform:translateY(0); opacity:0.5; }
-            50%      { transform:translateY(8px); opacity:1; }
-          }
-        `}</style>
       </section>
 
-      {/* ── Marquee ───────────────────────────────────────── */}
-      <Marquee />
+      {/* ── Quiet ticker ───────────────────────────────────── */}
+      <div style={{ overflow: 'hidden', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '13px 0', background: 'var(--bg-surface)' }}>
+        <div className="lp-marquee-inner" style={{ whiteSpace: 'nowrap' }}>
+          {Array(2).fill(['Minute-level planning','30-day habit matrix','Week score insights','Goal-linked progress','Identity levels','Auto-deleting chats','CSV export','Dark & light']).flat().map((item, i) => (
+            <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 24, padding: '0 28px', fontSize: 12.5, fontFamily: 'var(--font-body)', fontWeight: 500, letterSpacing: '0.1em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+              <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--brand-primary)', display: 'inline-block', flexShrink: 0 }} />
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
 
-      {/* ── Stats ─────────────────────────────────────────── */}
-      <section style={{ padding:'72px clamp(16px,5vw,80px)', maxWidth:1100, margin:'0 auto' }}>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:24 }}>
-          {STATS.map(({ value, label, icon: Icon, color }) => (
-            <div key={label} className="lp-card" style={{ padding:'28px 24px', textAlign:'center' }}>
-              <Icon size={24} style={{ color, marginBottom:12 }} />
-              <div className="lp-stat-num" style={{ fontSize:'clamp(2.2rem,4vw,3rem)', fontFamily:'var(--font-display)', fontWeight:800, color, letterSpacing:'-0.03em', lineHeight:1, opacity:0 }}>{value}</div>
-              <div style={{ fontSize:12, color:'var(--text-secondary)', letterSpacing:'0.08em', marginTop:8, fontFamily:'var(--font-mono)', textTransform:'uppercase' }}>{label}</div>
-            </div>
+      {/* ── Stats ──────────────────────────────────────────── */}
+      <section id="lp-overview" style={{ padding: '96px clamp(20px,5vw,80px)', maxWidth: 'var(--content-max)', margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 32 }}>
+          {STATS.map((s) => <Stat key={s.label} stat={s} />)}
+        </div>
+      </section>
+
+      {/* ── Ribbon: get to know MindForm ───────────────────── */}
+      <section style={{ padding: '24px clamp(20px,5vw,80px) 96px', maxWidth: 'var(--content-max)', margin: '0 auto' }}>
+        <h2 className="lp-h2" style={{ textAlign: 'center', marginBottom: 56 }}>
+          Get to know MindForm.
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(440px, 100%), 1fr))', gap: 20 }}>
+          {RIBBON.map(({ icon: Icon, color, title, desc }) => (
+            <RibbonCard key={title} icon={Icon} color={color} title={title} desc={desc} />
           ))}
         </div>
       </section>
 
-      {/* ── Features ──────────────────────────────────────── */}
-      <section id="lp-features" style={{ padding:'80px clamp(16px,5vw,80px)', maxWidth:1100, margin:'0 auto' }}>
-        <div style={{ textAlign:'center', marginBottom:64 }}>
-          <div className="lp-pill" style={{ marginBottom:16 }}>What's inside</div>
-          <h2 className="lp-h2">
-            Everything you need.<br />
-            <span style={{ color:'var(--text-secondary)', fontWeight:400 }}>Nothing you don't.</span>
-          </h2>
-          <div className="lp-divider" style={{ margin:'20px auto 0' }} />
+      {/* ── Scenes (storytelling) ──────────────────────────── */}
+      <div id="lp-scenes">
+        {SCENES.map((s, i) => <Scene key={s.id} scene={s} index={i} />)}
+      </div>
+
+      {/* ── Privacy strip ──────────────────────────────────── */}
+      <section id="lp-privacy" style={{ padding: '110px clamp(20px,5vw,80px)', maxWidth: 'var(--content-max)', margin: '0 auto', textAlign: 'center' }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          width: 56, height: 56, borderRadius: 16, marginBottom: 24,
+          background: 'var(--green-dim)', border: '1px solid color-mix(in srgb, var(--green) 30%, transparent)',
+        }}>
+          <Shield size={26} style={{ color: 'var(--green)' }} />
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))', gap:24 }}>
-          {FEATURES.map((f, i) => <FeatureCard key={f.title} feature={f} index={i} />)}
-        </div>
+        <h2 className="lp-h2" style={{ marginBottom: 18 }}>Privacy. Built in<br />from the start.</h2>
+        <p className="lp-body" style={{ maxWidth: 560, margin: '0 auto 8px' }}>
+          Your data stays scoped to your account. AI chats delete themselves every 24 hours,
+          forum posts every 48. Profiles are private until you choose to share your streak.
+        </p>
       </section>
 
-      {/* ── How it works ──────────────────────────────────── */}
-      <section id="lp-how-it-works" style={{ padding:'80px clamp(16px,5vw,80px)', background:'var(--bg-surface)', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)' }}>
-        <div style={{ maxWidth:900, margin:'0 auto', display:'grid', gridTemplateColumns:'1fr 1fr', gap:80, alignItems:'center' }}>
-          <div>
-            <div className="lp-pill" style={{ marginBottom:16 }}>How it works</div>
-            <h2 className="lp-h2" style={{ marginBottom:12 }}>Simple by design,<br />powerful by nature.</h2>
-            <p className="lp-body" style={{ marginBottom:0 }}>MindForm strips away everything unnecessary so you can focus on what matters: building the version of yourself you've always imagined.</p>
-          </div>
-          <div style={{ display:'flex', flexDirection:'column', gap:40 }}>
-            {HOW_STEPS.map((s, i) => <HowStep key={s.num} step={s} index={i} />)}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Open source strip ─────────────────────────────── */}
-      <section id="lp-open-source" style={{ padding:'80px clamp(16px,5vw,80px)', maxWidth:700, margin:'0 auto', textAlign:'center' }}>
-        <div className="lp-pill" style={{ marginBottom:16 }}>Open source</div>
-        <h2 className="lp-h2" style={{ marginBottom:16 }}>Built in public.<br /><span className="lp-gradient-text">Free forever.</span></h2>
-        <p className="lp-body" style={{ marginBottom:36 }}>MindForm is 100% open source. Inspect the code, contribute, or self-host. We believe your productivity tools should be transparent.</p>
-        <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
-          <button className="lp-btn-primary" onClick={onGetStarted}>Start for Free <ArrowRight size={16} /></button>
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="lp-btn-secondary" style={{ textDecoration:'none' }}>
-            ★ GitHub
-          </a>
-        </div>
-      </section>
-
-      {/* ── CTA Banner ────────────────────────────────────── */}
-      <section style={{ padding:'100px clamp(16px,5vw,80px)', textAlign:'center', background:'var(--bg-surface)', borderTop:'1px solid var(--border)' }}>
-        <h2 className="lp-h2" style={{ marginBottom:16, maxWidth:600, margin:'0 auto 16px' }}>
-          Ready to form<br />
-          <span className="lp-gradient-text">your mind?</span>
+      {/* ── CTA finale ─────────────────────────────────────── */}
+      <section style={{
+        padding: '110px clamp(20px,5vw,80px)', textAlign: 'center',
+        background: 'var(--bg-surface)', borderTop: '1px solid var(--border)',
+      }}>
+        <h2 className="lp-h2" style={{ maxWidth: 700, margin: '0 auto 18px' }}>
+          The best time to start<br />was today. <span className="lp-gradient-text">The second best is now.</span>
         </h2>
-        <p className="lp-body" style={{ marginBottom:40 }}>Join and start building better habits, one day at a time.</p>
-        <button className="lp-btn-primary" onClick={onGetStarted} style={{ padding:'18px 52px', fontSize:17 }}>
-          Start Now — It's Free <ArrowRight size={18} />
+        <p className="lp-body" style={{ marginBottom: 40 }}>Free forever. No credit card. No noise.</p>
+        <button className="lp-btn-primary" onClick={onGetStarted} style={{ padding: '17px 46px', fontSize: 17 }}>
+          Start now — it’s free <ArrowRight size={17} />
         </button>
       </section>
 
-      {/* ── Footer ────────────────────────────────────────── */}
-      <footer style={{ padding:'28px clamp(16px,3vw,40px)', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12, borderTop:'1px solid var(--border)' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <img src="/logo.png" alt="MindForm" style={{ width:24, height:24, borderRadius:6, objectFit:'contain' }} />
-          <span style={{ fontFamily:'var(--font-display)', fontWeight:800, fontSize:13, letterSpacing:'0.07em' }}>MIND FORM</span>
-        </div>
-        <span style={{ fontSize:12, color:'var(--text-muted)', fontFamily:'var(--font-body)' }}>
-          © 2025 MindForm. All rights reserved.
-        </span>
-        <div style={{ fontSize:12, color:'var(--text-muted)', fontFamily:'var(--font-body)' }}>
-          Already have an account?{' '}
-          <button onClick={onGetStarted} style={{ background:'none', color:'var(--brand-primary)', fontWeight:600, fontSize:12, cursor:'pointer', fontFamily:'var(--font-body)', borderBottom:'1px solid var(--brand-primary-glow)' }}>
-            Sign in →
-          </button>
+      {/* ── Footer — apple.com style ───────────────────────── */}
+      <footer style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '40px clamp(20px,5vw,80px) 32px' }}>
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+            gap: 28, paddingBottom: 32, borderBottom: '1px solid var(--border)',
+          }}>
+            {FOOTER_COLS.map((col) => (
+              <div key={col.title}>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>{col.title}</div>
+                {col.links.map((l) => (
+                  <div key={l} style={{ fontSize: 12.5, color: 'var(--text-muted)', padding: '4px 0', cursor: 'pointer', transition: 'color 0.2s' }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                    onClick={l === 'Task Tracker' || l === 'Habit Tracker' || l === 'Goals' || l === 'Fapless' ? onGetStarted : undefined}
+                  >{l}</div>
+                ))}
+              </div>
+            ))}
+            <div>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>Get started</div>
+              <div style={{ fontSize: 12.5, color: 'var(--text-muted)', padding: '4px 0' }}>Free forever</div>
+              <button className="lp-btn-primary" onClick={onGetStarted} style={{ marginTop: 12, padding: '8px 18px', fontSize: 13 }}>
+                Sign in <ArrowRight size={13} />
+              </button>
+            </div>
+          </div>
+
+          <div style={{ paddingTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <img src="/logo.png" alt="MindForm" style={{ width: 20, height: 20, borderRadius: 5, objectFit: 'contain' }} />
+              <span style={{ fontSize: 12.5, color: 'var(--text-muted)', fontFamily: 'var(--font-body)' }}>
+                © 2026 MindForm. All rights reserved.
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
+              {['Privacy Policy', 'Terms of Use', 'Open Source'].map((l) => (
+                <span key={l} style={{ fontSize: 12.5, color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                >{l}</span>
+              ))}
+              <button onClick={onGetStarted} style={{ background: 'none', color: 'var(--brand-primary)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+                Sign in →
+              </button>
+            </div>
+          </div>
         </div>
       </footer>
+    </div>
+  )
+}
+
+/* ── Ribbon card ───────────────────────────────────────────── */
+function RibbonCard({ icon: Icon, color, title, desc }) {
+  const ref = useReveal()
+  return (
+    <div ref={ref} className="lp-card" style={{ padding: '30px 30px 32px', opacity: 0 }}>
+      <div style={{
+        width: 44, height: 44, borderRadius: 13, marginBottom: 18,
+        background: `color-mix(in srgb, ${color} 14%, transparent)`,
+        border: `1px solid color-mix(in srgb, ${color} 28%, transparent)`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Icon size={20} style={{ color }} />
+      </div>
+      <div className="lp-h3" style={{ marginBottom: 8 }}>{title}</div>
+      <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.6, fontFamily: 'var(--font-body)' }}>{desc}</p>
     </div>
   )
 }

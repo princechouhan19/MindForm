@@ -92,51 +92,86 @@ function saveChat(msgs) {
 function MdText({ text }) {
   const parseInline = (str) => {
     if (!str) return null
-    const parts = str.split(/(\*\*[^*]+\*\*)/g)
+    const parts = str.split(/(\*\*[^*]+\*\*|`[^`]+`)/g)
     return parts.map((p, i) => {
       if (p.startsWith('**') && p.endsWith('**')) {
         return <strong key={i} style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{p.slice(2, -2)}</strong>
+      }
+      if (p.startsWith('`') && p.endsWith('`') && p.length > 2) {
+        return <code key={i} style={{
+          fontFamily: 'var(--font-mono)', fontSize: 12.5,
+          background: 'var(--bg-glass)', border: '1px solid var(--border)',
+          borderRadius: 6, padding: '1px 6px', color: 'var(--text-primary)',
+        }}>{p.slice(1, -1)}</code>
       }
       return p
     })
   }
 
   const lines = text.split('\n')
-  return (
-    <div style={{ lineHeight: 1.6, fontSize: 14, color: 'var(--text-secondary)' }}>
-      {lines.map((ln, i) => {
-        const trimmed = ln.trim()
-        if (trimmed.startsWith('```')) return null
-        
-        // Headings
-        if (trimmed.startsWith('### ')) return <div key={i} style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', margin: '14px 0 6px' }}>{parseInline(trimmed.slice(4))}</div>
-        if (trimmed.startsWith('## '))  return <div key={i} style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', margin: '16px 0 8px' }}>{parseInline(trimmed.slice(3))}</div>
-        if (trimmed.startsWith('# '))   return <div key={i} style={{ fontWeight: 800, fontSize: 20, color: 'var(--text-primary)', margin: '18px 0 10px' }}>{parseInline(trimmed.slice(2))}</div>
-        
-        // Lists
-        if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ')) {
-          return <div key={i} style={{ display: 'flex', gap: 8, paddingLeft: 4, margin: '4px 0' }}>
-            <span style={{ color: 'var(--cyan)', fontWeight: 700 }}>•</span>
-            <div style={{ flex: 1 }}>{parseInline(trimmed.slice(2))}</div>
-          </div>
-        }
-        
-        // Numbered
-        const numMatch = trimmed.match(/^(\d+\.)\s+(.*)/)
-        if (numMatch) {
-          return <div key={i} style={{ display: 'flex', gap: 8, paddingLeft: 4, margin: '8px 0 4px' }}>
-            <span style={{ color: 'var(--cyan)', fontWeight: 800, fontFamily: 'var(--font-mono)', fontSize: 13 }}>{numMatch[1]}</span>
-            <div style={{ flex: 1, color: 'var(--text-primary)', fontWeight: 600 }}>{parseInline(numMatch[2])}</div>
-          </div>
-        }
-
-        // Normal text
-        return (
-          <div key={i} style={{ margin: trimmed === '' ? '8px 0' : '4px 0', minHeight: trimmed === '' ? 10 : 'auto' }}>
-            {parseInline(ln)}
-          </div>
+  const blocks = []
+  let codeBuffer = null
+  lines.forEach((ln, i) => {
+    const trimmed = ln.trim()
+    if (trimmed.startsWith('```')) {
+      if (codeBuffer) {
+        blocks.push(
+          <pre key={`code-${blocks.length}`} style={{
+            background: 'var(--bg-glass)', border: '1px solid var(--border)',
+            borderRadius: 10, padding: '12px 14px', margin: '10px 0',
+            overflowX: 'auto', fontFamily: 'var(--font-mono)', fontSize: 12.5,
+            color: 'var(--text-primary)', lineHeight: 1.55,
+          }}>{codeBuffer.join('\n')}</pre>
         )
-      })}
+        codeBuffer = null
+      } else {
+        codeBuffer = []
+      }
+      return
+    }
+    if (codeBuffer) { codeBuffer.push(ln); return }
+    blocks.push(<Line key={i} trimmed={trimmed} ln={ln} parseInline={parseInline} />)
+  })
+  if (codeBuffer) {
+    blocks.push(
+      <pre key="code-tail" style={{
+        background: 'var(--bg-glass)', border: '1px solid var(--border)',
+        borderRadius: 10, padding: '12px 14px', margin: '10px 0',
+        overflowX: 'auto', fontFamily: 'var(--font-mono)', fontSize: 12.5,
+        color: 'var(--text-primary)', lineHeight: 1.55,
+      }}>{codeBuffer.join('\n')}</pre>
+    )
+  }
+  return <div style={{ lineHeight: 1.6, fontSize: 14.5, color: 'var(--text-secondary)' }}>{blocks}</div>
+}
+
+function Line({ trimmed, ln, parseInline }) {
+  // Headings
+  if (trimmed.startsWith('### ')) return <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', margin: '14px 0 6px' }}>{parseInline(trimmed.slice(4))}</div>
+  if (trimmed.startsWith('## '))  return <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', margin: '16px 0 8px' }}>{parseInline(trimmed.slice(3))}</div>
+  if (trimmed.startsWith('# '))   return <div style={{ fontWeight: 700, fontSize: 20, color: 'var(--text-primary)', margin: '18px 0 10px' }}>{parseInline(trimmed.slice(2))}</div>
+
+  // Lists
+  if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ')) {
+    return <div style={{ display: 'flex', gap: 8, paddingLeft: 4, margin: '4px 0' }}>
+      <span style={{ color: 'var(--cyan)', fontWeight: 700 }}>•</span>
+      <div style={{ flex: 1 }}>{parseInline(trimmed.slice(2))}</div>
+    </div>
+  }
+
+  // Numbered
+  const numMatch = trimmed.match(/^(\d+\.)\s+(.*)/)
+  if (numMatch) {
+    return <div style={{ display: 'flex', gap: 8, paddingLeft: 4, margin: '8px 0 4px' }}>
+      <span style={{ color: 'var(--cyan)', fontWeight: 700, fontFamily: 'var(--font-mono)', fontSize: 13 }}>{numMatch[1]}</span>
+      <div style={{ flex: 1, color: 'var(--text-primary)', fontWeight: 600 }}>{parseInline(numMatch[2])}</div>
+    </div>
+  }
+
+  // Normal text
+  return (
+    <div style={{ margin: trimmed === '' ? '8px 0' : '4px 0', minHeight: trimmed === '' ? 10 : 'auto' }}>
+      {parseInline(ln)}
     </div>
   )
 }
@@ -175,7 +210,7 @@ function CustomSelect({ value, options, onChange, placeholder }) {
               width: '100%', padding: '10px 14px', border: 'none', background: value === o.id ? 'var(--cyan-dim)' : 'transparent',
               color: value === o.id ? 'var(--cyan)' : 'var(--text-secondary)', fontSize: 13, textAlign: 'left',
               cursor: 'pointer', transition: 'all 0.15s',
-            }} onMouseEnter={e => { if (value !== o.id) e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }} onMouseLeave={e => { if (value !== o.id) e.currentTarget.style.background = 'transparent' }}>
+            }} onMouseEnter={e => { if (value !== o.id) e.currentTarget.style.background = 'var(--border)' }} onMouseLeave={e => { if (value !== o.id) e.currentTarget.style.background = 'transparent' }}>
               {o.label}
             </button>
           ))}
@@ -192,6 +227,13 @@ function AISettings({ config, onSave, onClose }) {
   // Per-provider keys: load saved keys and pre-fill for the current provider
   const [allKeys,  setAllKeys]  = useState(loadKeys)
   const [showKey,  setShowKey]  = useState(false)
+
+  // ESC closes the settings sheet (accessibility)
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
 
   const prov   = PROVIDERS.find(p => p.id === provider)
   const apiKey = allKeys[provider] || ''
@@ -326,7 +368,7 @@ function Bubble({ msg }) {
   return (
     <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', justifyContent: isUser ? 'flex-end' : 'flex-start', marginBottom: 16 }}>
       {!isUser && (
-        <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, var(--cyan-dim), rgba(167,139,250,0.2))', border: '1px solid var(--border-bright)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+        <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, var(--cyan-dim), var(--purple-dim))', border: '1px solid var(--border-bright)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
           <Bot size={14} color="var(--cyan)" />
         </div>
       )}
@@ -397,7 +439,7 @@ export default function AIChatView() {
     setLoading(true)
 
     try {
-      const token = localStorage.getItem('prince_token')
+      const token = localStorage.getItem('mf_token') || localStorage.getItem('prince_token')
       const res = await fetch(`${BASE_URL}/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -408,12 +450,12 @@ export default function AIChatView() {
           messages: updated.map(({ role, content }) => ({ role, content })),
         }),
       })
-      const data = await res.json()
-      if (!res.ok || !data.success) {
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data?.success) {
         // If auth error, we can specifically flag it
-        const isAuthError = res.status === 401 || data.message?.toLowerCase().includes('api key')
+        const isAuthError = res.status === 401 || data?.message?.toLowerCase().includes('api key')
         setError({
-          message: data.message || 'AI request failed',
+          message: data?.message || (res.status === 401 ? 'Your session expired — sign in again.' : 'AI request failed'),
           isAuth: isAuthError
         })
         return
@@ -493,7 +535,7 @@ export default function AIChatView() {
             </div>
 
             {!isReady && (
-              <div style={{ background: 'rgba(255,183,0,0.08)', border: '1px solid rgba(255,183,0,0.25)', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, maxWidth: 380 }}>
+              <div style={{ background: 'var(--amber-dim)', border: '1px solid var(--amber-glow)', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, maxWidth: 380 }}>
                 <AlertCircle size={16} color="var(--amber)" style={{ flexShrink: 0 }} />
                 <div style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'left' }}>
                   Add your API key to get started. Your key is stored locally and never sent to us.
@@ -530,7 +572,7 @@ export default function AIChatView() {
         {/* Loading */}
         {loading && (
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 16 }}>
-            <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, var(--cyan-dim), rgba(167,139,250,0.2))', border: '1px solid var(--border-bright)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, var(--cyan-dim), var(--purple-dim))', border: '1px solid var(--border-bright)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Bot size={14} color="var(--cyan)" />
             </div>
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '18px 18px 18px 4px', padding: '14px 18px', display: 'flex', gap: 5, alignItems: 'center' }}>
@@ -543,7 +585,7 @@ export default function AIChatView() {
 
         {/* Error */}
         {error && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(255,71,87,0.08)', border: '1px solid rgba(255,71,87,0.25)', borderRadius: 12, padding: '14px 18px', marginBottom: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--red-dim)', border: '1px solid var(--red-dim)', borderRadius: 12, padding: '14px 18px', marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <AlertCircle size={14} color="var(--red)" style={{ flexShrink: 0 }} />
               <div style={{ flex: 1, fontSize: 13, color: 'var(--red)', fontWeight: 500 }}>{error.message}</div>
@@ -571,15 +613,21 @@ export default function AIChatView() {
             ref={inputRef}
             className="ai-input"
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={e => {
+              setInput(e.target.value)
+              // auto-grow up to max-height
+              const el = e.target
+              el.style.height = 'auto'
+              el.style.height = Math.min(el.scrollHeight, 120) + 'px'
+            }}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
             placeholder={isReady ? 'Ask anything about your habits, tasks, goals… (Enter to send)' : 'Configure your API key first…'}
             disabled={!isReady || loading}
             rows={1}
             style={{
               flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)',
-              borderRadius: 12, padding: '12px 14px', fontSize: 14,
-              color: 'var(--text-primary)', fontFamily: 'var(--font-display)',
+              borderRadius: 12, padding: '12px 14px', fontSize: 14.5,
+              color: 'var(--text-primary)', fontFamily: 'var(--font-body)',
               resize: 'none', lineHeight: 1.5,
               maxHeight: 120, overflowY: 'auto',
               opacity: isReady ? 1 : 0.5,
@@ -595,7 +643,7 @@ export default function AIChatView() {
                 ? `linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))`
                 : 'var(--bg-glass)',
               border: `1px solid ${isReady && input.trim() ? 'transparent' : 'var(--border)'}`,
-              color: isReady && input.trim() && !loading ? '#000' : 'var(--text-muted)',
+              color: isReady && input.trim() && !loading ? '#fff' : 'var(--text-muted)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: isReady && input.trim() && !loading ? 'pointer' : 'not-allowed',
               transition: 'all 0.2s',

@@ -3,6 +3,8 @@ import {
   User, LogOut, Mail, AtSign, Bell, MapPin, Volume2, ShieldCheck, Sun, Moon
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../components/Toast'
+import { useConfirm } from '../components/ConfirmDialog'
 
 function useIsMobile() {
   const [m, setM] = useState(window.innerWidth <= 768)
@@ -16,6 +18,8 @@ function useIsMobile() {
 
 export default function SettingsView({ theme, setTheme }) {
   const { user, logout } = useAuth()
+  const toast = useToast()
+  const confirmDialog = useConfirm()
   const isMobile = useIsMobile()
 
   const [notifPermission, setNotifPermission] = useState(
@@ -26,26 +30,35 @@ export default function SettingsView({ theme, setTheme }) {
   const [audioStatus, setAudioStatus] = useState('suspended')
 
   useEffect(() => {
+    let status
     if (typeof window !== 'undefined' && navigator.permissions) {
       navigator.permissions.query({ name: 'geolocation' }).then(p => {
+        status = p
         setGeoStatus(p.state)
-        p.onchange = () => setGeoStatus(p.state)
+        const onChange = () => setGeoStatus(p.state)
+        p.addEventListener('change', onChange)
+        status._cleanup = () => p.removeEventListener('change', onChange)
       }).catch(() => {})
     }
+    return () => { if (status?._cleanup) status._cleanup() }
   }, [])
 
   const requestNotif = async () => {
     if (!('Notification' in window)) {
-      alert('Notifications are not supported on this browser.')
+      toast.warning('Notifications are not supported on this browser.')
       return
     }
-    const res = await Notification.requestPermission()
-    setNotifPermission(res)
+    try {
+      const res = await Notification.requestPermission()
+      setNotifPermission(res)
+      if (res === 'granted') toast.success('Notifications enabled.')
+      else if (res === 'denied') toast.error('Notifications blocked — enable them in browser settings.')
+    } catch { toast.error('Could not request notification permission.') }
   }
 
   const requestGeo = () => {
     if (!('geolocation' in navigator)) {
-      alert('Geolocation is not supported by your browser.')
+      toast.warning('Geolocation is not supported by your browser.')
       return
     }
     setGeoStatus('prompting...')
@@ -56,8 +69,9 @@ export default function SettingsView({ theme, setTheme }) {
       },
       (err) => {
         console.warn(err)
-        setGeoStatus('denied')
+        setGeoStatus(err.code === 1 ? 'denied' : 'unavailable')
         setGeoCoords(null)
+        toast.warning(err.code === 1 ? 'Location permission denied.' : 'Location unavailable.')
       }
     )
   }
@@ -75,7 +89,7 @@ export default function SettingsView({ theme, setTheme }) {
         playTestSound(ctx)
       }
     } catch (e) {
-      alert('Web Audio API not supported.')
+      toast.warning('Web Audio API not supported.')
     }
   }
 
@@ -90,9 +104,10 @@ export default function SettingsView({ theme, setTheme }) {
     gain.connect(ctx.destination)
     osc.start()
     osc.stop(ctx.currentTime + 0.4)
+    osc.onended = () => ctx.close().catch(() => {})
   }
 
-  const AccountPanel = () => (
+  const renderAccountPanel = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Profile card */}
       <div style={{
@@ -310,7 +325,7 @@ export default function SettingsView({ theme, setTheme }) {
         <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 16, fontFamily: 'var(--font-display)' }}>Settings</h1>
       </div>
       <div style={{ flex: 1, overflow: 'auto', padding: '16px 16px 80px' }}>
-        <AccountPanel />
+        {renderAccountPanel()}
       </div>
     </div>
   )
@@ -331,7 +346,7 @@ export default function SettingsView({ theme, setTheme }) {
         </div>
 
         <div style={{ maxWidth: 600 }}>
-          <AccountPanel />
+          {renderAccountPanel()}
         </div>
       </main>
     </div>

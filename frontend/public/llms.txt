@@ -1,0 +1,36 @@
+# MindForm
+
+> MindForm is a free, private productivity dashboard for habit tracking, minute-level task planning, long-term goals and discipline streaks — in one Apple-inspired interface.
+
+MindForm is a full-stack productivity ecosystem that helps people build discipline through data-driven habit tracking, task management, goal progression and psychological wellness monitoring. It is 100% free and open source.
+
+## Core modules
+
+- **Task Tracker**: weekly minute-level planner with day-by-day checkboxes, week score, next-task timer, insights, weekly reflection prompts and CSV export.
+- **Habit Tracker**: 30-day habit matrix with streaks, completion rates, daily/weekly charts, mood and motivation tracking (1-10 scale), and CSV export.
+- **Goals**: create career, health, personal or general goals with deadlines, categories, statuses and progress computed from linked tasks and habits.
+- **Fapless**: a discipline streak engine with 10 identity levels (Novice → Legend), milestone bonuses, challenges (30-day, 90-day protocol), relapse history with reasons and aura points.
+- **Social Hub**: opt-in public profiles, a global leaderboard ranked by streak, a follow system and a private community forum where messages auto-delete after 48 hours.
+- **AI Coach**: a chat interface with your data in context. Works with Google Gemini or Mistral models; you bring your own API key, which is stored only in your browser.
+
+## Privacy model
+
+- Tasks, habits and goals are stored privately in your account and scoped to your user ID.
+- AI chat history is automatically deleted every 24 hours.
+- Community forum messages automatically delete after 48 hours (TTL index).
+- Profiles are private by default; you opt in to appear on the leaderboard.
+- Disposable email providers are blocked; bot protection uses honeypots and rate limiting.
+
+## Technology
+
+- Frontend: React 18, Vite, Recharts, GSAP, Lenis smooth scrolling, Lucide icons.
+- Backend: Node.js, Express, JWT auth, Helmet, rate limiting, MongoDB (Mongoose).
+
+## Links
+
+- Live app: https://mindform.onrender.com/
+- Docs and self-hosting: see the repository README.
+
+## Pricing
+
+MindForm is free forever. There are no paid tiers.

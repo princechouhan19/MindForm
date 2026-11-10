@@ -2,13 +2,106 @@
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MindForm — Build the Mind You Want to Live With</title>
-    <meta name="description" content="MindForm is a deeply focused personal productivity suite. Tasks, habits, goals, and self-discipline — all in one elegant dashboard." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- Primary SEO -->
+    <title>MindForm — Habit Tracker, Task Planner & Discipline Dashboard</title>
+    <meta name="description" content="MindForm is a private, focused productivity dashboard: plan tasks to the minute, build unbreakable habit streaks, track long-term goals and grow your discipline — all in one elegant, Apple-inspired workspace." />
+    <meta name="keywords" content="habit tracker, task planner, productivity dashboard, goal tracking, streak tracker, discipline app, daily routine app, focus app" />
+    <meta name="author" content="MindForm" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <link rel="canonical" href="https://mindform.onrender.com/" />
+
+    <!-- GEO / local targeting -->
+    <meta name="geo.region" content="IN" />
+    <meta name="geo.placename" content="India" />
+    <meta name="ICBM" content="20.5937, 78.9629" />
+
+    <!-- Theme & icons -->
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f7" />
     <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MindForm" />
+    <meta property="og:title" content="MindForm — Build the mind you want to live with" />
+    <meta property="og:description" content="Tasks, habits, goals and discipline in one focused dashboard. Private by design, free forever." />
+    <meta property="og:url" content="https://mindform.onrender.com/" />
+    <meta property="og:image" content="https://mindform.onrender.com/TaskTracker.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MindForm — Build the mind you want to live with" />
+    <meta name="twitter:description" content="Tasks, habits, goals and discipline in one focused dashboard. Private by design." />
+    <meta name="twitter:image" content="https://mindform.onrender.com/TaskTracker.png" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&display=swap" rel="stylesheet" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&display=swap" rel="stylesheet" />
+
+    <!-- Structured data: WebApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "MindForm",
+      "url": "https://mindform.onrender.com/",
+      "applicationCategory": "ProductivityApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript",
+      "description": "MindForm is a private productivity dashboard for habit tracking, minute-level task planning, long-term goals and discipline streaks.",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "featureList": [
+        "Minute-level weekly task planner",
+        "30-day habit matrix with streaks",
+        "Goal tracking with linked progress",
+        "Discipline streak engine with levels",
+        "Community leaderboard and forum",
+        "AI coach (bring your own key)"
+      ],
+      "author": { "@type": "Organization", "name": "MindForm" }
+    }
+    </script>
+
+    <!-- Structured data: FAQPage (AEO) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is MindForm?",
+          "acceptedAnswer": { "@type": "Answer", "text": "MindForm is a free, private productivity dashboard that combines minute-level task planning, a 30-day habit matrix, goal tracking with linked progress, and a discipline streak engine — in one Apple-inspired interface." }
+        },
+        {
+          "@type": "Question",
+          "name": "Is MindForm free?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. MindForm is 100% free and open source. You can inspect the code, contribute, or self-host it on your own infrastructure." }
+        },
+        {
+          "@type": "Question",
+          "name": "Does MindForm store my data?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Your tasks, habits and goals are stored privately in your account. AI chat history is automatically deleted every 24 hours and community forum messages every 48 hours. AI keys you provide are stored only in your browser." }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the streak and aura system work?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Every day you keep your discipline streak you earn aura points, level up through identities from Novice to Legend, and can take on challenges like the 30-day or 90-day protocol." }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

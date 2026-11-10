@@ -10,11 +10,11 @@ export function AuthProvider({ children }) {
 
   // Restore session on mount
   useEffect(() => {
-    const token = localStorage.getItem('prince_token')
+    const token = authAPI.getToken()
     if (token) {
       authAPI.me()
         .then(data => setUser(data.user))
-        .catch(() => localStorage.removeItem('prince_token'))
+        .catch(() => authAPI.clearToken())
         .finally(() => setLoading(false))
     } else {
       setLoading(false)
@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
     setError('')
     try {
       const data = await authAPI.login(email, password)
-      localStorage.setItem('prince_token', data.token)
+      authAPI.setToken(data.token)
       setUser(data.user)
       return true
     } catch (err) {
@@ -38,7 +38,7 @@ export function AuthProvider({ children }) {
     setError('')
     try {
       const data = await authAPI.register(name, email, password)
-      localStorage.setItem('prince_token', data.token)
+      authAPI.setToken(data.token)
       setUser(data.user)
       return true
     } catch (err) {
@@ -48,8 +48,9 @@ export function AuthProvider({ children }) {
   }
 
   const logout = () => {
-    localStorage.removeItem('prince_token')
+    authAPI.clearToken()
     setUser(null)
+    setError('') // clear stale errors on sign-out
   }
 
   return (

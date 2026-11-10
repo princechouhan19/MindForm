@@ -5,6 +5,8 @@ import {
   Smartphone, Monitor, Globe, Lock, Play, Calendar, RefreshCw
 } from 'lucide-react'
 import { faplessAPI } from '../api/client'
+import { useToast } from '../components/Toast'
+import { useConfirm } from '../components/ConfirmDialog'
 
 // ─── LEVEL SYSTEM ────────────────────────────────────────────────────────────
 const LEVELS = [
@@ -14,9 +16,9 @@ const LEVELS = [
   { id: 'average',      label: 'Average',            minDays: 14,  maxDays: 29,   auraPerDay: 35,  color: '#6495ed', desc: 'Two weeks. Dopamine receptors are healing.', image: '/levels/average.png' },
   { id: 'advanced',     label: 'Advanced',            minDays: 30,  maxDays: 44,   auraPerDay: 55,  color: '#9370db', desc: '30 days — The infamous "30-day mark". Brain fog is lifting.', image: '/levels/advanced.png' },
   { id: 'sigma',        label: 'Sigma',              minDays: 45,  maxDays: 59,   auraPerDay: 80,  color: '#00bfff', desc: '45 days. Confidence, energy, and clarity are surging.', image: '/levels/sigma.png' },
-  { id: 'chad',         label: 'Chad',               minDays: 60,  maxDays: 89,   auraPerDay: 110, color: '#ffd700', desc: '60 days. People notice the change. You are becoming.', image: '/levels/chad.png' },
-  { id: 'absolute_chad',label: 'Absolute Chad',      minDays: 90,  maxDays: 119,  auraPerDay: 150, color: '#ff8c00', desc: '90-day reboot complete. This is real transformation.', image: '/levels/absolute_chad.png' },
-  { id: 'gigachad',     label: 'Giga Chad',          minDays: 120, maxDays: 364,  auraPerDay: 200, color: '#ff4500', desc: '120+ days. You operate on a different frequency.', image: '/levels/gigachad.png' },
+  { id: 'chad',         label: 'Chad',               minDays: 60,  maxDays: 89,   auraPerDay: 110, color: 'var(--brand-warning)', desc: '60 days. People notice the change. You are becoming.', image: '/levels/chad.png' },
+  { id: 'absolute_chad',label: 'Absolute Chad',      minDays: 90,  maxDays: 119,  auraPerDay: 150, color: 'var(--brand-orange)', desc: '90-day reboot complete. This is real transformation.', image: '/levels/absolute_chad.png' },
+  { id: 'gigachad',     label: 'Giga Chad',          minDays: 120, maxDays: 364,  auraPerDay: 200, color: 'var(--red)', desc: '120+ days. You operate on a different frequency.', image: '/levels/gigachad.png' },
   { id: 'abs_gigachad', label: 'Absolute Giga Chad', minDays: 365, maxDays: Infinity, auraPerDay: 365, color: '#ff00ff', desc: '365 days. You have completely transcended. A new human.', image: '/levels/abs_gigachad.png' },
 ]
 
@@ -140,7 +142,7 @@ const SUGGESTIONS = [
   {
     cat: '🌐 Browser Settings',
     icon: Globe,
-    color: '#ffd700',
+    color: 'var(--brand-warning)',
     items: [
       { name: 'Enable Safe Search', desc: 'Go to Google Settings → Turn on SafeSearch and lock it.' },
       { name: 'Use Family DNS', desc: 'Set DNS to 1.1.1.3 (Cloudflare Family) — blocks adult content at network level.' },
@@ -151,7 +153,7 @@ const SUGGESTIONS = [
   {
     cat: '🔒 System-Level',
     icon: Lock,
-    color: '#ff8c00',
+    color: 'var(--brand-orange)',
     items: [
       { name: 'Hosts file editing', desc: 'Add blocked domains to C:/Windows/System32/drivers/etc/hosts' },
       { name: 'OpenDNS FamilyShield', desc: '208.67.222.123 — free DNS that blocks adult content globally.' },
@@ -174,6 +176,8 @@ function useIsMobile() {
 
 export default function FaplessView() {
   const isMobile = useIsMobile()
+  const toast = useToast()
+  const confirmDialog = useConfirm()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -190,7 +194,7 @@ export default function FaplessView() {
     setLoading(true)
     faplessAPI.get()
       .then(res => setData(res.data))
-      .catch(console.error)
+      .catch(() => toast.error('Could not load your streak. Check your connection and try again.'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -265,17 +269,27 @@ export default function FaplessView() {
 
   // ─── Actions ───────────────────────────────────────────────────────────────
   const handleStart = async () => {
-    if (data?.startDate && !confirm('This will reset your current streak. Start a fresh streak from today?')) return
+    if (data?.startDate) {
+      const ok = await confirmDialog({
+        title: 'Start a fresh streak?',
+        body: 'Your current streak will be reset to zero from today. Milestone history stays.',
+        confirmLabel: 'Reset streak', danger: true,
+      })
+      if (!ok) return
+    }
     setSaving(true)
     try {
       const res = await faplessAPI.start()
       setData(res.data)
+      toast.success('Day 1. Let’s go.')
+    } catch (e) {
+      toast.error(e.message || 'Could not start the streak.')
     } finally { setSaving(false) }
   }
 
   const handleRelapse = async () => {
     if (!relapseReason.trim()) {
-      alert('Please enter a reason — understanding why helps you improve.')
+      toast.warning('Please enter a reason — understanding why helps you improve.')
       return
     }
     setSaving(true)
@@ -289,6 +303,8 @@ export default function FaplessView() {
       setQuoteType(isDemotivational ? 'demotivational' : 'motivational')
       setRelapseReason('')
       setShowRelapse(false)
+    } catch (e) {
+      toast.error(e.message || 'Could not log the relapse.')
     } finally { setSaving(false) }
   }
 
@@ -301,6 +317,9 @@ export default function FaplessView() {
         notes: data?.notes || '',
       })
       setData(res.data)
+      toast.success(id ? 'Challenge activated.' : 'Challenge cleared.')
+    } catch (e) {
+      toast.error(e.message || 'Could not update the challenge.')
     } finally { setSaving(false) }
   }
 
@@ -313,7 +332,7 @@ export default function FaplessView() {
   }
 
   const sectionBtn = (id) => ({
-    background: expandedSection === id ? 'rgba(255,255,255,0.05)' : 'none',
+    background: expandedSection === id ? 'var(--border)' : 'none',
     border: '1px solid ' + (expandedSection === id ? 'var(--border-bright)' : 'var(--border)'),
     borderRadius: 10,
     color: 'var(--text-primary)',
@@ -331,9 +350,9 @@ export default function FaplessView() {
 
   if (loading) return (
     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', gap: 10, flexDirection: 'column' }}>
-      <Flame size={36} color="#ff4500" style={{ animation: 'pulse 1.5s ease infinite' }} />
-      <div style={{ fontSize: 14 }}>Loading Fapless...</div>
-      <style>{`@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.95)} } @keyframes spin { to { transform: rotate(360deg) } } @keyframes glow { 0%,100%{box-shadow:0 0 10px ${currentLevel?.color || '#ff4500'}44} 50%{box-shadow:0 0 30px ${currentLevel?.color || '#ff4500'}88} }`}</style>
+      <Flame size={36} color="var(--red)" style={{ animation: 'pulse 1.5s ease infinite' }} />
+      <div style={{ fontSize: 14 }}>Loading Fapless…</div>
+      <style>{`@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.95)} } @keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   )
 
@@ -351,7 +370,7 @@ export default function FaplessView() {
         <strong style={{ color: 'var(--text-primary)' }}>Start again. Right now.</strong>
       </div>
       <button onClick={() => { setRelapseQuote(''); load() }}
-        style={{ background: 'var(--brand-primary)', border: 'none', borderRadius: 12, color: '#000', padding: '12px 28px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+        style={{ background: 'var(--brand-primary)', border: 'none', borderRadius: 12, color: '#fff', padding: '13px 30px', fontSize: 15, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, minHeight: 48 }}>
         <RefreshCw size={16} /> Start Fresh Journey
       </button>
     </div>
@@ -369,27 +388,34 @@ export default function FaplessView() {
     })
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Shared keyframes — defined here so mobile animations actually run */}
+        <style>{`
+          @keyframes aura-pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.2);opacity:0.8} }
+          @keyframes aura-plus { 0%{opacity:0;transform:translateY(5px)} 20%{opacity:1;transform:translateY(0)} 80%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-5px)} }
+          @keyframes auraFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+          @keyframes glow { 0%,100%{box-shadow:0 0 12px ${currentLevel.color}33} 50%{box-shadow:0 0 32px ${currentLevel.color}55} }
+        `}</style>
         {/* Aura Floating Header */}
         <div style={{
-          position: 'sticky', top: 0, zIndex: 100, background: 'rgba(10,11,15,0.7)', backdropFilter: 'blur(10px)',
-          borderBottom: '1px solid rgba(255,215,0,0.15)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+          position: 'sticky', top: 0, zIndex: 100, background: 'var(--bg-overlay)', backdropFilter: 'blur(10px)',
+          borderBottom: '1px solid var(--border)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Zap size={16} color="#ffd700" fill="#ffd700" style={{ animation: 'aura-pulse 1s ease-in-out infinite' }} />
-            <span style={{ fontSize: 18, fontWeight: 900, fontFamily: 'var(--font-mono)', color: '#ffd700', letterSpacing: '-0.5px' }}>
+            <Zap size={16} color="var(--brand-warning)" fill="var(--brand-warning)" style={{ animation: 'aura-pulse 1s ease-in-out infinite' }} />
+            <span style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--brand-warning)', letterSpacing: '-0.5px' }}>
               {auraPoints.toLocaleString()}
             </span>
-            <span style={{ fontSize: 11, color: 'rgba(255,215,0,0.6)', fontWeight: 700, letterSpacing: '0.05em' }}>AURA</span>
+            <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.05em' }}>AURA</span>
           </div>
           <div style={{
-             fontSize: 10, fontWeight: 800, color: '#ffd700', background: 'rgba(255,215,0,0.1)',
+             fontSize: 10, fontWeight: 700, color: 'var(--brand-warning)', background: 'color-mix(in srgb, var(--brand-warning) 12%, transparent)',
              padding: '4px 10px', borderRadius: 20, animation: 'aura-plus 1s ease-out infinite'
           }}>+{currentLevel.auraPerDay} AURA/DAY</div>
         </div>
 
         {/* Mobile Hero */}
         <div style={{ padding: '14px 14px 0', flexShrink: 0 }}>
-          <div style={{ fontSize: 11, color: '#ff4500', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 4 }}>FAPLESS TRACKER</div>
+          <div style={{ fontSize: 11, color: 'var(--red)', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 4 }}>FAPLESS TRACKER</div>
 
           {/* Main hero card */}
           <div style={{
@@ -402,13 +428,13 @@ export default function FaplessView() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               {/* Level Image */}
               <div style={{ width: 64, height: 64, borderRadius: 12, overflow: 'hidden', border: `2px solid ${currentLevel.color}`, boxShadow: `0 0 10px ${currentLevel.color}33`, flexShrink: 0, background: 'rgba(0,0,0,0.2)' }}>
-                <img src={currentLevel.image} alt={currentLevel.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={currentLevel.image} alt={currentLevel.label} onError={(e) => { e.currentTarget.style.display = 'none' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
 
               {/* Days + time */}
               <div style={{ textAlign: 'center', flexShrink: 0 }}>
                 <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 2 }}>STREAK</div>
-                <div style={{ fontSize: 44, fontWeight: 900, fontFamily: 'var(--font-mono)', color: currentLevel.color, lineHeight: 1, animation: 'auraFloat 4s ease infinite' }}>{streakDays}</div>
+                <div style={{ fontSize: 44, fontWeight: 800, fontFamily: 'var(--font-mono)', color: currentLevel.color, lineHeight: 1, animation: 'auraFloat 4s ease infinite' }}>{streakDays}</div>
                 <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4 }}>days</div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
                   {[
@@ -447,8 +473,8 @@ export default function FaplessView() {
                   </>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
-                  <Zap size={13} color="#ffd700" fill="#ffd700" />
-                  <span style={{ fontSize: 15, fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#ffd700' }}>{auraPoints.toLocaleString()}</span>
+                  <Zap size={13} color="var(--brand-warning)" fill="var(--brand-warning)" />
+                  <span style={{ fontSize: 15, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--brand-warning)' }}>{auraPoints.toLocaleString()}</span>
                   <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>aura</span>
                 </div>
               </div>
@@ -458,15 +484,15 @@ export default function FaplessView() {
           {/* Action buttons */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
             {!data?.startDate ? (
-              <button onClick={handleStart} disabled={saving} style={{ flex: 1, background: 'linear-gradient(135deg, #ff4500, #ff8c00)', border: 'none', borderRadius: 12, color: '#fff', padding: '14px', fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <button onClick={handleStart} disabled={saving} style={{ flex: 1, background: 'linear-gradient(135deg, var(--red), var(--brand-orange))', border: 'none', borderRadius: 12, color: '#fff', padding: '14px', fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                 <Play size={17} /> Start Journey
               </button>
             ) : (
               <>
-                <button onClick={() => setShowRelapse(s => !s)} style={{ flex: 1, background: showRelapse ? 'rgba(255,71,87,0.1)' : 'var(--bg-card)', border: '1px solid rgba(255,71,87,0.35)', borderRadius: 12, color: 'var(--red)', padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                <button onClick={() => setShowRelapse(s => !s)} style={{ flex: 1, background: showRelapse ? 'var(--red-dim)' : 'var(--bg-card)', border: '1px solid var(--red-dim)', borderRadius: 12, color: 'var(--red)', padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
                   <RotateCcw size={15} /> Relapse
                 </button>
-                <button onClick={handleStart} disabled={saving} style={{ flex: 1, background: 'linear-gradient(135deg, #ff4500, #ff8c00)', border: 'none', borderRadius: 12, color: '#fff', padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                <button onClick={handleStart} disabled={saving} style={{ flex: 1, background: 'linear-gradient(135deg, var(--red), var(--brand-orange))', border: 'none', borderRadius: 12, color: '#fff', padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
                   <RefreshCw size={15} /> Reset
                 </button>
               </>
@@ -476,7 +502,7 @@ export default function FaplessView() {
 
         {/* Relapse panel */}
         {showRelapse && (
-          <div style={{ margin: '0 14px', background: 'rgba(255,71,87,0.05)', border: '1px solid rgba(255,71,87,0.3)', borderRadius: 12, padding: '16px', flexShrink: 0 }}>
+          <div style={{ margin: '0 14px', background: 'var(--red-dim)', border: '1px solid var(--red-dim)', borderRadius: 12, padding: '16px', flexShrink: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--red)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
               <AlertTriangle size={14} /> Be honest — what triggered you?
             </div>
@@ -515,7 +541,7 @@ export default function FaplessView() {
 
           {/* Level Roadmap */}
           <button onClick={() => toggle('levels')} style={sec('levels')}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Trophy size={15} color="#ffd700" /> Level Roadmap</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Trophy size={15} color="var(--brand-warning)" /> Level Roadmap</span>
             {expandedSection === 'levels' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
           </button>
           {expandedSection === 'levels' && (
@@ -543,7 +569,7 @@ export default function FaplessView() {
 
           {/* Milestones */}
           <button onClick={() => toggle('milestones')} style={sec('milestones')}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Star size={15} color="#ffd700" /> Milestones ({getCompletedMilestones(streakDays).length}/{MILESTONES.length})</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Star size={15} color="var(--brand-warning)" /> Milestones ({getCompletedMilestones(streakDays).length}/{MILESTONES.length})</span>
             {expandedSection === 'milestones' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
           </button>
           {expandedSection === 'milestones' && (
@@ -554,17 +580,17 @@ export default function FaplessView() {
                   <div key={m.day} style={{
                     padding: '10px 12px', borderRadius: 8,
                     background: isCompleted ? 'rgba(46,213,115,0.08)' : 'var(--bg-glass)',
-                    border: `1px solid ${isCompleted ? '#2ed573' : 'var(--border)'}`,
+                    border: `1px solid ${isCompleted ? 'var(--green)' : 'var(--border)'}`,
                     display: 'flex', alignItems: 'center', gap: 12
                   }}>
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: isCompleted ? '#2ed57322' : 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isCompleted ? '#2ed573' : 'var(--text-muted)', fontSize: 12, fontWeight: 'bold' }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: isCompleted ? 'var(--green)22' : 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isCompleted ? 'var(--green)' : 'var(--text-muted)', fontSize: 12, fontWeight: 'bold' }}>
                       {isCompleted ? '✓' : `${m.day}d`}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: isCompleted ? '#2ed573' : 'var(--text-primary)' }}>{m.label}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: isCompleted ? 'var(--green)' : 'var(--text-primary)' }}>{m.label}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{m.desc}</div>
                     </div>
-                    <div style={{ fontSize: 11, color: '#ffd700', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}>+{m.bonus}</div>
+                    <div style={{ fontSize: 11, color: 'var(--brand-warning)', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}>+{m.bonus}</div>
                   </div>
                 )
               })}
@@ -573,7 +599,7 @@ export default function FaplessView() {
 
           {/* Challenges */}
           <button onClick={() => toggle('challenges')} style={sec('challenges')}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Flame size={15} color="#ff4500" /> Challenges</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Flame size={15} color="var(--red)" /> Challenges</span>
             {expandedSection === 'challenges' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
           </button>
           {expandedSection === 'challenges' && (
@@ -585,21 +611,21 @@ export default function FaplessView() {
                   <div key={ch.id} onClick={() => setChallenge(isActive ? '' : ch.id)} style={{
                     padding: '14px', borderRadius: 10, cursor: 'pointer',
                     background: isActive ? 'rgba(255,69,0,0.08)' : 'var(--bg-glass)',
-                    border: `1px solid ${isActive ? '#ff4500' : 'var(--border)'}`,
+                    border: `1px solid ${isActive ? 'var(--red)' : 'var(--border)'}`,
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifycontent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: isActive ? '#ff4500' : 'var(--text-primary)' }}>{ch.label}</span>
-                      {isActive && <span style={{ fontSize: 9, background: isComplete ? 'var(--green)' : '#ff4500', color: isComplete ? '#000' : '#fff', borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>{isComplete ? 'DONE ✅' : 'ACTIVE'}</span>}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: isActive ? 'var(--red)' : 'var(--text-primary)' }}>{ch.label}</span>
+                      {isActive && <span style={{ fontSize: 9, background: isComplete ? 'var(--green)' : 'var(--red)', color: isComplete ? '#000' : '#fff', borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>{isComplete ? 'DONE ✅' : 'ACTIVE'}</span>}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>{ch.desc}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ch.duration} days</span>
-                      <span style={{ fontSize: 11, color: '#ffd700', fontWeight: 700 }}>⚡ +{ch.auraBonus.toLocaleString()}</span>
+                      <span style={{ fontSize: 11, color: 'var(--brand-warning)', fontWeight: 700 }}>⚡ +{ch.auraBonus.toLocaleString()}</span>
                     </div>
                     {isActive && !isComplete && (
                       <div style={{ marginTop: 8 }}>
                         <div style={{ height: 4, background: 'var(--border)', borderRadius: 2 }}>
-                          <div style={{ height: '100%', width: `${Math.min(100, Math.round((streakDays / ch.duration) * 100))}%`, background: 'linear-gradient(90deg,#ff4500,#ffd700)', borderRadius: 2 }} />
+                          <div style={{ height: '100%', width: `${Math.min(100, Math.round((streakDays / ch.duration) * 100))}%`, background: 'linear-gradient(90deg,var(--red),var(--brand-warning))', borderRadius: 2 }} />
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>{ch.duration - streakDays} days left</div>
                       </div>
@@ -654,7 +680,7 @@ export default function FaplessView() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
                       <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: 8, borderRadius: 8, textAlign: 'center' }}>
                         <div style={{ fontSize: 8, color: 'var(--text-muted)', fontWeight: 700 }}>AVG STREAK</div>
-                        <div style={{ fontSize: 14, fontWeight: 900, color: 'var(--green)', marginTop: 2 }}>{relapseStats.avgStreak}d</div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--green)', marginTop: 2 }}>{relapseStats.avgStreak}d</div>
                       </div>
                       <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: 8, borderRadius: 8, textAlign: 'center' }}>
                         <div style={{ fontSize: 8, color: 'var(--text-muted)', fontWeight: 700 }}>TRIGGERS</div>
@@ -716,18 +742,18 @@ export default function FaplessView() {
 
       {/* Aura Floating Header */}
       <div style={{
-        position: 'sticky', top: 0, zIndex: 100, background: 'rgba(10,11,15,0.7)', backdropFilter: 'blur(10px)',
+        position: 'sticky', top: 0, zIndex: 100, background: 'var(--bg-overlay)', backdropFilter: 'blur(10px)',
         borderBottom: '1px solid rgba(255,215,0,0.15)', padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Zap size={18} color="#ffd700" fill="#ffd700" style={{ animation: 'aura-pulse 1s ease-in-out infinite' }} />
-          <span style={{ fontSize: 24, fontWeight: 900, fontFamily: 'var(--font-mono)', color: '#ffd700', letterSpacing: '-0.5px' }}>
+          <Zap size={18} color="var(--brand-warning)" fill="var(--brand-warning)" style={{ animation: 'aura-pulse 1s ease-in-out infinite' }} />
+          <span style={{ fontSize: 24, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--brand-warning)', letterSpacing: '-0.5px' }}>
             {auraPoints.toLocaleString()}
           </span>
           <span style={{ fontSize: 13, color: 'rgba(255,215,0,0.6)', fontWeight: 800, letterSpacing: '0.1em' }}>AURA POINTS</span>
         </div>
         <div style={{
-           fontSize: 12, fontWeight: 800, color: '#ffd700', background: 'rgba(255,215,0,0.1)',
+           fontSize: 12, fontWeight: 800, color: 'var(--brand-warning)', background: 'rgba(255,215,0,0.1)',
            padding: '6px 14px', borderRadius: 20, animation: 'aura-plus 1s ease-out infinite'
         }}>+{currentLevel.auraPerDay} AURA PER DAY</div>
       </div>
@@ -736,23 +762,23 @@ export default function FaplessView() {
       <div className="view-pad" style={{ padding: '24px 24px 0', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <div>
-            <div style={{ fontSize: 12, color: '#ff4500', fontWeight: 800, letterSpacing: '0.25em', marginBottom: 4, textTransform: 'uppercase' }}>Discipline Engine</div>
-            <h1 style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-1.5px', background: 'linear-gradient(to right, #fff, #a0a0a0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Mastery Journey</h1>
+            <div style={{ fontSize: 12, color: 'var(--red)', fontWeight: 800, letterSpacing: '0.25em', marginBottom: 4, textTransform: 'uppercase' }}>Discipline Engine</div>
+            <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>Mastery Journey</h1>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             {!data?.startDate ? (
               <button onClick={handleStart} disabled={saving}
-                style={{ background: 'linear-gradient(135deg, #ff4500, #ff8c00)', border: 'none', borderRadius: 12, color: '#fff', padding: '10px 22px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                style={{ background: 'linear-gradient(135deg, var(--red), var(--brand-orange))', border: 'none', borderRadius: 12, color: '#fff', padding: '10px 22px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Play size={16} /> Start Journey
               </button>
             ) : (
               <>
                 <button onClick={() => setShowRelapse(s => !s)}
-                  style={{ background: showRelapse ? 'rgba(255,71,87,0.15)' : 'none', border: '1px solid rgba(255,71,87,0.4)', borderRadius: 10, color: 'var(--red)', padding: '9px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7 }}>
+                  style={{ background: showRelapse ? 'var(--red-dim)' : 'none', border: '1px solid var(--red-dim)', borderRadius: 10, color: 'var(--red)', padding: '9px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7 }}>
                   <RotateCcw size={14} /> Relapse
                 </button>
                 <button onClick={handleStart} disabled={saving}
-                  style={{ background: 'linear-gradient(135deg, #ff4500, #ff8c00)', border: 'none', borderRadius: 10, color: '#fff', padding: '9px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7 }}>
+                  style={{ background: 'linear-gradient(135deg, var(--red), var(--brand-orange))', border: 'none', borderRadius: 10, color: '#fff', padding: '9px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7 }}>
                   <RefreshCw size={14} /> Reset Streak
                 </button>
               </>
@@ -762,7 +788,7 @@ export default function FaplessView() {
 
         {/* Relapse panel */}
         {showRelapse && (
-          <div style={{ ...card, marginBottom: 16, border: '1px solid rgba(255,71,87,0.4)', background: 'rgba(255,71,87,0.05)' }}>
+          <div style={{ ...card, marginBottom: 16, border: '1px solid var(--red-dim)', background: 'var(--red-dim)' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--red)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
               <AlertTriangle size={14} /> Record Relapse — Be honest with yourself
             </div>
@@ -802,7 +828,7 @@ export default function FaplessView() {
           }}>
             <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at center, ${currentLevel.color}08 0%, transparent 70%)`, pointerEvents: 'none' }} />
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.2em', fontWeight: 800, marginBottom: 16 }}>CURRENT STREAK</div>
-            <div className="hero-val" style={{ fontSize: 84, fontWeight: 900, color: currentLevel.color, lineHeight: 1, animation: 'auraFloat 4s ease-in-out infinite' }}>
+            <div className="hero-val" style={{ fontSize: 84, fontWeight: 800, color: currentLevel.color, lineHeight: 1, animation: 'auraFloat 4s ease-in-out infinite' }}>
               {streakDays}
             </div>
             {/* Hours & Minutes & Seconds */}
@@ -834,12 +860,12 @@ export default function FaplessView() {
             
             {/* Level Physique Image */}
             <div style={{ width: 110, height: 110, borderRadius: 16, overflow: 'hidden', border: `3px solid ${currentLevel.color}`, boxShadow: `0 0 20px ${currentLevel.color}44`, flexShrink: 0, background: 'rgba(0,0,0,0.3)', margin: '0 0 0 8px' }}>
-              <img src={currentLevel.image} alt={currentLevel.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={currentLevel.image} alt={currentLevel.label} onError={(e) => { e.currentTarget.style.display = 'none' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
 
             <div style={{ flex: 1, textAlign: 'left' }}>
               <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.2em', fontWeight: 800, marginBottom: 8 }}>CURRENT IDENTITY</div>
-              <div style={{ fontSize: 26, fontWeight: 900, color: currentLevel.color, marginBottom: 8, letterSpacing: '-1px' }}>{currentLevel.label}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: currentLevel.color, marginBottom: 8, letterSpacing: '-1px' }}>{currentLevel.label}</div>
               <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.6 }}>{currentLevel.desc}</div>
               
               <div style={{ paddingRight: 16 }}>
@@ -849,12 +875,12 @@ export default function FaplessView() {
                       <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>Next: {nextLevel.label}</span>
                       <span style={{ fontSize: 11, color: currentLevel.color, fontWeight: 800 }}>{nextLevel.minDays - streakDays}D REMAINING</span>
                     </div>
-                    <div style={{ height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ height: 6, background: 'var(--border)', borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)' }}>
                       <div style={{ height: '100%', width: `${progressToNext}%`, background: `linear-gradient(90deg, ${currentLevel.color}, ${nextLevel.color})`, transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} />
                     </div>
                   </>
                 ) : (
-                  <div style={{ fontSize: 12, color: '#ffd700', fontWeight: 900, letterSpacing: '0.1em' }}>🏆 ASCENDED GIGACHAD</div>
+                  <div style={{ fontSize: 12, color: 'var(--brand-warning)', fontWeight: 800, letterSpacing: '0.1em' }}>🏆 ASCENDED GIGACHAD</div>
                 )}
               </div>
             </div>
@@ -868,24 +894,24 @@ export default function FaplessView() {
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.2em', fontWeight: 800, marginBottom: 16 }}>DISCIPLINE ENERGY</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 8 }}>
               <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(255,215,0,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Zap size={24} color="#ffd700" fill="#ffd700" style={{ animation: 'aura-pulse 1s linear infinite' }} />
+                <Zap size={24} color="var(--brand-warning)" fill="var(--brand-warning)" style={{ animation: 'aura-pulse 1s linear infinite' }} />
               </div>
-              <span className="hero-val" style={{ fontSize: 52, fontWeight: 900, color: '#ffd700', lineHeight: 1 }}>{auraPoints.toLocaleString()}</span>
+              <span className="hero-val" style={{ fontSize: 52, fontWeight: 800, color: 'var(--brand-warning)', lineHeight: 1 }}>{auraPoints.toLocaleString()}</span>
             </div>
-            <div style={{ fontSize: 13, color: '#ffd700', fontWeight: 800, opacity: 0.8, marginBottom: 12 }}>AURA POINTS EARNED</div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', padding: '6px 14px', borderRadius: 20, margin: '0 auto' }}>
-              <Star size={12} color="#ffd700" />
+            <div style={{ fontSize: 13, color: 'var(--brand-warning)', fontWeight: 800, opacity: 0.8, marginBottom: 12 }}>AURA POINTS EARNED</div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--border)', padding: '6px 14px', borderRadius: 20, margin: '0 auto' }}>
+              <Star size={12} color="var(--brand-warning)" />
               <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>+{currentLevel.auraPerDay} / DAY STREAK BONUS</span>
             </div>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 16 }}>
-              TOTAL RELAPSES: <span style={{ color: data?.relapses?.length > 0 ? '#ff4757' : '#2ed573', fontWeight: 900 }}>{data?.relapses?.length || 0}</span>
+              TOTAL RELAPSES: <span style={{ color: data?.relapses?.length > 0 ? 'var(--red)' : 'var(--green)', fontWeight: 800 }}>{data?.relapses?.length || 0}</span>
             </div>
           </div>
         </div>  {/* end hero grid */}
 
         {/* ── All Levels Map ── */}
         <button onClick={() => setExpandedSection(s => s === 'levels' ? '' : 'levels')} style={sectionBtn('levels')}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Trophy size={15} color="#ffd700" /> Level Roadmap</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Trophy size={15} color="var(--brand-warning)" /> Level Roadmap</span>
           {expandedSection === 'levels' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
         </button>
         {expandedSection === 'levels' && (
@@ -924,7 +950,7 @@ export default function FaplessView() {
 
         {/* ── Milestones ── */}
         <button onClick={() => setExpandedSection(s => s === 'milestones' ? '' : 'milestones')} style={sectionBtn('milestones')}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Star size={15} color="#ffd700" /> Milestone Bonuses ({getCompletedMilestones(streakDays).length}/{MILESTONES.length})</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Star size={15} color="var(--brand-warning)" /> Milestone Bonuses ({getCompletedMilestones(streakDays).length}/{MILESTONES.length})</span>
           {expandedSection === 'milestones' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
         </button>
         {expandedSection === 'milestones' && (
@@ -936,18 +962,18 @@ export default function FaplessView() {
                   <div key={m.day} style={{
                     padding: '14px', borderRadius: 12,
                     background: isCompleted ? 'rgba(46,213,115,0.08)' : 'var(--bg-glass)',
-                    border: `1px solid ${isCompleted ? '#2ed573' : 'var(--border)'}`,
+                    border: `1px solid ${isCompleted ? 'var(--green)' : 'var(--border)'}`,
                     display: 'flex', alignItems: 'center', gap: 14,
                     transition: 'all 0.2s'
                   }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: isCompleted ? '#2ed57322' : 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isCompleted ? '#2ed573' : 'var(--text-muted)', fontSize: 13, fontWeight: 'bold', flexShrink: 0 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: isCompleted ? 'var(--green)22' : 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isCompleted ? 'var(--green)' : 'var(--text-muted)', fontSize: 13, fontWeight: 'bold', flexShrink: 0 }}>
                       {isCompleted ? '✓' : `${m.day}d`}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: isCompleted ? '#2ed573' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.label}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: isCompleted ? 'var(--green)' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.label}</div>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{m.desc}</div>
                     </div>
-                    <div style={{ fontSize: 12, color: '#ffd700', fontWeight: 'bold', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>+{m.bonus}</div>
+                    <div style={{ fontSize: 12, color: 'var(--brand-warning)', fontWeight: 'bold', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>+{m.bonus}</div>
                   </div>
                 )
               })}
@@ -982,7 +1008,7 @@ export default function FaplessView() {
 
         {/* ── Challenges ── */}
         <button onClick={() => setExpandedSection(s => s === 'challenges' ? '' : 'challenges')} style={sectionBtn('challenges')}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Flame size={15} color="#ff4500" /> Challenges</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Flame size={15} color="var(--red)" /> Challenges</span>
           {expandedSection === 'challenges' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
         </button>
         {expandedSection === 'challenges' && (
@@ -996,25 +1022,25 @@ export default function FaplessView() {
                     className="fapless-card"
                     style={{
                       background: isActive ? 'rgba(255,69,0,0.1)' : 'var(--bg-glass)',
-                      border: `1px solid ${isActive ? '#ff4500' : 'var(--border)'}`,
+                      border: `1px solid ${isActive ? 'var(--red)' : 'var(--border)'}`,
                       borderRadius: 12, padding: '16px', cursor: 'pointer', transition: 'all 0.15s',
                     }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: isActive ? '#ff4500' : 'var(--text-primary)' }}>{ch.label}</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: isActive ? 'var(--red)' : 'var(--text-primary)' }}>{ch.label}</span>
                       {isActive && (isComplete
                         ? <span style={{ fontSize: 10, background: 'var(--green)', color: '#000', borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>COMPLETE ✅</span>
-                        : <span style={{ fontSize: 10, background: '#ff4500', color: '#fff', borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>ACTIVE</span>
+                        : <span style={{ fontSize: 10, background: 'var(--red)', color: '#fff', borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>ACTIVE</span>
                       )}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 10, lineHeight: 1.5 }}>{ch.desc}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ch.duration} days</span>
-                      <span style={{ fontSize: 11, color: '#ffd700', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>⚡ +{ch.auraBonus.toLocaleString()} bonus</span>
+                      <span style={{ fontSize: 11, color: 'var(--brand-warning)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>⚡ +{ch.auraBonus.toLocaleString()} bonus</span>
                     </div>
                     {isActive && !isComplete && (
                       <div style={{ marginTop: 10 }}>
                         <div style={{ height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${Math.min(100, Math.round((streakDays / ch.duration) * 100))}%`, background: 'linear-gradient(90deg, #ff4500, #ffd700)', borderRadius: 2, transition: 'width 0.5s' }} />
+                          <div style={{ height: '100%', width: `${Math.min(100, Math.round((streakDays / ch.duration) * 100))}%`, background: 'linear-gradient(90deg, var(--red), var(--brand-warning))', borderRadius: 2, transition: 'width 0.5s' }} />
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>{Math.min(100, Math.round((streakDays / ch.duration) * 100))}% — {ch.duration - streakDays} days left</div>
                       </div>
@@ -1075,18 +1101,18 @@ export default function FaplessView() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: 16, marginBottom: 20, borderBottom: '1px solid var(--border)', paddingBottom: 20 }}>
                     <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', padding: '14px', borderRadius: 10, textAlign: 'center' }}>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>AVERAGE STREAK</div>
-                      <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--green)', marginTop: 6 }}>{relapseStats.avgStreak} Days</div>
+                      <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--green)', marginTop: 6 }}>{relapseStats.avgStreak} Days</div>
                     </div>
                     <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', padding: '14px', borderRadius: 10, textAlign: 'center' }}>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>TOTAL RESET EVENTS</div>
-                      <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--red)', marginTop: 6 }}>{relapseStats.total} Times</div>
+                      <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--red)', marginTop: 6 }}>{relapseStats.total} Times</div>
                     </div>
                     <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', padding: '14px', borderRadius: 10 }}>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 6 }}>TOP TRIGGER CATEGORIES / INSIGHTS</div>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
                         {relapseStats.topTriggers.length > 0 ? (
                           relapseStats.topTriggers.map((t, idx) => (
-                            <span key={idx} style={{ background: 'rgba(255,71,87,0.1)', color: 'var(--red)', border: '1px solid rgba(255,71,87,0.2)', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
+                            <span key={idx} style={{ background: 'var(--red-dim)', color: 'var(--red)', border: '1px solid var(--red-dim)', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
                               🚨 {t}
                             </span>
                           ))
@@ -1100,7 +1126,7 @@ export default function FaplessView() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[...data.relapses].reverse().map((r, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 14, padding: '12px 14px', background: 'rgba(255,71,87,0.05)', borderRadius: 8, border: '1px solid rgba(255,71,87,0.15)', alignItems: 'center' }}>
+                    <div key={i} style={{ display: 'flex', gap: 14, padding: '12px 14px', background: 'var(--red-dim)', borderRadius: 8, border: '1px solid var(--red-dim)', alignItems: 'center' }}>
                       <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', minWidth: 100, flexShrink: 0 }}>
                         {new Date(r.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </div>

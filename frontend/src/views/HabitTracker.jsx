@@ -3,6 +3,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, A
 import { Plus, Trash2, ChevronLeft, ChevronRight, Download, Trophy, Cloud, Loader, CheckCircle2, Circle, BarChart2, Pencil, Check, X, GripVertical, ChevronUp, ChevronDown } from 'lucide-react'
 import { habitsAPI } from '../api/client'
 import { useSync } from '../hooks/useSync'
+import { useToast } from '../components/Toast'
+import { useConfirm } from '../components/ConfirmDialog'
 import { DonutChart } from '../components/StatCard'
 
 const DEFAULT_HABITS = [
@@ -46,9 +48,9 @@ const ShadcnTooltip = ({ active, payload, label, prefix = '', suffix = '%' }) =>
   if (active && payload && payload.length) {
     return (
       <div style={{
-        background: 'rgba(10,11,15,0.92)',
+        background: 'var(--bg-overlay)',
         backdropFilter: 'blur(8px)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: '1px solid var(--border)',
         padding: '8px 12px',
         borderRadius: '8px',
         boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
@@ -71,6 +73,8 @@ const ShadcnTooltip = ({ active, payload, label, prefix = '', suffix = '%' }) =>
 }
 
 export default function HabitTracker() {
+  const toast = useToast()
+  const confirmDialog = useConfirm()
   const today = new Date()
   const isMobile = useIsMobile()
   const [year, setYear] = useState(today.getFullYear())
@@ -126,7 +130,11 @@ export default function HabitTracker() {
   const weekGroups = useMemo(() => getWeekGroups(year, month), [year, month])
   const monthName = new Date(year, month).toLocaleString('default', { month: 'long' })
 
+  // monthLoaded gates auto-save: prevents defaults overwriting server data
+  // while the month GET is still in flight (critical data-loss fix).
+  const [monthLoaded, setMonthLoaded] = useState(false)
   useEffect(() => {
+    setMonthLoaded(false)
     setLoading(true)
     habitsAPI.getMonth(monthKey)
       .then(res => {
@@ -135,14 +143,15 @@ export default function HabitTracker() {
           setChecks(res.data.checks || {})
           setMental(res.data.mental || {})
         }
+        setMonthLoaded(true)
       })
-      .catch(console.error)
+      .catch(() => setMonthLoaded(false))
       .finally(() => setLoading(false))
   }, [monthKey])
 
   const syncPayload = useMemo(() => ({ habits, checks, mental }), [JSON.stringify({ habits, checks, mental })])
   const saveFn = useCallback(() => habitsAPI.upsertMonth(monthKey, syncPayload), [monthKey, JSON.stringify(syncPayload)])
-  const syncStatus = useSync(saveFn, syncPayload)
+  const syncStatus = useSync(saveFn, syncPayload, { ready: monthLoaded })
 
   const isFutureDay = (day) => {
     const d = new Date(year, month, day)
@@ -208,7 +217,7 @@ export default function HabitTracker() {
     }
     const trimmedName = editText.trim()
     if (trimmedName !== oldName && habits.some(h => h.name === trimmedName)) {
-      alert("A habit with this name already exists.")
+      toast.warning('A habit with this name already exists.')
       return
     }
     const newHabits = habits.map(h => h.name === oldName ? { ...h, name: trimmedName, emoji: editEmoji || h.emoji, time: editTime } : h)
@@ -344,7 +353,7 @@ export default function HabitTracker() {
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px',
                       background: done ? 'rgba(255,183,0,0.04)' : 'var(--bg-card)',
-                      border: `1px solid ${done ? 'rgba(255,183,0,0.2)' : 'var(--border)'}`,
+                      border: `1px solid ${done ? 'var(--amber-glow)' : 'var(--border)'}`,
                       borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s', width: '100%',
                       opacity: isDragged ? 0.5 : 1,
                       boxSizing: 'border-box'
@@ -363,7 +372,7 @@ export default function HabitTracker() {
                       }}>{habit.name}</span>
                       {habit.time && (
                         <span style={{
-                          fontSize: 11, background: 'rgba(255,183,0,0.08)', color: 'var(--amber)',
+                          fontSize: 11, background: 'var(--amber-dim)', color: 'var(--amber)',
                           borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-mono)', flexShrink: 0, marginLeft: 8
                         }}>{habit.time}</span>
                       )}
@@ -391,7 +400,7 @@ export default function HabitTracker() {
                 <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 10 }}>DAILY PROGRESS — {monthName}</div>
                 <ResponsiveContainer width="100%" height={80}>
                   <BarChart data={dailyData} barSize={5}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                     <XAxis dataKey="label" tick={false} axisLine={false} tickLine={false} />
                     <Tooltip content={<ShadcnTooltip prefix="Day " />} />
                     <Bar dataKey="pct" fill="var(--amber)" radius={[2, 2, 0, 0]} opacity={0.85} />
@@ -474,7 +483,7 @@ export default function HabitTracker() {
                           </div>
                           <span style={{ fontSize: 18 }}>{habit.emoji}</span>
                           <span style={{ fontSize: 14, color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{habit.name}</span>
-                          {habit.time && <span style={{ fontSize: 11, background: 'rgba(255,183,0,0.08)', color: 'var(--amber)', borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-mono)' }}>{habit.time}</span>}
+                          {habit.time && <span style={{ fontSize: 11, background: 'var(--amber-dim)', color: 'var(--amber)', borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-mono)' }}>{habit.time}</span>}
                           <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                             <button onClick={() => moveHabit(idx, -1)} disabled={idx === 0} style={{ background: 'none', color: idx === 0 ? 'var(--text-muted)' : 'var(--amber)', padding: 4 }}><ChevronUp size={14} /></button>
                             <button onClick={() => moveHabit(idx, 1)} disabled={idx === habits.length - 1} style={{ background: 'none', color: idx === habits.length - 1 ? 'var(--text-muted)' : 'var(--amber)', padding: 4 }}><ChevronDown size={14} /></button>
@@ -494,7 +503,7 @@ export default function HabitTracker() {
                   <input value={newHabit} onChange={e => setNewHabit(e.target.value)} onKeyDown={e => e.key === 'Enter' && addHabit()} placeholder="Add a habit..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }} />
                   <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 8px', color: 'var(--amber)', fontFamily: 'var(--font-mono)', fontSize: 13 }} />
                 </div>
-                <button onClick={addHabit} style={{ background: 'var(--amber-dim)', border: '1px solid rgba(255,183,0,0.25)', borderRadius: 10, color: 'var(--amber)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', fontWeight: 600 }}><Plus size={20} /> Add Habit</button>
+                <button onClick={addHabit} style={{ background: 'var(--amber-dim)', border: '1px solid var(--amber-glow)', borderRadius: 10, color: 'var(--amber)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', fontWeight: 600 }}><Plus size={20} /> Add Habit</button>
               </div>
             </div>
           )}
@@ -535,7 +544,7 @@ export default function HabitTracker() {
             <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 10 }}>DAILY PROGRESS</div>
             <ResponsiveContainer width="100%" height={55}>
               <BarChart data={dailyData} barSize={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="label" tick={false} axisLine={false} tickLine={false} />
                 <Tooltip content={<ShadcnTooltip prefix="Day " />} />
                 <Bar dataKey="pct" fill="var(--amber)" radius={[2, 2, 0, 0]} opacity={0.8} />
@@ -546,8 +555,8 @@ export default function HabitTracker() {
             <div style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 8 }}>WEEKLY PROGRESS</div>
             <ResponsiveContainer width="100%" height={55}>
               <BarChart data={weeklyData} barSize={24}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#6b7280', fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 9, fill: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} />
                 <Tooltip content={<ShadcnTooltip />} />
                 <Bar dataKey="pct" fill="var(--amber)" radius={[3, 3, 0, 0]} opacity={0.85} />
               </BarChart>
@@ -581,7 +590,7 @@ export default function HabitTracker() {
                           const isToday = new Date(year, month, d).toDateString() === today.toDateString()
                           const isFuture = isFutureDay(d)
                           return (
-                            <th key={d} style={{ padding: '6px 4px', fontSize: 11, fontFamily: 'var(--font-mono)', color: isToday ? 'var(--amber)' : isFuture ? 'var(--text-muted)' : 'var(--text-muted)', borderBottom: '1px solid var(--border)', borderLeft: di === 0 && wg.week > 1 ? '1px solid rgba(255,183,0,0.15)' : 'none', minWidth: 32, textAlign: 'center', opacity: isFuture ? 0.4 : 1 }}>
+                            <th key={d} style={{ padding: '6px 4px', fontSize: 11, fontFamily: 'var(--font-mono)', color: isToday ? 'var(--amber)' : isFuture ? 'var(--text-muted)' : 'var(--text-muted)', borderBottom: '1px solid var(--border)', borderLeft: di === 0 && wg.week > 1 ? '1px solid var(--amber-dim)' : 'none', minWidth: 32, textAlign: 'center', opacity: isFuture ? 0.4 : 1 }}>
                               {di === 0 && <div style={{ fontSize: 9, color: 'var(--amber)', marginBottom: 2 }}>W{wg.week}</div>}
                               {isFuture ? '🔒' : d}
                             </th>
@@ -605,7 +614,7 @@ export default function HabitTracker() {
                               background: hi % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)',
                               opacity: isDragged ? 0.5 : 1,
                             }}
-                            onMouseEnter={e => !isEditing && (e.currentTarget.style.background = 'rgba(255,183,0,0.03)')}
+                            onMouseEnter={e => !isEditing && (e.currentTarget.style.background = 'var(--amber-dim)')}
                             onMouseLeave={e => !isEditing && (e.currentTarget.style.background = hi % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)')}>
                             <td style={{ padding: '10px 16px', fontSize: 14, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 1, whiteSpace: 'nowrap' }}>
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, minWidth: 220 }}>
@@ -644,7 +653,7 @@ export default function HabitTracker() {
                                       </div>
                                       <span>{habit.emoji} {habit.name}</span>
                                       {habit.time && (
-                                        <span style={{ fontSize: 11, background: 'rgba(255,183,0,0.08)', color: 'var(--amber)', borderRadius: 4, padding: '1px 6px', fontFamily: 'var(--font-mono)' }}>
+                                        <span style={{ fontSize: 11, background: 'var(--amber-dim)', color: 'var(--amber)', borderRadius: 4, padding: '1px 6px', fontFamily: 'var(--font-mono)' }}>
                                           {habit.time}
                                         </span>
                                       )}
@@ -665,7 +674,7 @@ export default function HabitTracker() {
                               </div>
                             </td>
                             {weekGroups.map(wg => wg.days.map((d, di) => (
-                              <td key={d} style={{ textAlign: 'center', borderBottom: '1px solid var(--border)', borderLeft: di === 0 && wg.week > 1 ? '1px solid rgba(255,183,0,0.08)' : 'none', padding: '4px', opacity: isFutureDay(d) ? 0.35 : 1 }}>
+                              <td key={d} style={{ textAlign: 'center', borderBottom: '1px solid var(--border)', borderLeft: di === 0 && wg.week > 1 ? '1px solid var(--amber-dim)' : 'none', padding: '4px', opacity: isFutureDay(d) ? 0.35 : 1 }}>
                                 <input type="checkbox" checked={getChecked(d, habit.name)} disabled={isFutureDay(d)} onChange={e => toggleCheck(d, habit.name, e.target.checked)} style={{ accentColor: 'var(--amber)', width: 15, height: 15, cursor: isFutureDay(d) ? 'not-allowed' : 'pointer' }} />
                               </td>
                             )))}
@@ -682,7 +691,7 @@ export default function HabitTracker() {
                   <input value={newEmoji} onChange={e => setNewEmoji(e.target.value)} style={{ width: 44, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px', fontSize: 16, color: 'var(--text-primary)', textAlign: 'center' }} placeholder="✨" />
                   <input value={newHabit} onChange={e => setNewHabit(e.target.value)} onKeyDown={e => e.key === 'Enter' && addHabit()} placeholder="Add new habit..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 14px', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }} />
                   <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px', color: 'var(--amber)', fontFamily: 'var(--font-mono)', fontSize: 13 }} />
-                  <button onClick={addHabit} style={{ background: 'var(--amber-dim)', border: '1px solid rgba(255,183,0,0.2)', borderRadius: 8, color: 'var(--amber)', padding: '8px 18px', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display)', fontWeight: 600, cursor: 'pointer' }}>
+                  <button onClick={addHabit} style={{ background: 'var(--amber-dim)', border: '1px solid var(--amber-glow)', borderRadius: 8, color: 'var(--amber)', padding: '8px 18px', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display)', fontWeight: 600, cursor: 'pointer' }}>
                     <Plus size={16} /> Add
                   </button>
                 </div>
@@ -725,9 +734,9 @@ export default function HabitTracker() {
                         <stop offset="100%" stopColor="var(--amber)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                     <XAxis dataKey="label" tick={false} axisLine={false} tickLine={false} />
-                    <YAxis domain={[0, 10]} tick={{ fontSize: 9, fill: '#6b7280', fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={20} />
+                    <YAxis domain={[0, 10]} tick={{ fontSize: 9, fill: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={20} />
                     <Tooltip content={<ShadcnTooltip prefix="Day " suffix="/10" />} />
                     <Area type="monotone" dataKey="mood" stroke="var(--cyan)" strokeWidth={1.5} fill="url(#moodGrad)" dot={false} name="Mood" connectNulls />
                     <Area type="monotone" dataKey="motivation" stroke="var(--amber)" strokeWidth={1.5} fill="url(#motGrad)" dot={false} name="Motivation" connectNulls />
@@ -750,7 +759,7 @@ export default function HabitTracker() {
                           {Array.from({ length: Math.min(14, totalDays) }, (_, i) => (
                             <td key={i + 1} style={{ padding: '2px 2px' }}>
                               <input type="number" min={1} max={10} value={getMentalVal(i + 1, type)} onChange={e => setMentalVal(i + 1, type, e.target.value)}
-                                style={{ width: 26, background: 'var(--bg-glass)', border: `1px solid ${getMentalVal(i + 1, type) ? color + '44' : 'var(--border)'}`, borderRadius: 4, padding: '3px 2px', fontSize: 9, color, fontFamily: 'var(--font-mono)', textAlign: 'center' }} />
+                                style={{ width: 26, background: 'var(--bg-glass)', border: `1px solid ${getMentalVal(i + 1, type) ? `color-mix(in srgb, ${color} 40%, transparent)` : 'var(--border)'}`, borderRadius: 4, padding: '3px 2px', fontSize: 9, color, fontFamily: 'var(--font-mono)', textAlign: 'center' }} />
                             </td>
                           ))}
                         </tr>

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Plus, Trash2, Target, CheckCircle2, Clock, XCircle, Edit2, X, Save, Link2, BarChart2, Loader, AlertCircle } from 'lucide-react'
 import { goalsAPI, tasksAPI, habitsAPI } from '../api/client'
+import { useToast } from '../components/Toast'
+import { useConfirm } from '../components/ConfirmDialog'
 
 const CATEGORIES = ['general', 'career', 'health', 'learning', 'finance', 'personal']
 const STATUS_COLORS = {
@@ -24,7 +26,7 @@ function DeadlineBadge({ deadline }) {
   const color = days < 0 ? 'var(--red)' : days <= 7 ? 'var(--amber)' : 'var(--green)'
   const label = days < 0 ? `${Math.abs(days)}d overdue` : days === 0 ? 'Due today' : `${days}d left`
   return (
-    <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color, background: color + '18', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>
+    <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color, background: `color-mix(in srgb, ${color} 12%, transparent)`, padding: '3px 9px', borderRadius: 7, fontWeight: 700 }}>
       {label}
     </span>
   )
@@ -68,7 +70,7 @@ function GoalForm({ onSave, onCancel, initial, availableTasks, availableHabits }
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--cyan)', marginBottom: 18, letterSpacing: '0.1em' }}>
         {initial ? 'EDIT GOAL' : 'NEW GOAL'}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))', gap: 12, marginBottom: 12 }}>
         <div style={{ gridColumn: '1 / -1' }}>
           <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Goal Title *</label>
           <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
@@ -92,7 +94,7 @@ function GoalForm({ onSave, onCancel, initial, availableTasks, availableHabits }
             <div style={{ display: 'flex', gap: 8 }}>
               {['active', 'completed', 'abandoned'].map(s => (
                 <button key={s} onClick={() => setForm(p => ({ ...p, status: s }))}
-                  style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: `1px solid ${form.status === s ? STATUS_COLORS[s] : 'var(--border)'}`, background: form.status === s ? STATUS_COLORS[s] + '22' : 'transparent', color: form.status === s ? STATUS_COLORS[s] : 'var(--text-muted)', transition: 'all 0.15s' }}>
+                  style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: `1px solid ${form.status === s ? STATUS_COLORS[s] : 'var(--border)'}`, background: form.status === s ? `color-mix(in srgb, ${STATUS_COLORS[s]} 16%, transparent)` : 'transparent', color: form.status === s ? STATUS_COLORS[s] : 'var(--text-muted)', transition: 'all 0.15s' }}>
                   {s.charAt(0).toUpperCase() + s.slice(1)}
                 </button>
               ))}
@@ -148,12 +150,12 @@ function GoalForm({ onSave, onCancel, initial, availableTasks, availableHabits }
 
       <div style={{ display: 'flex', gap: 10 }}>
         <button onClick={handleSave} disabled={saving || !form.title.trim() || !form.deadline}
-          style={{ background: 'var(--brand-primary)', border: 'none', borderRadius: 10, color: '#000', padding: '10px 22px', fontSize: 14, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: saving ? 0.7 : 1 }}>
+          style={{ background: 'var(--brand-primary)', border: 'none', borderRadius: 'var(--radius-md)', color: '#fff', padding: '11px 24px', fontSize: 14.5, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: saving ? 0.7 : 1, minHeight: 44 }}>
           {saving ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={14} />}
-          {saving ? 'Saving...' : 'Save Goal'}
+          {saving ? 'Saving…' : 'Save Goal'}
         </button>
         <button onClick={onCancel}
-          style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text-muted)', padding: '10px 18px', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+          style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', padding: '11px 20px', fontSize: 14.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
           <X size={14} /> Cancel
         </button>
       </div>
@@ -162,11 +164,11 @@ function GoalForm({ onSave, onCancel, initial, availableTasks, availableHabits }
 }
 
 function GoalProgress({ goal, taskStats, habitStats }) {
-  const taskItems = goal.linkedTasks.map(t => {
+  const taskItems = (goal.linkedTasks || []).map(t => {
     const s = taskStats[t] || { done: 0, total: 0 }
     return { name: t, pct: s.total ? Math.round((s.done / s.total) * 100) : 0 }
   })
-  const habitItems = goal.linkedHabits.map(h => {
+  const habitItems = (goal.linkedHabits || []).map(h => {
     const s = habitStats[h] || { done: 0, total: 0 }
     return { name: h, pct: s.total ? Math.round((s.done / s.total) * 100) : 0 }
   })
@@ -204,6 +206,8 @@ function GoalProgress({ goal, taskStats, habitStats }) {
 }
 
 export default function GoalsView() {
+  const toast = useToast()
+  const confirmDialog = useConfirm()
   const [goals, setGoals] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -220,9 +224,6 @@ export default function GoalsView() {
     const now = new Date()
     const yr = now.getFullYear(), mo = now.getMonth()
     const monthKey = `${yr}-${mo}`
-    // Get current week key
-    const weekNum = Math.ceil(now.getDate() / 7)
-    const weekKey = `${yr}-${mo}-w${weekNum}`
 
     Promise.all([
       tasksAPI.getMonth(monthKey).catch(() => null),
@@ -280,21 +281,43 @@ export default function GoalsView() {
   useEffect(() => { loadGoals() }, [loadGoals])
 
   const handleCreate = async (form) => {
-    await goalsAPI.create(form)
-    setShowForm(false)
-    loadGoals()
+    try {
+      await goalsAPI.create(form)
+      setShowForm(false)
+      loadGoals()
+      toast.success('Goal created.')
+    } catch (e) {
+      toast.error(e.message || 'Could not create goal.')
+      throw e
+    }
   }
 
   const handleUpdate = async (form) => {
-    await goalsAPI.update(editGoal._id, form)
-    setEditGoal(null)
-    loadGoals()
+    try {
+      await goalsAPI.update(editGoal._id, form)
+      setEditGoal(null)
+      loadGoals()
+      toast.success('Goal updated.')
+    } catch (e) {
+      toast.error(e.message || 'Could not update goal.')
+      throw e
+    }
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this goal?')) return
-    await goalsAPI.delete(id)
-    loadGoals()
+    const ok = await confirmDialog({
+      title: 'Delete this goal?',
+      body: 'The goal and its linked progress will be removed. This can’t be undone.',
+      confirmLabel: 'Delete', danger: true,
+    })
+    if (!ok) return
+    try {
+      await goalsAPI.delete(id)
+      loadGoals()
+      toast.success('Goal deleted.')
+    } catch (e) {
+      toast.error(e.message || 'Could not delete goal.')
+    }
   }
 
   const filteredGoals = filter === 'all' ? goals : goals.filter(g => g.status === filter)
@@ -316,26 +339,26 @@ export default function GoalsView() {
             <h1 style={{ fontSize: 28, fontWeight: 800 }}>My Goals</h1>
           </div>
           <button onClick={() => { setShowForm(true); setEditGoal(null) }}
-            style={{ background: 'linear-gradient(135deg, var(--green), #00a86b)', border: 'none', borderRadius: 12, color: '#000', padding: '10px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+            style={{ background: 'var(--brand-primary)', border: 'none', borderRadius: 'var(--radius-pill)', color: '#fff', padding: '10px 22px', fontSize: 14.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
             <Plus size={16} /> Add Goal
           </button>
         </div>
 
         {/* Summary cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(150px, 100%), 1fr))', gap: 12, marginBottom: 20 }}>
           {[
             ['Total', summaryStats.total, 'var(--text-primary)', Target],
             ['Active', summaryStats.active, 'var(--cyan)', Clock],
             ['Completed', summaryStats.completed, 'var(--green)', CheckCircle2],
             ['Overdue', summaryStats.overdue, 'var(--red)', AlertCircle],
           ].map(([label, val, color, Icon]) => (
-            <div key={label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 10, background: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div key={label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 11, background: `color-mix(in srgb, ${color} 13%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Icon size={18} color={color} />
               </div>
               <div>
-                <div style={{ fontSize: 24, fontWeight: 800, fontFamily: 'var(--font-mono)', color }}>{val}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{label}</div>
+                <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'var(--font-display)', color, letterSpacing: '-0.02em' }}>{val}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>{label}</div>
               </div>
             </div>
           ))}
@@ -374,9 +397,9 @@ export default function GoalsView() {
           <div style={{ textAlign: 'center', color: 'var(--red)', padding: 40 }}>{error}</div>
         ) : filteredGoals.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
-            <Target size={48} style={{ marginBottom: 16, opacity: 0.3 }} />
+            <Target size={44} style={{ marginBottom: 16, opacity: 0.3 }} />
             <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>No goals yet</div>
-            <div style={{ fontSize: 13 }}>Click "Add Goal" to set your first goal</div>
+            <div style={{ fontSize: 13.5 }}>Tap “Add Goal” to set your first target</div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -384,7 +407,7 @@ export default function GoalsView() {
               const StatusIcon = STATUS_ICONS[goal.status]
               const days = daysLeft(goal.deadline)
               return (
-                <div key={goal._id} style={{ background: 'var(--bg-card)', border: `1px solid ${goal.status === 'active' && days < 0 ? 'rgba(255,71,87,0.3)' : 'var(--border)'}`, borderRadius: 'var(--radius-md)', padding: '20px 24px', transition: 'border-color 0.15s' }}>
+                <div key={goal._id} style={{ background: 'var(--bg-card)', border: `1px solid ${goal.status === 'active' && days < 0 ? 'var(--red-dim)' : 'var(--border)'}`, borderRadius: 'var(--radius-md)', padding: '20px 24px', transition: 'border-color 0.15s' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
                     <div style={{ flex: 1 }}>
                       {/* Title row */}
@@ -406,7 +429,7 @@ export default function GoalsView() {
                       </div>
 
                       {/* Progress */}
-                      {(goal.linkedTasks.length > 0 || goal.linkedHabits.length > 0) && (
+                      {((goal.linkedTasks?.length || 0) > 0 || (goal.linkedHabits?.length || 0) > 0) && (
                         <div style={{ background: 'var(--bg-glass)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--border)' }}>
                           <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
                             <BarChart2 size={11} /> LINKED PROGRESS
@@ -418,17 +441,17 @@ export default function GoalsView() {
 
                     {/* Actions */}
                     <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                      <button onClick={() => { setEditGoal(goal); setShowForm(false) }}
-                        style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', padding: '7px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.15s' }}
+                      <button onClick={() => { setEditGoal(goal); setShowForm(false) }} aria-label="Edit goal"
+                        style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 9, color: 'var(--text-muted)', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
                         onMouseEnter={e => { e.currentTarget.style.color = 'var(--cyan)'; e.currentTarget.style.borderColor = 'var(--cyan)' }}
                         onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)' }}>
-                        <Edit2 size={14} />
+                        <Edit2 size={15} />
                       </button>
-                      <button onClick={() => handleDelete(goal._id)}
-                        style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', padding: '7px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.15s' }}
+                      <button onClick={() => handleDelete(goal._id)} aria-label="Delete goal"
+                        style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 9, color: 'var(--text-muted)', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
                         onMouseEnter={e => { e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'var(--red)' }}
                         onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)' }}>
-                        <Trash2 size={14} />
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </div>

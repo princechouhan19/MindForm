@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { socialAPI, adminAPI } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../components/Toast'
 
 const flag = (code) => {
   if (!code || code.length !== 2) return '🌍'
@@ -25,7 +26,7 @@ const BTN = (variant = 'primary') => ({
   padding: '8px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700,
   cursor: 'pointer', border: 'none', transition: 'all 0.15s',
   ...(variant === 'primary' ? {
-    background: 'var(--brand-primary)', color: '#000',
+    background: 'var(--brand-primary)', color: '#fff',
   } : variant === 'danger' ? {
     background: 'var(--red-dim)', border: '1px solid var(--red)', color: 'var(--red)',
   } : {
@@ -56,10 +57,10 @@ function MiniProfile({ user, streakDays = 0, aura = 0, rank, onClick, isFollowin
       {rank !== undefined && (
         <div style={{
           width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-          background: rank === 0 ? '#FFD70030' : rank === 1 ? '#C0C0C030' : rank === 2 ? '#CD7F3230' : 'var(--border)',
+          background: rank === 0 ? 'color-mix(in srgb, var(--brand-warning) 18%, transparent)' : rank === 1 ? 'var(--bg-glass)' : rank === 2 ? 'color-mix(in srgb, var(--brand-orange) 18%, transparent)' : 'var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 12, fontWeight: 900,
-          color: rank === 0 ? '#FFD700' : rank === 1 ? '#C0C0C0' : rank === 2 ? '#CD7F32' : 'var(--text-muted)',
+          fontSize: 12, fontWeight: 800,
+          color: rank === 0 ? 'var(--brand-warning)' : rank === 1 ? 'var(--text-secondary)' : rank === 2 ? 'var(--brand-orange)' : 'var(--text-muted)',
         }}>
           {rank === 0 ? '🥇' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : `#${rank + 1}`}
         </div>
@@ -77,8 +78,8 @@ function MiniProfile({ user, streakDays = 0, aura = 0, rank, onClick, isFollowin
           {user.badges?.slice(0, 2).map(b => <BadgePill key={b.id} badge={b} />)}
         </div>
         <div style={{ display: 'flex', gap: 14, marginTop: 4 }}>
-          <span style={{ fontSize: 12, color: '#ff4500', fontWeight: 700 }}>🔥 {streakDays}d</span>
-          <span style={{ fontSize: 12, color: '#ffd700', fontWeight: 700 }}>⚡ {aura.toLocaleString()}</span>
+          <span style={{ fontSize: 12, color: 'var(--red)', fontWeight: 700 }}>🔥 {streakDays}d</span>
+          <span style={{ fontSize: 12, color: 'var(--brand-warning)', fontWeight: 700 }}>⚡ {aura.toLocaleString()}</span>
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -94,6 +95,7 @@ function MiniProfile({ user, streakDays = 0, aura = 0, rank, onClick, isFollowin
 }
 
 export default function SocialView() {
+  const toast = useToast()
   const { user } = useAuth()
   const [tab, setTab] = useState('leaderboard')
   const [profile, setProfile] = useState(null)
@@ -151,7 +153,8 @@ export default function SocialView() {
       const r = await socialAPI.updateMe(editForm)
       setProfile(r.profile)
       setEditing(false)
-    } catch (e) { alert(e.message) }
+      toast.success('Profile updated.')
+    } catch (e) { toast.error(e.message || 'Could not save profile.') }
   }
 
   const toggleFollow = async (userId) => {
@@ -163,7 +166,7 @@ export default function SocialView() {
         await socialAPI.follow(userId)
         setFollowList(prev => new Set(prev).add(userId))
       }
-    } catch (e) { alert(e.message) }
+    } catch (e) { toast.error(e.message || 'Follow action failed.') }
   }
 
   const sendMsg = async () => {
@@ -173,7 +176,7 @@ export default function SocialView() {
       const r = await socialAPI.postForumMessage(msgText.trim())
       setForumMsgs(prev => [...prev, r.message])
       setMsgText('')
-    } catch (e) { alert(e.message) } finally { setSending(false) }
+    } catch (e) { toast.error(e.message || 'Could not send message.') } finally { setSending(false) }
   }
 
   const openProfile = async (userId) => {
@@ -182,15 +185,15 @@ export default function SocialView() {
       setViewProfile(r.profile)
     } catch (e) {
       if (e.message.includes('private')) setViewProfile({ _private: true })
-      else alert(e.message)
+      else toast.error(e.message || 'Could not open profile.')
     }
   }
 
   const TABS = [
-    { id: 'leaderboard', label: 'Leaderboard', icon: Trophy, color: '#ffd700', desc: 'Top streaks globally' },
+    { id: 'leaderboard', label: 'Leaderboard', icon: Trophy, color: 'var(--brand-warning)', desc: 'Top streaks globally' },
     { id: 'forum',       label: 'Community',   icon: MessageCircle, color: 'var(--brand-primary)', desc: 'Join the conversation' },
-    { id: 'profile',     label: 'My Profile',  icon: Users, color: '#a78bfa', desc: 'Manage your public persona' },
-    ...(isAdmin ? [{ id: 'admin', label: 'Admin', icon: Crown, color: '#ff4500', desc: 'Site administration' }] : []),
+    { id: 'profile',     label: 'My Profile',  icon: Users, color: 'var(--purple)', desc: 'Manage your public persona' },
+    ...(isAdmin ? [{ id: 'admin', label: 'Admin', icon: Crown, color: 'var(--red)', desc: 'Site administration' }] : []),
   ]
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
@@ -311,14 +314,14 @@ export default function SocialView() {
             </div>
             <div style={{ marginTop: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <h2 style={{ fontSize: 24, fontWeight: 900 }}>{profile.name}</h2>
+                <h2 style={{ fontSize: 24, fontWeight: 800 }}>{profile.name}</h2>
                 {profile.country && <span style={{ fontSize: 22 }}>{flag(profile.country)}</span>}
               </div>
               <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>{profile.email}</div>
               {profile.bio && <div style={{ fontSize: 15, color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.6, maxWidth: '90%' }}>{profile.bio}</div>}
               <div style={{ display: 'flex', gap: 24, marginTop: 20 }}>
-                <div><span style={{ fontSize: 20, fontWeight: 900, color: 'var(--brand-primary)' }}>{profile.followers?.length || 0}</span> <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.1em' }}>FOLLOWERS</span></div>
-                <div><span style={{ fontSize: 20, fontWeight: 900, color: 'var(--brand-primary)' }}>{profile.following?.length || 0}</span> <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.1em' }}>FOLLOWING</span></div>
+                <div><span style={{ fontSize: 20, fontWeight: 800, color: 'var(--brand-primary)' }}>{profile.followers?.length || 0}</span> <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.1em' }}>FOLLOWERS</span></div>
+                <div><span style={{ fontSize: 20, fontWeight: 800, color: 'var(--brand-primary)' }}>{profile.following?.length || 0}</span> <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.1em' }}>FOLLOWING</span></div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: profile.isPublic ? 'var(--green)' : 'var(--text-muted)' }}>
                   {profile.isPublic ? <Eye size={18} /> : <EyeOff size={18} />}
                   <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em' }}>{profile.isPublic ? 'PUBLIC' : 'PRIVATE'}</span>
@@ -408,7 +411,7 @@ export default function SocialView() {
           <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 16, fontFamily: 'var(--font-display)' }}>Social Hub</h1>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 4 }}>
             {TABS.map(({ id, label, icon: Icon, color }) => (
-              <button key={id} onClick={() => setTab(id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 20, fontSize: 13, fontWeight: 600, flexShrink: 0, cursor: 'pointer', background: tab === id ? color + '18' : 'var(--bg-glass)', border: `1px solid ${tab === id ? color : 'var(--border)'}`, color: tab === id ? color : 'var(--text-muted)', transition: 'all 0.15s' }}>
+              <button key={id} onClick={() => setTab(id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 20, fontSize: 13, fontWeight: 600, flexShrink: 0, cursor: 'pointer', background: tab === id ? `color-mix(in srgb, ${color} 14%, transparent)` : 'var(--bg-glass)', border: `1px solid ${tab === id ? color : 'var(--border)'}`, color: tab === id ? color : 'var(--text-muted)', transition: 'all 0.15s' }}>
                 <Icon size={13} /> {label}
               </button>
             ))}
@@ -420,8 +423,8 @@ export default function SocialView() {
           {TABS.map(({ id, label, icon: Icon, color, desc }) => {
             const active = tab === id
             return (
-              <button key={id} onClick={() => setTab(id)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, cursor: 'pointer', background: active ? color + '12' : 'transparent', border: `1px solid ${active ? color + '40' : 'transparent'}`, color: active ? 'var(--text-primary)' : 'var(--text-secondary)', transition: 'all 0.2s', textAlign: 'left', width: '100%' }} onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-glass)' }} onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, background: active ? color + '20' : 'var(--bg-glass)', border: `1px solid ${active ? color + '40' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+              <button key={id} onClick={() => setTab(id)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, cursor: 'pointer', background: active ? `color-mix(in srgb, ${color} 12%, transparent)` : 'transparent', border: `1px solid ${active ? `color-mix(in srgb, ${color} 35%, transparent)` : 'transparent'}`, color: active ? 'var(--text-primary)' : 'var(--text-secondary)', transition: 'all 0.2s', textAlign: 'left', width: '100%' }} onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-glass)' }} onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, background: active ? `color-mix(in srgb, ${color} 16%, transparent)` : 'var(--bg-glass)', border: `1px solid ${active ? `color-mix(in srgb, ${color} 35%, transparent)` : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
                   <Icon size={15} color={active ? color : 'var(--text-muted)'} />
                 </div>
                 <div>
@@ -445,6 +448,13 @@ export default function SocialView() {
 }
 
 function ProfileModal({ profile, onClose, myId, isFollowing, onFollow }) {
+  // ESC to close + body scroll lock (accessibility)
+  React.useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
   if (profile._private) return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
       <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '40px', maxWidth: 360, textAlign: 'center' }} onClick={e => e.stopPropagation()}>
@@ -466,13 +476,13 @@ function ProfileModal({ profile, onClose, myId, isFollowing, onFollow }) {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <h3 style={{ fontSize: 22, fontWeight: 900 }}>{profile.name}</h3>
+              <h3 style={{ fontSize: 22, fontWeight: 800 }}>{profile.name}</h3>
               {profile.country && <span style={{ fontSize: 20 }}>{flag(profile.country)}</span>}
             </div>
             {profile.bio && <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.5 }}>{profile.bio}</div>}
             <div style={{ display: 'flex', gap: 24, marginTop: 16 }}>
-              <div><span style={{ fontSize: 18, fontWeight: 900, color: '#ff4500' }}>🔥</span> <span style={{ fontSize: 14, fontWeight: 700 }}>{profile.streakDays}d</span></div>
-              <div><span style={{ fontSize: 18 }}>⚡</span> <span style={{ fontSize: 14, fontWeight: 700, color: '#ffd700' }}>{profile.aura?.toLocaleString()}</span></div>
+              <div><span style={{ fontSize: 18, fontWeight: 800, color: 'var(--red)' }}>🔥</span> <span style={{ fontSize: 14, fontWeight: 700 }}>{profile.streakDays}d</span></div>
+              <div><span style={{ fontSize: 18 }}>⚡</span> <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--brand-warning)' }}>{profile.aura?.toLocaleString()}</span></div>
               <div style={{ fontSize: 14, color: 'var(--text-muted)' }}><strong>{profile.followers?.length || 0}</strong> followers</div>
             </div>
           </div>
@@ -494,6 +504,8 @@ function ProfileModal({ profile, onClose, myId, isFollowing, onFollow }) {
 }
 
 function AdminPanel() {
+  const toast = useToast()
+  const [busy, setBusy] = useState(false)
   const [users, setUsers] = useState([])
   const [badges, setBadges] = useState([])
   const [loading, setLoading] = useState(true)
@@ -505,18 +517,28 @@ function AdminPanel() {
   }, [])
 
   const assignBadge = async (userId, badgeId) => {
-    await adminAPI.assignBadge(userId, badgeId)
-    const updated = await adminAPI.getUsers()
-    setUsers(updated.users)
+    if (busy) return
+    setBusy(true)
+    try {
+      await adminAPI.assignBadge(userId, badgeId)
+      const updated = await adminAPI.getUsers()
+      setUsers(updated.users)
+      toast.success('Badge assigned.')
+    } catch (e) { toast.error(e.message || 'Could not assign badge.') } finally { setBusy(false) }
   }
 
   const revokeBadge = async (userId, badgeId) => {
-    await adminAPI.revokeBadge(userId, badgeId)
-    const updated = await adminAPI.getUsers()
-    setUsers(updated.users)
+    if (busy) return
+    setBusy(true)
+    try {
+      await adminAPI.revokeBadge(userId, badgeId)
+      const updated = await adminAPI.getUsers()
+      setUsers(updated.users)
+      toast.success('Badge revoked.')
+    } catch (e) { toast.error(e.message || 'Could not revoke badge.') } finally { setBusy(false) }
   }
 
-  if (loading) return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading admin panel...</div>
+  if (loading) return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading admin panel…</div>
 
   const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()) || u._id.includes(search))
 
@@ -524,8 +546,8 @@ function AdminPanel() {
     <div style={{ maxWidth: 800, margin: '0 auto', width: '100%' }}>
       <div style={{ background: 'linear-gradient(135deg, rgba(255,69,0,0.05), var(--bg-surface))', border: '1px solid rgba(255,69,0,0.3)', borderRadius: 16, padding: '20px', marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-          <Crown size={20} color="#ff4500" />
-          <h2 style={{ fontSize: 18, fontWeight: 900, color: '#ff4500' }}>Admin Panel</h2>
+          <Crown size={20} color="var(--red)" />
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--red)' }}>Admin Panel</h2>
         </div>
         <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{users.length} registered users</div>
       </div>
@@ -549,7 +571,7 @@ function AdminPanel() {
                   <span style={{ fontSize: 15, fontWeight: 800 }}>{u.name}</span>
                   {u.country && <span>{flag(u.country)}</span>}
                   {u.isPublic ? <Globe size={12} color="var(--green)" /> : <Lock size={12} color="var(--text-muted)" />}
-                  {u.isAdmin && <span style={{ fontSize: 9, background: 'rgba(255,69,0,0.15)', color: '#ff4500', padding: '1px 6px', borderRadius: 20, fontWeight: 900, border: '1px solid rgba(255,69,0,0.3)' }}>ADMIN</span>}
+                  {u.isAdmin && <span style={{ fontSize: 9, background: 'rgba(255,69,0,0.15)', color: 'var(--red)', padding: '1px 6px', borderRadius: 20, fontWeight: 800, border: '1px solid rgba(255,69,0,0.3)' }}>ADMIN</span>}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   <span>{u.email}</span>

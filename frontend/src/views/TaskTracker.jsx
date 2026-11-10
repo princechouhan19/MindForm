@@ -3,6 +3,8 @@ import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } fro
 import { Plus, Trash2, ChevronLeft, ChevronRight, Star, AlertTriangle, Download, Cloud, CloudOff, Loader, Copy, CheckCircle2, Circle, Pencil, Check, X, Clock, Zap, GripVertical, ChevronUp, ChevronDown } from 'lucide-react'
 import { tasksAPI } from '../api/client'
 import { useSync } from '../hooks/useSync'
+import { useToast } from '../components/Toast'
+import { useConfirm } from '../components/ConfirmDialog'
 import { DonutChart } from '../components/StatCard'
 
 const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -58,9 +60,9 @@ const ShadcnTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
       <div style={{
-        background: 'rgba(10,11,15,0.92)',
+        background: 'var(--bg-overlay)',
         backdropFilter: 'blur(8px)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: '1px solid var(--border)',
         padding: '8px 12px',
         borderRadius: '8px',
         boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
@@ -83,6 +85,8 @@ const ShadcnTooltip = ({ active, payload, label }) => {
 }
 
 export default function TaskTracker() {
+  const toast = useToast()
+  const confirmDialog = useConfirm()
   const today = new Date()
   const isMobile = useIsMobile()
   const [year, setYear] = useState(today.getFullYear())
@@ -180,17 +184,21 @@ export default function TaskTracker() {
     return tasks.map((t, idx) => parseTask(t, idx))
   }, [tasks, parseTask])
 
+  // monthLoaded gates auto-save: never persist before the fresh GET resolved,
+  // otherwise defaults can overwrite real server data (critical data-loss fix).
+  const [monthLoaded, setMonthLoaded] = useState(false)
   useEffect(() => {
+    setMonthLoaded(false)
     setLoadingWeek(true)
     tasksAPI.getMonth(monthKey)
-      .then(res => { if (res.data) setAllData(prev => ({ ...prev, ...res.data })) })
-      .catch(console.error)
+      .then(res => { if (res.data) setAllData(prev => ({ ...prev, ...res.data })); setMonthLoaded(true) })
+      .catch(() => setMonthLoaded(false))
       .finally(() => setLoadingWeek(false))
   }, [monthKey])
 
   const syncPayload = useMemo(() => ({ tasks, checks, reflection }), [JSON.stringify({ tasks, checks, reflection })])
   const saveFn = useCallback(() => tasksAPI.upsertWeek(weekKey, syncPayload), [weekKey, JSON.stringify(syncPayload)])
-  const syncStatus = useSync(saveFn, syncPayload)
+  const syncStatus = useSync(saveFn, syncPayload, { ready: monthLoaded })
 
   const totalWeeks = getWeeksInMonth(year, month)
   const weekDays = useMemo(() => getWeekDays(year, month, weekNum), [year, month, weekNum])
@@ -233,7 +241,7 @@ export default function TaskTracker() {
     const encodedNew = encodeTask({ name: trimmed, time: editTime })
     const duplicate = parsedTasks.some(pt => pt.name.toLowerCase() === trimmed.toLowerCase() && pt.name.toLowerCase() !== oldName.toLowerCase())
     if (duplicate) {
-      alert("A task with this name already exists in this week.")
+      toast.warning('A task with this name already exists in this week.')
       return
     }
     const newTasks = tasks.map(t => {
@@ -258,12 +266,20 @@ export default function TaskTracker() {
     setEditingTask(null)
   }
 
-  const copyFromLastWeek = () => {
+  const copyFromLastWeek = async () => {
     if (weekNum <= 1) return
     const prevTasks = (allData[`${monthKey}-w${weekNum - 1}`] || {}).tasks || DEFAULT_TASKS
     const hasCustom = JSON.stringify(tasks) !== JSON.stringify(DEFAULT_TASKS)
-    if (hasCustom && !confirm(`Replace Week ${weekNum} tasks with Week ${weekNum - 1} tasks?`)) return
+    if (hasCustom) {
+      const ok = await confirmDialog({
+        title: 'Replace this week’s tasks?',
+        body: `Week ${weekNum} will be replaced with Week ${weekNum - 1} tasks. This can’t be undone.`,
+        confirmLabel: 'Replace', danger: true,
+      })
+      if (!ok) return
+    }
     updateWeek({ tasks: [...prevTasks] })
+    toast.success('Tasks copied from last week.')
   }
   const setRef = (field, val) => updateWeek({ reflection: { ...reflection, [field]: val } })
 
@@ -450,8 +466,8 @@ export default function TaskTracker() {
           {/* Upcoming Live Timer banner */}
           {nextTaskInfo && (
             <div style={{
-              background: 'linear-gradient(135deg, var(--bg-card), rgba(0,229,255,0.03))',
-              border: '1px solid rgba(0,229,255,0.15)', borderRadius: 12, padding: '12px 14px',
+              background: 'linear-gradient(135deg, var(--bg-card), var(--cyan-dim))',
+              border: '1px solid var(--cyan-dim)', borderRadius: 12, padding: '12px 14px',
               marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               animation: 'fadeUp 0.3s ease'
             }}>
@@ -462,7 +478,7 @@ export default function TaskTracker() {
                 </div>
               </div>
               <button onClick={requestNotificationAccess} style={{
-                background: 'rgba(0,229,255,0.08)', border: '1px solid rgba(0,229,255,0.2)',
+                background: 'var(--cyan-dim)', border: '1px solid var(--cyan-glow)',
                 borderRadius: 8, padding: '6px 12px', fontSize: 11, color: 'var(--cyan)', fontWeight: 700,
                 display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer'
               }}>
@@ -564,8 +580,8 @@ export default function TaskTracker() {
                       style={{
                         display: 'flex', alignItems: 'center', gap: 14,
                         padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
-                        background: done ? 'rgba(0,255,136,0.05)' : 'var(--bg-card)',
-                        border: `1px solid ${done ? 'rgba(0,255,136,0.25)' : 'var(--border)'}`,
+                        background: done ? 'var(--green-dim)' : 'var(--bg-card)',
+                        border: `1px solid ${done ? 'var(--green-dim)' : 'var(--border)'}`,
                         opacity: isDragged ? 0.5 : 1,
                         transition: 'all 0.2s',
                       }}>
@@ -580,7 +596,7 @@ export default function TaskTracker() {
                         style={{ display: 'none' }} />
                       <div style={{ flexShrink: 0 }}>
                         {done
-                          ? <CheckCircle2 size={22} color="var(--green)" fill="rgba(0,255,136,0.15)" />
+                          ? <CheckCircle2 size={22} color="var(--green)" fill="var(--green-dim)" />
                           : <Circle size={22} color="var(--border-bright)" />
                         }
                       </div>
@@ -595,7 +611,7 @@ export default function TaskTracker() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                           {task.time && (
                             <span style={{
-                              fontSize: 11, background: 'rgba(0,229,255,0.08)', color: 'var(--cyan)',
+                              fontSize: 11, background: 'var(--cyan-dim)', color: 'var(--cyan)',
                               borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-mono)'
                             }}>{task.time}</span>
                           )}
@@ -672,7 +688,7 @@ export default function TaskTracker() {
                             <GripVertical size={16} />
                           </div>
                           <span style={{ fontSize: 14, color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
-                          {t.time && <span style={{ fontSize: 11, background: 'rgba(0,229,255,0.08)', color: 'var(--cyan)', borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-mono)' }}>{t.time}</span>}
+                          {t.time && <span style={{ fontSize: 11, background: 'var(--cyan-dim)', color: 'var(--cyan)', borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-mono)' }}>{t.time}</span>}
                           <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                             <button onClick={() => moveTask(idx, -1)} disabled={idx === 0} style={{ background: 'none', color: idx === 0 ? 'var(--text-muted)' : 'var(--cyan)', padding: 4 }}><ChevronUp size={14} /></button>
                             <button onClick={() => moveTask(idx, 1)} disabled={idx === parsedTasks.length - 1} style={{ background: 'none', color: idx === parsedTasks.length - 1 ? 'var(--text-muted)' : 'var(--cyan)', padding: 4 }}><ChevronDown size={14} /></button>
@@ -715,11 +731,11 @@ export default function TaskTracker() {
         <div style={{ position: 'fixed', top: 16, right: 16, left: 16, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
           {toasts.map(t => (
             <div key={t.id} style={{
-              background: 'rgba(19,21,29,0.92)', backdropFilter: 'blur(12px)', border: '1px solid rgba(0,229,255,0.3)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 15px rgba(0,229,255,0.1)', borderRadius: 12, padding: '14px 16px',
+              background: 'var(--bg-overlay)', backdropFilter: 'blur(12px)', border: '1px solid var(--cyan-glow)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 15px var(--cyan-dim)', borderRadius: 12, padding: '14px 16px',
               pointerEvents: 'auto', animation: 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards', display: 'flex', alignItems: 'center', gap: 12
             }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(0,229,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--cyan-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Zap size={18} color="var(--cyan)" fill="var(--cyan)" />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -782,9 +798,9 @@ export default function TaskTracker() {
             <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 10 }}>WEEKLY PROGRESS</div>
             <ResponsiveContainer width="100%" height={60}>
               <BarChart data={weeklyBarData} barSize={20}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#6b7280', fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} />
-                <Tooltip content={<ShadcnTooltip />} cursor={{ fill: 'rgba(0, 229, 255, 0.04)' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 9, fill: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} />
+                <Tooltip content={<ShadcnTooltip />} cursor={{ fill: 'var(--cyan-dim)' }} />
                 <Bar dataKey="pct" fill="var(--cyan)" radius={[4, 4, 0, 0]} opacity={0.85} />
               </BarChart>
             </ResponsiveContainer>
@@ -792,12 +808,12 @@ export default function TaskTracker() {
           
           {/* Live Countdown Timer Card */}
           <div style={{
-            background: 'linear-gradient(135deg, var(--bg-card), rgba(0,229,255,0.04))',
-            border: '1px solid rgba(0,229,255,0.2)', borderRadius: 'var(--radius-md)', padding: '16px',
+            background: 'linear-gradient(135deg, var(--bg-card), var(--cyan-dim))',
+            border: '1px solid var(--cyan-glow)', borderRadius: 'var(--radius-md)', padding: '16px',
             display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0,
             position: 'relative', overflow: 'hidden'
           }}>
-            <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(0,229,255,0.03)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: 'var(--cyan-dim)', pointerEvents: 'none' }} />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>NEXT TASK TIMER</span>
               <button onClick={requestNotificationAccess} style={{
@@ -956,7 +972,7 @@ export default function TaskTracker() {
                               <GripVertical size={14} />
                             </div>
                             <span style={{ flex: 1, fontSize: 14, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
-                            {t.time && <span style={{ fontSize: 11, background: 'rgba(0,229,255,0.08)', color: 'var(--cyan)', borderRadius: 4, padding: '2px 6px', fontFamily: 'var(--font-mono)' }}>{t.time}</span>}
+                            {t.time && <span style={{ fontSize: 11, background: 'var(--cyan-dim)', color: 'var(--cyan)', borderRadius: 4, padding: '2px 6px', fontFamily: 'var(--font-mono)' }}>{t.time}</span>}
                             <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                               <button onClick={() => moveTask(idx, -1)} disabled={idx === 0} style={{ background: 'none', color: idx === 0 ? 'var(--text-muted)' : 'var(--cyan)', padding: 2, display: 'flex', cursor: idx === 0 ? 'not-allowed' : 'pointer' }} title="Move Up"><ChevronUp size={13} /></button>
                               <button onClick={() => moveTask(idx, 1)} disabled={idx === parsedTasks.length - 1} style={{ background: 'none', color: idx === parsedTasks.length - 1 ? 'var(--text-muted)' : 'var(--cyan)', padding: 2, display: 'flex', cursor: idx === parsedTasks.length - 1 ? 'not-allowed' : 'pointer' }} title="Move Down"><ChevronDown size={13} /></button>
@@ -1000,11 +1016,11 @@ export default function TaskTracker() {
       <div style={{ position: 'fixed', top: 24, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
         {toasts.map(t => (
           <div key={t.id} style={{
-            background: 'rgba(19,21,29,0.92)', backdropFilter: 'blur(12px)', border: '1px solid rgba(0,229,255,0.3)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 15px rgba(0,229,255,0.1)', borderRadius: 12, padding: '14px 16px',
+            background: 'var(--bg-overlay)', backdropFilter: 'blur(12px)', border: '1px solid var(--cyan-glow)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 15px var(--cyan-dim)', borderRadius: 12, padding: '14px 16px',
             width: '320px', pointerEvents: 'auto', animation: 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards', display: 'flex', alignItems: 'center', gap: 12
           }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(0,229,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--cyan-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Zap size={18} color="var(--cyan)" fill="var(--cyan)" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
