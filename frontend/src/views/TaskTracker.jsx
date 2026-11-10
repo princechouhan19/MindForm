@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { Plus, Trash2, ChevronLeft, ChevronRight, Star, AlertTriangle, Download, Cloud, CloudOff, Loader, Copy, CheckCircle2, Circle, Pencil, Check, X, Clock, Zap, GripVertical, ChevronUp, ChevronDown } from 'lucide-react'
 import { tasksAPI } from '../api/client'
 import { useSync } from '../hooks/useSync'
 import { useToast } from '../components/Toast'
 import { useConfirm } from '../components/ConfirmDialog'
-import { DonutChart } from '../components/StatCard'
+import { MFBarChart, MFRing } from '../components/MFCharts'
 
 const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const DEFAULT_TASKS = [
@@ -55,34 +54,8 @@ function useIsMobile() {
   return mobile
 }
 
-// Custom Shadcn UI styled tooltip content
-const ShadcnTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div style={{
-        background: 'var(--bg-overlay)',
-        backdropFilter: 'blur(8px)',
-        border: '1px solid var(--border)',
-        padding: '8px 12px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 4
-      }}>
-        <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>{label}</div>
-        {payload.map((p, idx) => (
-          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--cyan)' }} />
-            <span style={{ color: 'var(--text-secondary)' }}>Score:</span>
-            <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{p.value}%</span>
-          </div>
-        ))}
-      </div>
-    )
-  }
-  return null
-}
+// weekly bar data in MFBarChart shape
+const toChart = (arr) => arr.map(d => ({ label: d.label, value: d.pct }))
 
 export default function TaskTracker() {
   const toast = useToast()
@@ -705,11 +678,11 @@ export default function TaskTracker() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <input value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTask()}
-                    placeholder="Add task..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: 'var(--text-primary)' }} />
-                  <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)}
-                    style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 8px', color: 'var(--cyan)', fontFamily: 'var(--font-mono)', fontSize: 13 }} />
+                    placeholder="Add task..." style={{ flex: 1, minWidth: 0, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: 'var(--text-primary)' }} />
+                  <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} aria-label="Task time"
+                    style={{ flex: '0 0 auto', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 8px', color: 'var(--cyan)', fontFamily: 'var(--font-mono)', fontSize: 13, width: 104 }} />
                 </div>
-                <button onClick={addTask} style={{ background: 'var(--cyan-dim)', border: '1px solid var(--brand-primary-glow)', borderRadius: 10, color: 'var(--cyan)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontWeight: 700 }}>
+                <button onClick={addTask} style={{ background: 'var(--brand-primary)', border: 'none', borderRadius: 12, color: '#fff', padding: '13px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontWeight: 600, fontSize: 15, minHeight: 44 }}>
                   <Plus size={18} /> Add Task
                 </button>
               </div>
@@ -796,14 +769,7 @@ export default function TaskTracker() {
           {/* Weekly Progress — spans 2 cols */}
           <div style={{ gridColumn: 'span 2', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', minWidth: 0 }}>
             <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 10 }}>WEEKLY PROGRESS</div>
-            <ResponsiveContainer width="100%" height={60}>
-              <BarChart data={weeklyBarData} barSize={20}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 9, fill: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} />
-                <Tooltip content={<ShadcnTooltip />} cursor={{ fill: 'var(--cyan-dim)' }} />
-                <Bar dataKey="pct" fill="var(--cyan)" radius={[4, 4, 0, 0]} opacity={0.85} />
-              </BarChart>
-            </ResponsiveContainer>
+            <MFBarChart data={toChart(weeklyBarData)} height={72} color="var(--brand-primary)" showTicks />
           </div>
           
           {/* Live Countdown Timer Card */}
@@ -852,7 +818,7 @@ export default function TaskTracker() {
           {/* Week Score */}
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, minWidth: 0 }}>
             <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>WEEK SCORE</div>
-            <DonutChart percent={weekScore} size={84} color={weekScore >= 80 ? 'var(--green)' : weekScore >= 50 ? 'var(--amber)' : 'var(--red)'} />
+            <MFRing percent={weekScore} size={84} stroke={9} color={weekScore >= 80 ? 'var(--brand-success)' : weekScore >= 50 ? 'var(--brand-orange)' : 'var(--brand-accent)'} />
           </div>
 
           {/* Week Totals */}
@@ -890,7 +856,7 @@ export default function TaskTracker() {
                         <div style={{ fontSize: 11, fontWeight: 700, color: isToday ? 'var(--cyan)' : 'var(--text-secondary)', letterSpacing: '0.08em' }}>{SHORT_DAYS[i]}</div>
                         <div style={{ fontSize: 24, fontWeight: 800, color: isToday ? 'var(--cyan)' : 'var(--text-primary)', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{day || '—'}</div>
                       </div>
-                      <DonutChart percent={stats.pct} size={50} color={stats.pct >= 80 ? 'var(--green)' : stats.pct >= 50 ? 'var(--amber)' : 'var(--red)'} />
+                      <MFRing percent={stats.pct} size={50} stroke={6} color={stats.pct >= 80 ? 'var(--brand-success)' : stats.pct >= 50 ? 'var(--brand-orange)' : 'var(--brand-accent)'} />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {parsedTasks.map(task => (
@@ -912,8 +878,8 @@ export default function TaskTracker() {
               })}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: 16 }}>
-              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
+            <div className="mf-split-grid">
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '20px', minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                   <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>MANAGE TASKS</div>
                   {weekNum > 1 && (
@@ -990,13 +956,15 @@ export default function TaskTracker() {
                     )
                   })}
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTask()} placeholder="Add task..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text-primary)' }} />
-                  <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 8px', color: 'var(--cyan)', fontFamily: 'var(--font-mono)', fontSize: 13 }} />
-                  <button onClick={addTask} style={{ background: 'var(--cyan-dim)', border: '1px solid var(--brand-primary-glow)', borderRadius: 8, color: 'var(--cyan)', padding: '10px 16px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}><Plus size={18} /></button>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  <input value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTask()} placeholder="Add task..." style={{ flex: '1 1 140px', minWidth: 0, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: 'var(--text-primary)' }} />
+                  <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} aria-label="Task time" style={{ flex: '0 0 auto', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 8px', color: 'var(--cyan)', fontFamily: 'var(--font-mono)', fontSize: 13, width: 108 }} />
+                  <button onClick={addTask} aria-label="Add task" style={{ flex: '0 0 auto', width: 44, height: 44, background: 'var(--brand-primary)', border: 'none', borderRadius: 12, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'transform 0.15s var(--ease-apple), filter 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.filter = 'brightness(1.1)'}
+                    onMouseLeave={e => e.currentTarget.style.filter = 'none'}><Plus size={20} /></button>
                 </div>
               </div>
-              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '20px', minWidth: 0 }}>
                 <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 16 }}>WEEKLY REFLECTION</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {[['win', '🏆 Best win this week?'], ['slow', '🐢 What slowed me down?'], ['focus', '🎯 One focus for next week']].map(([field, label]) => (

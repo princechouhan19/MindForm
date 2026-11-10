@@ -98,7 +98,8 @@ export const goalsAPI = {
 export const faplessAPI = {
   get: () => request('GET', '/fapless'),
   update: (payload) => request('PUT', '/fapless', payload),
-  relapse: (reason, dayCount) => request('POST', '/fapless/relapse', { reason, dayCount }),
+  relapse: (reason, dayCount, trigger) => request('POST', '/fapless/relapse', { reason, dayCount, trigger }),
+  urgeLog: (payload) => request('POST', '/fapless/urge-log', payload),
   start: () => request('POST', '/fapless/start'),
   addAura: (points) => request('PUT', '/fapless/aura', { points }),
 }

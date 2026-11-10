@@ -3,8 +3,8 @@
 // every surface shows identical numbers (previously they disagreed wildly).
 
 const LEVELS = [
-  { id: 'clown',         label: 'Clown',              minDays: 0,   maxDays: 0,        auraPerDay: 0 },
-  { id: 'noob',          label: 'Noob',               minDays: 1,   maxDays: 6,        auraPerDay: 10 },
+  { id: 'clown',         label: 'Day One',            minDays: 0,   maxDays: 0,        auraPerDay: 0 },
+  { id: 'noob',          label: 'Initiate',           minDays: 1,   maxDays: 6,        auraPerDay: 10 },
   { id: 'novice',        label: 'Novice',             minDays: 7,   maxDays: 13,       auraPerDay: 20 },
   { id: 'average',       label: 'Average',            minDays: 14,  maxDays: 29,       auraPerDay: 35 },
   { id: 'advanced',      label: 'Advanced',           minDays: 30,  maxDays: 44,       auraPerDay: 55 },
@@ -14,6 +14,10 @@ const LEVELS = [
   { id: 'gigachad',      label: 'Giga Chad',          minDays: 120, maxDays: 364,      auraPerDay: 200 },
   { id: 'abs_gigachad',  label: 'Absolute Giga Chad', minDays: 365, maxDays: Infinity, auraPerDay: 365 },
 ]
+
+// Aura earned per resisted urge (mastery experience — the strongest source
+// of self-efficacy in behaviour-change research)
+const URGE_AURA = 15
 
 const MILESTONES = [
   { day: 1,   label: 'First Step',            bonus: 50 },
@@ -47,12 +51,16 @@ function getLevel(days) {
 }
 
 function calcStreakAura(days) {
+  // Count each day exactly once, by the level range it falls into.
+  // (The old version never advanced a cursor, so every level's full span
+  // was summed — a 5-day streak earned ~3,300 aura instead of ~50.)
   let aura = 0
   for (const lvl of LEVELS) {
-    if (days <= 0) break
-    const daysInLevel = Math.min(days, (lvl.maxDays === Infinity ? days : lvl.maxDays) - lvl.minDays + 1)
-    if (daysInLevel <= 0) continue
-    aura += daysInLevel * lvl.auraPerDay
+    if (lvl.auraPerDay <= 0) continue
+    const levelStart = Math.max(lvl.minDays, 1) // day 0 earns nothing
+    const levelEnd = lvl.maxDays === Infinity ? days : Math.min(days, lvl.maxDays)
+    const daysInLevel = levelEnd - levelStart + 1
+    if (daysInLevel > 0) aura += daysInLevel * lvl.auraPerDay
   }
   return aura
 }
@@ -85,9 +93,11 @@ function computeStreakStats(doc, atMs = Date.now()) {
   const milestoneAura = calcMilestoneAura(streakDays)
   const challengeBonus = calcChallengeBonus(doc.activeChallenge, streakDays)
   const relapseBonus = (doc.relapses || []).reduce((acc, r) => acc + (r.bonusEarned || 0), 0)
+  const urgeAura = (doc.urgeLogs || []).filter(u => u.resisted).length * URGE_AURA
 
-  const aura = streakAura + milestoneAura + challengeBonus + relapseBonus
-  return { streakDays, aura, level: { id: level.id, label: level.label }, auraRate: level.auraPerDay }
+  const aura = streakAura + milestoneAura + challengeBonus + relapseBonus + urgeAura
+  const urgesResisted = (doc.urgeLogs || []).filter(u => u.resisted).length
+  return { streakDays, aura, level: { id: level.id, label: level.label }, auraRate: level.auraPerDay, urgesResisted, urgeAura }
 }
 
-module.exports = { LEVELS, MILESTONES, CHALLENGES, getLevel, computeStreakStats }
+module.exports = { LEVELS, MILESTONES, CHALLENGES, URGE_AURA, getLevel, computeStreakStats }

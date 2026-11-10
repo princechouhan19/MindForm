@@ -344,8 +344,17 @@ img { -webkit-user-drag: none; user-select: none; }
 .mobile-nav-btn:active { transform: scale(0.92); }
 
 /* ── Responsive breakpoints ────────────────────────────────── */
+/* Tasks bottom split: Manage | Reflection — never overflows */
+.mf-split-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
 @media (max-width: 1024px) {
   :root { --sidebar-width: 200px; }
+  .mf-split-grid { grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); }
 }
 
 @media (max-width: 768px) {
@@ -364,6 +373,7 @@ img { -webkit-user-drag: none; user-select: none; }
   .grid-3col { grid-template-columns: 1fr !important; }
   .grid-4col { grid-template-columns: 1fr 1fr !important; }
   .grid-2col { grid-template-columns: 1fr !important; }
+  .mf-split-grid { grid-template-columns: 1fr !important; }
   h1 { font-size: 24px !important; }
   .view-pad { padding: 16px 16px 0 !important; }
   .view-scroll { padding: 0 16px 80px !important; }

@@ -1,20 +1,36 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
-  Flame, Shield, Trophy, AlertTriangle, RotateCcw, Zap, Star,
-  ChevronDown, ChevronUp, CheckCircle2, XCircle, Lightbulb,
-  Smartphone, Monitor, Globe, Lock, Play, Calendar, RefreshCw
+  Flame, Shield, Trophy, RotateCcw, Zap, Star,
+  ChevronDown, ChevronUp, Lightbulb,
+  Smartphone, Monitor, Globe, Lock, Play, Calendar, RefreshCw,
+  Waves, Wind, Dumbbell, Droplets, Phone, HeartPulse, Brain,
+  X, Check, Siren, Moon, Battery, Coffee, Users, TrendingUp
 } from 'lucide-react'
 import { faplessAPI } from '../api/client'
 import { useToast } from '../components/Toast'
 import { useConfirm } from '../components/ConfirmDialog'
+import { MFRing } from '../components/MFCharts'
 
-// ─── LEVEL SYSTEM ────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════
+   FAPLESS — research-based redesign (v2.1)
+
+   Evidence baked into this screen:
+   • Urge surfing (Marlatt): urges crest & pass like waves (~15–30 min)
+   • HALT trigger check (recovery standard)
+   • Physiological sigh / paced breathing for acute craving
+   • Behavioural replacement + environment design
+   • Self-compassion over shame (abstinence violation effect)
+   • Mastery experiences (Bandura): every resisted urge builds
+     self-efficacy and earns aura
+═══════════════════════════════════════════════════════════════ */
+
+// ─── LEVEL SYSTEM (ids kept in sync with backend utils/aura.js) ─────────────
 const LEVELS = [
-  { id: 'clown',        label: 'Clown',              minDays: 0,   maxDays: 0,    auraPerDay: 0,   color: '#a0a0a0', desc: 'Day 0 — The journey begins today.', image: '/levels/clown.png' },
-  { id: 'noob',         label: 'Noob',               minDays: 1,   maxDays: 6,    auraPerDay: 10,  color: '#cd7f32', desc: 'You took the first step. Most people never do.', image: '/levels/noob.png' },
+  { id: 'clown',        label: 'Day One',            minDays: 0,   maxDays: 0,    auraPerDay: 0,   color: '#a0a0a0', desc: 'Every legend starts at zero. Today is that day.', image: '/levels/clown.png' },
+  { id: 'noob',         label: 'Initiate',           minDays: 1,   maxDays: 6,    auraPerDay: 10,  color: '#cd7f32', desc: 'You took the first step. Most people never do.', image: '/levels/noob.png' },
   { id: 'novice',       label: 'Novice',             minDays: 7,   maxDays: 13,   auraPerDay: 20,  color: '#8fbc8f', desc: 'One week strong. Your brain is starting to rewire.', image: '/levels/novice.png' },
   { id: 'average',      label: 'Average',            minDays: 14,  maxDays: 29,   auraPerDay: 35,  color: '#6495ed', desc: 'Two weeks. Dopamine receptors are healing.', image: '/levels/average.png' },
-  { id: 'advanced',     label: 'Advanced',            minDays: 30,  maxDays: 44,   auraPerDay: 55,  color: '#9370db', desc: '30 days — The infamous "30-day mark". Brain fog is lifting.', image: '/levels/advanced.png' },
+  { id: 'advanced',     label: 'Advanced',           minDays: 30,  maxDays: 44,   auraPerDay: 55,  color: '#9370db', desc: '30 days — the famous reboot mark. Brain fog is lifting.', image: '/levels/advanced.png' },
   { id: 'sigma',        label: 'Sigma',              minDays: 45,  maxDays: 59,   auraPerDay: 80,  color: '#00bfff', desc: '45 days. Confidence, energy, and clarity are surging.', image: '/levels/sigma.png' },
   { id: 'chad',         label: 'Chad',               minDays: 60,  maxDays: 89,   auraPerDay: 110, color: 'var(--brand-warning)', desc: '60 days. People notice the change. You are becoming.', image: '/levels/chad.png' },
   { id: 'absolute_chad',label: 'Absolute Chad',      minDays: 90,  maxDays: 119,  auraPerDay: 150, color: 'var(--brand-orange)', desc: '90-day reboot complete. This is real transformation.', image: '/levels/absolute_chad.png' },
@@ -22,7 +38,6 @@ const LEVELS = [
   { id: 'abs_gigachad', label: 'Absolute Giga Chad', minDays: 365, maxDays: Infinity, auraPerDay: 365, color: '#ff00ff', desc: '365 days. You have completely transcended. A new human.', image: '/levels/abs_gigachad.png' },
 ]
 
-// ─── MILESTONES ──────────────────────────────────────────────────────────────
 const MILESTONES = [
   { day: 1, label: 'First Step', bonus: 50, desc: 'Complete 24 hours of self-control' },
   { day: 3, label: 'Urge Breaker', bonus: 100, desc: 'Survive the first 3 critical days' },
@@ -31,60 +46,12 @@ const MILESTONES = [
   { day: 30, label: 'Monthly Mastery', bonus: 1000, desc: '30 days of clarity' },
   { day: 45, label: 'Sigma Transcended', bonus: 1500, desc: '45 days of powerful focus' },
   { day: 60, label: 'Chad Awakening', bonus: 2000, desc: '60 days of transformation' },
-  { day: 90, label: 'Full Brain Reboot', bonus: 3000, desc: '90 days - completely reset dopamine' },
+  { day: 90, label: 'Full Brain Reboot', bonus: 3000, desc: '90 days — dopamine baseline reset' },
   { day: 120, label: 'Elite Focus', bonus: 5000, desc: '120 days of power' },
   { day: 180, label: 'Diamond Shield', bonus: 8000, desc: 'Half a year of pure mastery' },
   { day: 365, label: 'The Annual Ascendant', bonus: 15000, desc: '1 year of legendary commitment' },
 ]
 
-function getLevel(days) {
-  for (let i = LEVELS.length - 1; i >= 0; i--) {
-    if (days >= LEVELS[i].minDays) return LEVELS[i]
-  }
-  return LEVELS[0]
-}
-
-function getNextLevel(days) {
-  for (let i = 0; i < LEVELS.length; i++) {
-    if (days < LEVELS[i].minDays) return LEVELS[i]
-  }
-  return null
-}
-
-function calcAura(days) {
-  let aura = 0
-  for (const lvl of LEVELS) {
-    if (days <= 0) break
-    const daysInLevel = Math.min(days, (lvl.maxDays === Infinity ? days : lvl.maxDays) - lvl.minDays + 1)
-    if (daysInLevel <= 0) continue
-    aura += daysInLevel * lvl.auraPerDay
-  }
-  return aura
-}
-
-function getCompletedMilestones(days) {
-  return MILESTONES.filter(m => days >= m.day)
-}
-
-function calcMilestoneAura(days) {
-  return getCompletedMilestones(days).reduce((sum, m) => sum + m.bonus, 0)
-}
-
-// ─── LEVEL BENEFITS ───────────────────────────────────────────────────────────
-const BENEFITS = {
-  clown:         ['• Day 0: The journey starts today', '• Brain is seeking easy dopamine', '• Focus on the next 24 hours only'],
-  noob:          ['• Reduced urge intensity', '• Better sleep quality starts', '• You broke the cycle — that\'s huge'],
-  novice:        ['• Energy levels rising', '• Brain fog decreasing', '• Improved focus for 20-30 min tasks', '• Reduced social anxiety'],
-  average:       ['• Dopamine receptors partially healed', '• Morning motivation boost', '• Clearer thinking & sharper memory', '• More emotional control'],
-  advanced:      ['• Full dopamine reset nearly complete', '• Natural confidence in social settings', '• Physical strength & stamina up', '• Eye contact feels natural', '• Deeper voice reported by many'],
-  sigma:         ['• Aura is felt by others', '• Deep focus for 2+ hours', '• Attraction energy noticeably different', '• Discipline spills into all areas of life'],
-  chad:          ['• Operating at peak mental clarity', '• Emotional mastery — no longer reactive', '• Drive to build, create, earn', '• 60-day neurological transformation confirmed by science'],
-  absolute_chad: ['• 90-day full reboot ✅', '• Complete dopamine system restored', '• Social presence radiates confidence', '• Life goals feel achievable and clear'],
-  gigachad:      ['• 120+ days — elite 1% of men', '• Naturally magnetizing personality', '• High energy all day without stimulants', '• Deep work sessions of 4+ hours'],
-  abs_gigachad:  ['• 365 days — absolute legend', '• You have rewritten your identity', '• Limitless discipline applied to every domain', '• You are the standard, not the exception'],
-}
-
-// ─── CHALLENGES ───────────────────────────────────────────────────────────────
 const CHALLENGES = [
   { id: 'NNN',    label: '🚫 No Nut November (NNN)',   duration: 30,  desc: 'Classic November challenge. 30 days of total abstinence.', auraBonus: 500 },
   { id: 'NYR',    label: '🎆 New Year Reset (NYR)',     duration: 30,  desc: 'Start the new year with a clean slate. 30 days.', auraBonus: 500 },
@@ -95,43 +62,82 @@ const CHALLENGES = [
   { id: 'hardmode', label: '⚔️ Hard Mode (No PMO)',   duration: 90,  desc: 'No Porn, No Masturbation, No Orgasm. The ultimate test.', auraBonus: 2000 },
 ]
 
-// ─── MOTIVATIONAL / DE-MOTIVATIONAL QUOTES ────────────────────────────────────
-const DEMOTIVATIONAL = [
-  '"Every time you relapse, you sell a piece of your future self."',
-  '"The dopamine hit lasts 5 seconds. The shame lasts days."',
-  '"You chose 5 minutes of weakness over months of progress."',
-  '"The you from 90 days from now is disappointed."',
-  '"Porn is rented pleasure with a permanent cost."',
-  '"Every relapse tells your brain: I have no control."',
-]
+const URGE_AURA = 15
+
+// Daily reminders — positive & process-focused (shame-based quotes removed:
+// the abstinence violation effect shows shame fuels the binge cycle)
 const MOTIVATIONAL = [
   '"Every day clean is a vote for the person you want to become."',
-  '"The urge will pass in 10 minutes. Your strength lasts forever."',
+  '"The urge will pass in minutes. The strength you build lasts years."',
   '"Discipline is choosing your future self over your present feelings."',
   '"You didn\'t come this far to only come this far."',
   '"The hardest battle is with yourself. Win it."',
-  '"Real men master themselves first."',
   '"Your energy is sacred. Protect it."',
-  '"Every day you hold is a day your dopamine receptors heal."',
+  '"Every wave you surf rewires the loop a little more."',
+  '"Motivation follows action. Start with two minutes."',
 ]
 
-// ─── SUGGESTIONS ─────────────────────────────────────────────────────────────
-const SUGGESTIONS = [
+// ─── SCIENCE TIMELINE (evidence-informed expectations by day range) ─────────
+const BRAIN_TIMELINE = [
+  { range: 'Day 1–3', title: 'Withdrawal peak', color: 'var(--red)', icon: Flame,
+    body: 'Cravings, irritability and restlessness are normal — your brain is losing its easiest dopamine source. Urges feel strongest now and usually pass within 15–30 minutes.' },
+  { range: 'Day 4–7', title: 'Sleep & energy return', color: 'var(--brand-orange)', icon: Battery,
+    body: 'Many people notice deeper sleep and steadier morning energy. Urges are still frequent — every wave you surf weakens the habit loop a little more.' },
+  { range: 'Day 8–14', title: 'Fog lifting', color: 'var(--brand-warning)', icon: Brain,
+    body: 'Mental fog starts clearing and focus spans lengthen. Motivation becomes less about willpower and more about momentum.' },
+  { range: 'Day 15–29', title: 'Rewiring', color: 'var(--brand-primary)', icon: TrendingUp,
+    body: 'Reward sensitivity begins recovering — small everyday wins start feeling good again. Boredom is normal: your brain is relearning slower pleasures.' },
+  { range: 'Day 30–44', title: 'The 30-day mark', color: 'var(--brand-secondary)', icon: Shield,
+    body: 'The classic reboot milestone. Habit loops weaken noticeably; many report more eye contact, drive and social ease around now.' },
+  { range: 'Day 45–89', title: 'Compounding', color: 'var(--brand-teal)', icon: Zap,
+    body: 'Deep-work capacity grows and emotional reactivity drops. Discipline starts spilling over into training, work and relationships.' },
+  { range: 'Day 90+', title: 'Full reboot', color: 'var(--brand-success)', icon: Trophy,
+    body: 'The default loop has been rewritten. The goal now is identity: you are someone who does hard things. Keep surfing waves — they still come, but they are small.' },
+]
+
+// ─── SOS TOOLKIT ─────────────────────────────────────────────────────────────
+const TRIGGERS = [
+  { id: 'hungry',   label: 'Hungry',    emoji: '🍽️', tip: 'Eat something real first. Low blood sugar mimics cravings.' },
+  { id: 'angry',    label: 'Angry',     emoji: '😤', tip: 'Angry needs an outlet, not a screen. Move hard for 2 minutes.' },
+  { id: 'lonely',   label: 'Lonely',    emoji: '🫂', tip: 'Text or call one person right now. Connection is the antidote.' },
+  { id: 'tired',    label: 'Tired',     emoji: '😴', tip: 'Willpower is lowest when tired. A 15-min nap beats a relapse.' },
+  { id: 'bored',    label: 'Bored',     emoji: '🥱', tip: 'Boredom is withdrawal from stimulation. Pick anything hands-on.' },
+  { id: 'stressed', label: 'Stressed',  emoji: '😩', tip: 'Breathe out slowly — longer exhales switch off the stress response.' },
+  { id: 'scrolling',label: 'Late-night scroll', emoji: '📱', tip: 'Put the phone in another room. Distance beats discipline.' },
+]
+
+const REPLACEMENT_ACTIONS = [
+  { id: 'pushups',  label: '20 push-ups',            icon: Dumbbell, tip: 'Channel the energy physically — the urge chemistry actually helps here.' },
+  { id: 'cold',     label: 'Cold water on face',     icon: Droplets, tip: 'Triggers the dive reflex and drops heart rate fast.' },
+  { id: 'walk',     label: '10-minute walk outside', icon: Wind,     tip: 'Change of scene breaks the rumination loop.' },
+  { id: 'call',     label: 'Text an accountability friend', icon: Users, tip: 'Saying it out loud kills the secrecy that feeds the habit.' },
+  { id: 'water',    label: 'Drink a glass of water', icon: HeartPulse, tip: 'Dehydration amplifies cravings. Simple, but it works.' },
+  { id: 'breath',   label: '1 minute of slow breathing', icon: Wind, tip: 'Long, slow exhales calm the nervous system in real time.' },
+]
+
+// Compassionate reframes — replaces the old shame-based "demotivational
+// quotes". Research: shame fuels the binge cycle (abstinence violation
+// effect); self-compassion predicts faster re-engagement.
+const REFRAMES = [
+  'A relapse is a data point, not an identity. You just learned exactly which wave knocked you down.',
+  'The streak reset, but the skill didn’t. You still know how to surf an urge — that stays with you.',
+  'You didn’t lose the progress. You found the next edge of it.',
+  'Progress isn’t a straight line — it’s a trend. Zoom out; you’re still on it.',
+  'One wave, one fall. The ocean is still yours.',
+]
+
+const ENV_TOOLS = [
   {
-    cat: '📱 Mobile Apps',
-    icon: Smartphone,
-    color: '#00bfff',
+    cat: '📱 Mobile Apps', icon: Smartphone, color: '#00bfff',
     items: [
       { name: 'BlockSite', desc: 'Block adult sites on Android & iOS with a password lock.' },
-      { name: 'Cold Turkey (iOS)', desc: 'Hard block with a commitment mode — can\'t be overridden.' },
+      { name: 'Cold Turkey (iOS)', desc: 'Hard block with a commitment mode — can’t be overridden.' },
       { name: 'Pluckeye', desc: 'Gradually reduces image content. Extreme mode available.' },
       { name: 'Covenant Eyes', desc: 'Accountability app — sends report to a trusted person.' },
     ]
   },
   {
-    cat: '💻 PC Extensions',
-    icon: Monitor,
-    color: '#9370db',
+    cat: '💻 PC Extensions', icon: Monitor, color: '#9370db',
     items: [
       { name: 'BlockSite (Chrome/Firefox)', desc: 'Add any site to a blocklist instantly.' },
       { name: 'Cold Turkey Blocker', desc: 'Blocks at OS level — even in incognito. Unbeatable.' },
@@ -140,20 +146,16 @@ const SUGGESTIONS = [
     ]
   },
   {
-    cat: '🌐 Browser Settings',
-    icon: Globe,
-    color: 'var(--brand-warning)',
+    cat: '🌐 Network & Browser', icon: Globe, color: 'var(--brand-warning)',
     items: [
-      { name: 'Enable Safe Search', desc: 'Go to Google Settings → Turn on SafeSearch and lock it.' },
-      { name: 'Use Family DNS', desc: 'Set DNS to 1.1.1.3 (Cloudflare Family) — blocks adult content at network level.' },
-      { name: 'Router Parental Controls', desc: 'Block content for all devices on your network via router settings.' },
-      { name: 'Create separate browser profile', desc: 'Use a clean profile for work/study with extensions locked.' },
+      { name: 'Enable Safe Search', desc: 'Google Settings → turn on SafeSearch and lock it.' },
+      { name: 'Family DNS — 1.1.1.3', desc: 'Cloudflare for Families blocks adult content at network level.' },
+      { name: 'Router parental controls', desc: 'Block content for every device on your network.' },
+      { name: 'Clean browser profile', desc: 'A locked-down profile for work/study, no extensions.' },
     ]
   },
   {
-    cat: '🔒 System-Level',
-    icon: Lock,
-    color: 'var(--brand-orange)',
+    cat: '🔒 System-Level', icon: Lock, color: 'var(--brand-orange)',
     items: [
       { name: 'Hosts file editing', desc: 'Add blocked domains to C:/Windows/System32/drivers/etc/hosts' },
       { name: 'OpenDNS FamilyShield', desc: '208.67.222.123 — free DNS that blocks adult content globally.' },
@@ -163,7 +165,37 @@ const SUGGESTIONS = [
   },
 ]
 
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function getLevel(days) {
+  for (let i = LEVELS.length - 1; i >= 0; i--) {
+    if (days >= LEVELS[i].minDays) return LEVELS[i]
+  }
+  return LEVELS[0]
+}
+
+function getNextLevel(days) {
+  for (const lvl of LEVELS) {
+    if (days < lvl.minDays) return lvl
+  }
+  return null
+}
+
+// Mirrors backend utils/aura.js — each day counted once, by its level range.
+function calcAura(days) {
+  let aura = 0
+  for (const lvl of LEVELS) {
+    if (lvl.auraPerDay <= 0) continue
+    const levelStart = Math.max(lvl.minDays, 1)
+    const levelEnd = lvl.maxDays === Infinity ? days : Math.min(days, lvl.maxDays)
+    const daysInLevel = levelEnd - levelStart + 1
+    if (daysInLevel > 0) aura += daysInLevel * lvl.auraPerDay
+  }
+  return aura
+}
+
+const calcMilestoneAura = (days) => MILESTONES.filter(m => days >= m.day).reduce((s, m) => s + m.bonus, 0)
+const getCompletedMilestones = (days) => MILESTONES.filter(m => days >= m.day)
+
 function useIsMobile() {
   const [mobile, setMobile] = useState(window.innerWidth <= 768)
   useEffect(() => {
@@ -174,6 +206,221 @@ function useIsMobile() {
   return mobile
 }
 
+const pad = (n) => String(n).padStart(2, '0')
+
+/* ═══════════════════════════════════════════════════════════════
+   SOS OVERLAY — urge-surfing intervention
+═══════════════════════════════════════════════════════════════ */
+function SOSOverlay({ streakDays, onClose, onSurfed, onRelapse }) {
+  const SURF_SECONDS = 180
+  const [remaining, setRemaining] = useState(SURF_SECONDS)
+  const [running, setRunning] = useState(true)
+  const [intensity, setIntensity] = useState(7)
+  const [trigger, setTrigger] = useState('')
+  const [doneActions, setDoneActions] = useState([])
+  const [breathPhase, setBreathPhase] = useState(0) // cycles 0..3 (in/hold/out/hold)
+  const [phaseLeft, setPhaseLeft] = useState(4)
+  const [logging, setLogging] = useState(false)
+
+  // Surf timer
+  useEffect(() => {
+    if (!running || remaining <= 0) return
+    const t = setInterval(() => setRemaining(s => Math.max(0, s - 1)), 1000)
+    return () => clearInterval(t)
+  }, [running, remaining])
+
+  // Breathing pacer — box breathing 4-4-4-4
+  useEffect(() => {
+    const t = setInterval(() => {
+      setPhaseLeft(l => {
+        if (l <= 1) { setBreathPhase(p => (p + 1) % 4); return 4 }
+        return l - 1
+      })
+    }, 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  const mm = Math.floor(remaining / 60)
+  const ss = remaining % 60
+  const surfPct = ((SURF_SECONDS - remaining) / SURF_SECONDS) * 100
+  const breathLabels = ['Breathe in', 'Hold', 'Breathe out', 'Hold']
+  const breathScales = [1, 1, 0.55, 0.55]
+  const triggerMeta = TRIGGERS.find(t => t.id === trigger)
+
+  const finishSurf = async () => {
+    setLogging(true)
+    try {
+      const res = await faplessAPI.urgeLog({
+        trigger,
+        intensityBefore: intensity,
+        intensityAfter: Math.max(0, intensity - 4),
+        strategy: doneActions.join(',') || 'surf',
+        resisted: true,
+      })
+      onSurfed(res)
+    } catch (e) {
+      onSurfed(null, e)
+    } finally { setLogging(false) }
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 2000,
+      background: 'var(--bg-overlay)', backdropFilter: 'saturate(180%) blur(28px)', WebkitBackdropFilter: 'saturate(180%) blur(28px)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      overflow: 'auto', padding: '24px 20px 48px',
+      animation: 'sosIn 0.35s var(--ease-out-expo) forwards',
+    }}>
+      <style>{`
+        @keyframes sosIn { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes breathe {
+          0%,100% { transform: scale(0.55) }
+          25% { transform: scale(1) }
+          50% { transform: scale(1) }
+          75% { transform: scale(0.55) }
+        }
+      `}</style>
+
+      {/* Top bar */}
+      <div style={{ width: '100%', maxWidth: 640, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--brand-primary)' }}>
+          <Siren size={18} />
+          <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.06em' }}>URGE RESCUE</span>
+        </div>
+        <button onClick={onClose} aria-label="Close rescue"
+          style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--bg-glass)', border: '1px solid var(--border)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <X size={17} />
+        </button>
+      </div>
+
+      {/* Surf card */}
+      <div style={{ width: '100%', maxWidth: 640, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)', padding: '28px 24px', textAlign: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 4 }}>
+          <Waves size={14} color="var(--brand-primary)" /> URGE SURFING
+        </div>
+        <div style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.55, marginBottom: 20, maxWidth: 440, margin: '0 auto 20px' }}>
+          An urge is a wave — it peaks, crests, and passes. Ride this timer with slow breathing and it will drop on its own.
+        </div>
+
+        {/* Breathing circle + timer */}
+        <div style={{ position: 'relative', width: 168, height: 168, margin: '0 auto 8px' }}>
+          <div style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            background: 'radial-gradient(circle, var(--brand-primary-dim) 0%, transparent 70%)',
+          }} />
+          <div style={{
+            position: 'absolute', left: '50%', top: '50%', width: 128, height: 128, marginLeft: -64, marginTop: -64,
+            borderRadius: '50%', border: '2px solid var(--brand-primary)', opacity: 0.35,
+            animation: 'breathe 16s var(--ease-in-out) infinite',
+          }} />
+          <div style={{
+            position: 'absolute', left: '50%', top: '50%', width: 108, height: 108, marginLeft: -54, marginTop: -54,
+            borderRadius: '50%', border: '2px solid var(--brand-primary)',
+            animation: 'breathe 16s var(--ease-in-out) infinite',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            background: 'var(--bg-elevated)',
+          }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 30, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+              {mm}:{pad(ss)}
+            </span>
+            <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--brand-primary)', marginTop: 2 }}>
+              {breathLabels[breathPhase]} · {phaseLeft}
+            </span>
+          </div>
+        </div>
+        <div style={{ height: 5, borderRadius: 3, background: 'var(--border)', overflow: 'hidden', maxWidth: 320, margin: '14px auto 0' }}>
+          <div style={{ height: '100%', width: `${surfPct}%`, background: 'var(--brand-primary)', borderRadius: 3, transition: 'width 1s linear' }} />
+        </div>
+        <button onClick={() => setRunning(r => !r)}
+          style={{ marginTop: 12, background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)', color: 'var(--text-secondary)', padding: '7px 16px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', minHeight: 34 }}>
+          {remaining === 0 ? 'Wave passed ✓' : running ? 'Pause timer' : 'Resume timer'}
+        </button>
+      </div>
+
+      {/* Trigger check (HALT) */}
+      <div style={{ width: '100%', maxWidth: 640, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '20px 22px', marginTop: 14 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.08em', marginBottom: 4 }}>WHAT'S DRIVING THIS?</div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>Name it to tame it — most urges trace back to one of these.</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {TRIGGERS.map(t => {
+            const on = trigger === t.id
+            return (
+              <button key={t.id} onClick={() => setTrigger(on ? '' : t.id)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 14px', borderRadius: 'var(--radius-pill)',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer', minHeight: 38,
+                  border: `1px solid ${on ? 'var(--brand-primary)' : 'var(--border)'}`,
+                  background: on ? 'var(--brand-primary-dim)' : 'transparent',
+                  color: on ? 'var(--brand-primary)' : 'var(--text-secondary)',
+                  transition: 'all 0.15s',
+                }}>
+                <span>{t.emoji}</span> {t.label}
+              </button>
+            )
+          })}
+        </div>
+        {triggerMeta && (
+          <div style={{ marginTop: 12, padding: '11px 14px', borderRadius: 10, background: 'var(--brand-primary-dim)', border: '1px solid var(--brand-primary-glow)', fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5, display: 'flex', gap: 8 }}>
+            <Lightbulb size={15} color="var(--brand-primary)" style={{ flexShrink: 0, marginTop: 1 }} />
+            {triggerMeta.tip}
+          </div>
+        )}
+
+        {/* Intensity slider */}
+        <div style={{ marginTop: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
+            <span>How strong is the urge?</span>
+            <span style={{ color: 'var(--brand-primary)', fontFamily: 'var(--font-mono)' }}>{intensity}/10</span>
+          </div>
+          <input type="range" min="0" max="10" value={intensity} onChange={e => setIntensity(Number(e.target.value))}
+            style={{ width: '100%', accentColor: 'var(--brand-primary)', height: 28 }} />
+        </div>
+      </div>
+
+      {/* Replacement actions */}
+      <div style={{ width: '100%', maxWidth: 640, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '20px 22px', marginTop: 14 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.08em', marginBottom: 4 }}>CHANGE THE CHANNEL</div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>Do one or two — physical state changes beat willpower.</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {REPLACEMENT_ACTIONS.map(a => {
+            const on = doneActions.includes(a.id)
+            return (
+              <button key={a.id} onClick={() => setDoneActions(prev => on ? prev.filter(x => x !== a.id) : [...prev, a.id])}
+                title={a.tip}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 14px', borderRadius: 'var(--radius-pill)',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer', minHeight: 38,
+                  border: `1px solid ${on ? 'var(--brand-success)' : 'var(--border)'}`,
+                  background: on ? 'var(--green-dim)' : 'transparent',
+                  color: on ? 'var(--brand-success)' : 'var(--text-secondary)',
+                  transition: 'all 0.15s',
+                }}>
+                <a.icon size={14} /> {on ? <Check size={12} /> : null} {a.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Footer actions */}
+      <div style={{ width: '100%', maxWidth: 640, display: 'flex', flexDirection: 'column', gap: 10, marginTop: 18 }}>
+        <button onClick={finishSurf} disabled={logging}
+          style={{ background: 'var(--brand-success)', border: 'none', borderRadius: 14, color: '#fff', padding: '15px 24px', fontSize: 15.5, fontWeight: 700, cursor: logging ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 52, opacity: logging ? 0.7 : 1 }}>
+          {logging ? <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Waves size={17} />}
+          {logging ? 'Logging…' : `I surfed it — log the win (+${URGE_AURA} aura)`}
+        </button>
+        <button onClick={onRelapse}
+          style={{ background: 'none', border: 'none', borderRadius: 10, color: 'var(--text-muted)', padding: '10px', fontSize: 13, cursor: 'pointer', minHeight: 40, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+          It happened — log it honestly (no shame, just data)
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MAIN VIEW
+═══════════════════════════════════════════════════════════════ */
 export default function FaplessView() {
   const isMobile = useIsMobile()
   const toast = useToast()
@@ -182,12 +429,13 @@ export default function FaplessView() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
+  const [showSOS, setShowSOS] = useState(false)
   const [showRelapse, setShowRelapse] = useState(false)
-  const [relapseReason, setRelapseReason] = useState('')
-  const [relapseQuote, setRelapseQuote] = useState('')
-  const [quoteType, setQuoteType] = useState('')
+  const [relapseTrigger, setRelapseTrigger] = useState('')
+  const [relapseNote, setRelapseNote] = useState('')
+  const [reframe, setReframe] = useState(null) // post-relapse reframe screen
 
-  const [expandedSection, setExpandedSection] = useState('benefits')
+  const [expandedSection, setExpandedSection] = useState('science')
   const [activeSuggCat, setActiveSuggCat] = useState(0)
 
   const load = useCallback(() => {
@@ -200,10 +448,10 @@ export default function FaplessView() {
 
   useEffect(() => { load() }, [load])
 
-  // ─── Derived state ─────────────────────────────────────────────────────────
+  // live clock
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000) // update every second
+    const t = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(t)
   }, [])
 
@@ -215,59 +463,54 @@ export default function FaplessView() {
 
   const currentLevel = getLevel(streakDays)
   const nextLevel = getNextLevel(streakDays)
-  
-  const streakAura = calcAura(streakDays)
-  const milestoneAura = calcMilestoneAura(streakDays)
-  
-  // challenge bonus: current active challenge completed + previous relapse challenges
-  let currentChallengeBonus = 0
-  if (data?.activeChallenge) {
-    const ch = CHALLENGES.find(c => c.id === data.activeChallenge)
-    if (ch && streakDays >= ch.duration) {
-      currentChallengeBonus = ch.auraBonus
-    }
-  }
-  const challengeBonus = currentChallengeBonus + (data?.relapses?.reduce((acc, r) => acc + (r.bonusEarned || 0), 0) || 0)
-  
-  const auraPoints = streakAura + milestoneAura + challengeBonus
-  
   const progressToNext = nextLevel
-    ? Math.round(((streakDays - currentLevel.minDays) / (nextLevel.minDays - currentLevel.minDays)) * 100)
+    ? Math.min(100, Math.round(((streakDays - currentLevel.minDays) / (nextLevel.minDays - currentLevel.minDays)) * 100))
     : 100
 
-  // Relapse analysis helper
-  const relapseStats = useMemo(() => {
-    if (!data?.relapses || data.relapses.length === 0) return null
-    const relapses = data.relapses
-    const total = relapses.length
-    
-    // Average streak length
-    const totalDays = relapses.reduce((sum, r) => sum + r.dayCount, 0)
-    const avgStreak = (totalDays / total).toFixed(1)
-    
-    // Find most common triggers
+  // ── Analytics ──
+  const analytics = useMemo(() => {
+    const urges = data?.urgeLogs || []
+    const relapses = data?.relapses || []
+    const resisted = urges.filter(u => u.resisted)
+    const avgDrop = resisted.length
+      ? Math.round((resisted.reduce((s, u) => s + Math.max(0, (u.intensityBefore || 0) - (u.intensityAfter || 0)), 0) / resisted.length) * 10) / 10
+      : null
     const triggerMap = {}
-    relapses.forEach(r => {
-      if (!r.reason) return
-      const words = r.reason.toLowerCase()
-        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
-        .split(/\s+/)
-      words.forEach(w => {
-        if (w.length > 2 && !['and', 'the', 'for', 'with', 'was', 'this'].includes(w)) {
-          triggerMap[w] = (triggerMap[w] || 0) + 1
-        }
-      })
+    urges.forEach(u => { if (u.trigger) triggerMap[u.trigger] = (triggerMap[u.trigger] || 0) + 1 })
+    relapses.forEach(r => { if (r.trigger) triggerMap[r.trigger] = (triggerMap[r.trigger] || 0) + 1 })
+    const topTriggers = Object.entries(triggerMap).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => {
+      const t = TRIGGERS.find(x => x.id === k)
+      return t ? t.label : k
     })
-    
-    const topTriggers = Object.entries(triggerMap)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(entry => entry[0])
-      
-    return { total, avgStreak, topTriggers }
-  }, [data?.relapses])
+    const bestStreak = Math.max(streakDays, ...relapses.map(r => r.dayCount || 0), 0)
+    return {
+      urgesTotal: urges.length,
+      resistedCount: resisted.length,
+      successRate: urges.length ? Math.round((resisted.length / urges.length) * 100) : null,
+      avgDrop,
+      topTriggers,
+      bestStreak,
+      comebacks: relapses.length,
+    }
+  }, [data, streakDays])
 
-  // ─── Actions ───────────────────────────────────────────────────────────────
+  const nextMilestone = MILESTONES.find(m => m.day > streakDays)
+  const milestonePct = nextMilestone
+    ? Math.min(100, Math.round((streakDays / nextMilestone.day) * 100))
+    : 100
+
+  const streakAura = calcAura(streakDays)
+  const milestoneAura = calcMilestoneAura(streakDays)
+  const urgeAura = analytics.resistedCount * URGE_AURA
+  let challengeBonus = 0
+  if (data?.activeChallenge) {
+    const ch = CHALLENGES.find(c => c.id === data.activeChallenge)
+    if (ch && streakDays >= ch.duration) challengeBonus = ch.auraBonus
+  }
+  challengeBonus += (data?.relapses?.reduce((acc, r) => acc + (r.bonusEarned || 0), 0) || 0)
+  const auraPoints = streakAura + milestoneAura + urgeAura + challengeBonus
+
+  // ── Actions ──
   const handleStart = async () => {
     if (data?.startDate) {
       const ok = await confirmDialog({
@@ -288,24 +531,25 @@ export default function FaplessView() {
   }
 
   const handleRelapse = async () => {
-    if (!relapseReason.trim()) {
-      toast.warning('Please enter a reason — understanding why helps you improve.')
-      return
-    }
     setSaving(true)
     try {
-      const res = await faplessAPI.relapse(relapseReason, streakDays)
+      const res = await faplessAPI.relapse(relapseNote.trim(), streakDays, relapseTrigger)
       setData(res.data)
-      const isDemotivational = streakDays < 7
-      const pool = isDemotivational ? DEMOTIVATIONAL : MOTIVATIONAL
-      const q = pool[Math.floor(Math.random() * pool.length)]
-      setRelapseQuote(q)
-      setQuoteType(isDemotivational ? 'demotivational' : 'motivational')
-      setRelapseReason('')
       setShowRelapse(false)
+      setShowSOS(false)
+      setRelapseTrigger('')
+      setRelapseNote('')
+      setReframe(REFRAMES[Math.floor(Math.random() * REFRAMES.length)])
     } catch (e) {
       toast.error(e.message || 'Could not log the relapse.')
     } finally { setSaving(false) }
+  }
+
+  const handleSurfed = (res, err) => {
+    if (err) { toast.error(err.message || 'Could not log the urge.'); return }
+    if (res?.data) setData(res.data)
+    setShowSOS(false)
+    toast.success(`Urge surfed. +${URGE_AURA} aura.`)
   }
 
   const setChallenge = async (id) => {
@@ -323,30 +567,13 @@ export default function FaplessView() {
     } finally { setSaving(false) }
   }
 
-  // ─── Styles ────────────────────────────────────────────────────────────────
+  // ── Styles ──
   const card = {
     background: 'var(--bg-card)',
     border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)',
+    borderRadius: 'var(--radius-lg)',
     padding: '20px 22px',
   }
-
-  const sectionBtn = (id) => ({
-    background: expandedSection === id ? 'var(--border)' : 'none',
-    border: '1px solid ' + (expandedSection === id ? 'var(--border-bright)' : 'var(--border)'),
-    borderRadius: 10,
-    color: 'var(--text-primary)',
-    padding: '10px 16px',
-    cursor: 'pointer',
-    fontSize: 13,
-    fontWeight: 600,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    transition: 'all 0.15s',
-    marginBottom: 8,
-  })
 
   if (loading) return (
     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', gap: 10, flexDirection: 'column' }}>
@@ -356,802 +583,655 @@ export default function FaplessView() {
     </div>
   )
 
-  if (relapseQuote) return (
-    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 24, padding: 40 }}>
-      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }`}</style>
-      <div style={{ fontSize: 48 }}>{quoteType === 'demotivational' ? '😔' : '💪'}</div>
-      <div style={{
-        maxWidth: 560, textAlign: 'center', fontSize: isMobile ? 17 : 20, fontWeight: 700, lineHeight: 1.6,
-        color: quoteType === 'demotivational' ? 'var(--red)' : 'var(--green)',
-        fontStyle: 'italic', padding: '0 16px',
-      }}>{relapseQuote}</div>
-      <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', maxWidth: 400, padding: '0 16px' }}>
-        Your streak has been reset. But every legend has a chapter of failure.<br />
-        <strong style={{ color: 'var(--text-primary)' }}>Start again. Right now.</strong>
+  // ── Post-relapse reframe screen (compassionate, data-first) ──
+  if (reframe) return (
+    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 22, padding: 40 }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      <div style={{ width: 74, height: 74, borderRadius: '50%', background: 'var(--green-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Waves size={34} color="var(--brand-success)" />
       </div>
-      <button onClick={() => { setRelapseQuote(''); load() }}
-        style={{ background: 'var(--brand-primary)', border: 'none', borderRadius: 12, color: '#fff', padding: '13px 30px', fontSize: 15, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, minHeight: 48 }}>
-        <RefreshCw size={16} /> Start Fresh Journey
+      <div style={{ maxWidth: 520, textAlign: 'center', fontSize: isMobile ? 17 : 20, fontWeight: 600, lineHeight: 1.55, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+        {reframe}
+      </div>
+      <div style={{ display: 'flex', gap: 26, marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+        {[['Best streak', `${analytics.bestStreak}d`, 'var(--brand-success)'],
+          ['Urges resisted', analytics.resistedCount, 'var(--brand-primary)'],
+          ['Comebacks', analytics.comebacks, 'var(--text-secondary)']].map(([l, v, c]) => (
+          <div key={l} style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: c, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>{v}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{l}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', maxWidth: 420 }}>
+        Your trigger was saved. Spotting patterns early is how future waves get smaller.
+      </div>
+      <button onClick={() => { setReframe(null); load() }}
+        style={{ background: 'var(--brand-primary)', border: 'none', borderRadius: 14, color: '#fff', padding: '14px 30px', fontSize: 15, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, minHeight: 50, boxShadow: 'var(--shadow-brand)' }}>
+        <RefreshCw size={16} /> Start Fresh
       </button>
     </div>
   )
 
-  // ─── MOBILE LAYOUT ─────────────────────────────────────────────────────────
-  if (isMobile) {
-    const toggle = (id) => setExpandedSection(s => s === id ? '' : id)
-    const sec = (id, icon, label, color) => ({
-      background: expandedSection === id ? 'rgba(255,255,255,0.04)' : 'none',
-      border: `1px solid ${expandedSection === id ? 'rgba(255,255,255,0.1)' : 'var(--border)'}`,
-      borderRadius: 12, color: 'var(--text-primary)', padding: '14px 16px', cursor: 'pointer',
-      fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      width: '100%', transition: 'all 0.15s', marginBottom: 8,
-    })
-    return (
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Shared keyframes — defined here so mobile animations actually run */}
-        <style>{`
-          @keyframes aura-pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.2);opacity:0.8} }
-          @keyframes aura-plus { 0%{opacity:0;transform:translateY(5px)} 20%{opacity:1;transform:translateY(0)} 80%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-5px)} }
-          @keyframes auraFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
-          @keyframes glow { 0%,100%{box-shadow:0 0 12px ${currentLevel.color}33} 50%{box-shadow:0 0 32px ${currentLevel.color}55} }
-        `}</style>
-        {/* Aura Floating Header */}
-        <div style={{
-          position: 'sticky', top: 0, zIndex: 100, background: 'var(--bg-overlay)', backdropFilter: 'blur(10px)',
-          borderBottom: '1px solid var(--border)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Zap size={16} color="var(--brand-warning)" fill="var(--brand-warning)" style={{ animation: 'aura-pulse 1s ease-in-out infinite' }} />
-            <span style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--brand-warning)', letterSpacing: '-0.5px' }}>
-              {auraPoints.toLocaleString()}
-            </span>
-            <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.05em' }}>AURA</span>
+  /* Shared fragments */
+  const statsRow = (
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 12 }}>
+      {[
+        { label: 'BEST STREAK', value: `${analytics.bestStreak}d`, color: 'var(--brand-success)', icon: Trophy },
+        { label: 'URGES RESISTED', value: analytics.resistedCount, color: 'var(--brand-primary)', icon: Waves },
+        { label: 'WAVE SUCCESS', value: analytics.successRate === null ? '—' : `${analytics.successRate}%`, color: 'var(--brand-teal)', icon: TrendingUp },
+        { label: 'COMEBACKS', value: analytics.comebacks, color: 'var(--text-secondary)', icon: RotateCcw },
+      ].map(s => (
+        <div key={s.label} style={{ ...card, display: 'flex', flexDirection: 'column', gap: 6, padding: '14px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <s.icon size={13} color={s.color} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>{s.label}</span>
           </div>
-          <div style={{
-             fontSize: 10, fontWeight: 700, color: 'var(--brand-warning)', background: 'color-mix(in srgb, var(--brand-warning) 12%, transparent)',
-             padding: '4px 10px', borderRadius: 20, animation: 'aura-plus 1s ease-out infinite'
-          }}>+{currentLevel.auraPerDay} AURA/DAY</div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: s.color, fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', lineHeight: 1 }}>{s.value}</div>
         </div>
+      ))}
+    </div>
+  )
 
-        {/* Mobile Hero */}
-        <div style={{ padding: '14px 14px 0', flexShrink: 0 }}>
-          <div style={{ fontSize: 11, color: 'var(--red)', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 4 }}>FAPLESS TRACKER</div>
-
-          {/* Main hero card */}
-          <div style={{
-            background: `linear-gradient(135deg, var(--bg-card), ${currentLevel.color}0a)`,
-            border: `1px solid ${currentLevel.color}44`,
-            borderRadius: 16, padding: '18px 16px', marginBottom: 12,
-            animation: 'glow 3s ease infinite', position: 'relative', overflow: 'hidden',
+  const scienceSection = (
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
+      {BRAIN_TIMELINE.map(t => {
+        const active = streakDays >= 0 && (() => {
+          const m = t.range.match(/(\d+)[–-](\d+)?/)
+          if (!m) return false
+          const from = Number(m[1])
+          const to = m[2] ? Number(m[2]) : Infinity
+          return streakDays + 1 >= from && streakDays + 1 <= to
+        })()
+        return (
+          <div key={t.range} style={{
+            border: `1px solid ${active ? t.color : 'var(--border)'}`,
+            background: active ? `color-mix(in srgb, ${t.color} 6%, transparent)` : 'var(--bg-glass)',
+            borderRadius: 12, padding: '14px 16px',
           }}>
-            <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 30% 50%, ${currentLevel.color}06 0%, transparent 70%)`, pointerEvents: 'none' }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              {/* Level Image */}
-              <div style={{ width: 64, height: 64, borderRadius: 12, overflow: 'hidden', border: `2px solid ${currentLevel.color}`, boxShadow: `0 0 10px ${currentLevel.color}33`, flexShrink: 0, background: 'rgba(0,0,0,0.2)' }}>
-                <img src={currentLevel.image} alt={currentLevel.label} onError={(e) => { e.currentTarget.style.display = 'none' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <t.icon size={15} color={t.color} />
+              <span style={{ fontSize: 13.5, fontWeight: 700, color: active ? t.color : 'var(--text-primary)' }}>{t.title}</span>
+              <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginLeft: 'auto' }}>{t.range}</span>
+              {active && <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: t.color, borderRadius: 20, padding: '2px 8px' }}>NOW</span>}
+            </div>
+            <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{t.body}</div>
+          </div>
+        )
+      })}
+    </div>
+  )
 
-              {/* Days + time */}
-              <div style={{ textAlign: 'center', flexShrink: 0 }}>
-                <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 2 }}>STREAK</div>
-                <div style={{ fontSize: 44, fontWeight: 800, fontFamily: 'var(--font-mono)', color: currentLevel.color, lineHeight: 1, animation: 'auraFloat 4s ease infinite' }}>{streakDays}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4 }}>days</div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
-                  {[
-                    { v: streakHrs, l: 'H' },
-                    { v: streakMins, l: 'M' },
-                    { v: streakSecs, l: 'S' }
-                  ].map((t, i) => (
-                    <React.Fragment key={t.l}>
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-mono)', color: currentLevel.color, opacity: 0.8 }}>{String(t.v).padStart(2,'0')}</div>
-                        <div style={{ fontSize: 7, color: 'var(--text-muted)', fontWeight: 800 }}>{t.l}</div>
-                      </div>
-                      {i < 2 && <div style={{ fontSize: 11, color: currentLevel.color, opacity: 0.2, marginTop: -8 }}>:</div>}
-                    </React.Fragment>
-                  ))}
-                </div>
+  const levelsSection = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {LEVELS.map(lvl => {
+        const isActive = lvl.id === currentLevel.id
+        const isLocked = streakDays < lvl.minDays
+        return (
+          <div key={lvl.id} style={{
+            display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px',
+            borderRadius: 12, border: `1px solid ${isActive ? lvl.color : 'var(--border)'}`,
+            background: isActive ? `color-mix(in srgb, ${lvl.color} 8%, transparent)` : 'var(--bg-glass)',
+            opacity: isLocked ? 0.45 : 1, transition: 'all 0.15s',
+          }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, overflow: 'hidden', border: `2px solid ${isActive ? lvl.color : 'var(--border)'}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)' }}>
+              {isLocked ? <Lock size={14} color="var(--text-muted)" /> : <img src={lvl.image} alt={lvl.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: isActive ? lvl.color : 'var(--text-primary)' }}>{lvl.label}</span>
+                {isActive && <span style={{ fontSize: 9, background: lvl.color, color: '#000', borderRadius: 20, padding: '1px 8px', fontWeight: 800, letterSpacing: '0.05em' }}>YOU ARE HERE</span>}
               </div>
-
-              {/* Divider */}
-              <div style={{ width: 1, background: `${currentLevel.color}22`, alignSelf: 'stretch' }} />
-
-              {/* Level + Aura */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 4 }}>CURRENT LEVEL</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: currentLevel.color, marginBottom: 4, lineHeight: 1.2 }}>{currentLevel.label}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.4 }}>{currentLevel.desc}</div>
-                {nextLevel && (
-                  <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>→ {nextLevel.label}</span>
-                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{nextLevel.minDays - streakDays}d left</span>
-                    </div>
-                    <div style={{ height: 4, background: 'var(--border)', borderRadius: 2 }}>
-                      <div style={{ height: '100%', width: `${progressToNext}%`, background: `linear-gradient(90deg, ${currentLevel.color}, ${nextLevel.color})`, borderRadius: 2, transition: 'width 0.5s' }} />
-                    </div>
-                  </>
-                )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
-                  <Zap size={13} color="var(--brand-warning)" fill="var(--brand-warning)" />
-                  <span style={{ fontSize: 15, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--brand-warning)' }}>{auraPoints.toLocaleString()}</span>
-                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>aura</span>
-                </div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{lvl.desc}</div>
+            </div>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700, color: lvl.color }}>
+                {lvl.minDays === lvl.maxDays ? 'Day 0' : lvl.maxDays === Infinity ? `${lvl.minDays}+ days` : `${lvl.minDays}–${lvl.maxDays}d`}
               </div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>+{lvl.auraPerDay} aura/day</div>
             </div>
           </div>
+        )
+      })}
+    </div>
+  )
 
-          {/* Action buttons */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-            {!data?.startDate ? (
-              <button onClick={handleStart} disabled={saving} style={{ flex: 1, background: 'linear-gradient(135deg, var(--red), var(--brand-orange))', border: 'none', borderRadius: 12, color: '#fff', padding: '14px', fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                <Play size={17} /> Start Journey
-              </button>
-            ) : (
-              <>
-                <button onClick={() => setShowRelapse(s => !s)} style={{ flex: 1, background: showRelapse ? 'var(--red-dim)' : 'var(--bg-card)', border: '1px solid var(--red-dim)', borderRadius: 12, color: 'var(--red)', padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-                  <RotateCcw size={15} /> Relapse
-                </button>
-                <button onClick={handleStart} disabled={saving} style={{ flex: 1, background: 'linear-gradient(135deg, var(--red), var(--brand-orange))', border: 'none', borderRadius: 12, color: '#fff', padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-                  <RefreshCw size={15} /> Reset
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Relapse panel */}
-        {showRelapse && (
-          <div style={{ margin: '0 14px', background: 'var(--red-dim)', border: '1px solid var(--red-dim)', borderRadius: 12, padding: '16px', flexShrink: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--red)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <AlertTriangle size={14} /> Be honest — what triggered you?
+  const milestonesSection = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {MILESTONES.map(m => {
+        const isCompleted = streakDays >= m.day
+        const isNext = nextMilestone?.day === m.day
+        return (
+          <div key={m.day} style={{
+            padding: '12px 14px', borderRadius: 12,
+            background: isCompleted ? 'var(--green-dim)' : 'var(--bg-glass)',
+            border: `1px solid ${isCompleted ? 'var(--brand-success)' : isNext ? 'var(--brand-primary-glow)' : 'var(--border)'}`,
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+              background: isCompleted ? 'var(--brand-success)' : 'var(--border)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: isCompleted ? '#000' : 'var(--text-muted)', fontSize: 11, fontWeight: 800,
+            }}>
+              {isCompleted ? <Check size={15} color="#000" /> : `${m.day}d`}
             </div>
-            <textarea value={relapseReason} onChange={e => setRelapseReason(e.target.value)}
-              placeholder="Boredom, stress, loneliness, late night phone..."
-              rows={3} style={{ width: '100%', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', fontSize: 14, color: 'var(--text-primary)', resize: 'none', lineHeight: 1.5, fontFamily: 'var(--font-display)', boxSizing: 'border-box' }} />
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              <button onClick={handleRelapse} disabled={saving || !relapseReason.trim()}
-                style={{ flex: 1, background: 'var(--red)', border: 'none', borderRadius: 8, color: '#fff', padding: '11px', fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: relapseReason.trim() ? 1 : 0.5 }}>
-                Confirm Relapse
-              </button>
-              <button onClick={() => { setShowRelapse(false); setRelapseReason('') }}
-                style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', padding: '11px 16px', fontSize: 14, cursor: 'pointer' }}>Cancel</button>
-            </div>
-          </div>
-        )}
-
-        {/* Scrollable accordion sections */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '12px 14px 80px' }}>
-
-          {/* Benefits */}
-          <button onClick={() => toggle('benefits')} style={sec('benefits')}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Star size={15} color="var(--amber)" /> My Level Benefits</span>
-            {expandedSection === 'benefits' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-          </button>
-          {expandedSection === 'benefits' && (
-            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px', marginBottom: 10 }}>
-              {BENEFITS[currentLevel.id] ? BENEFITS[currentLevel.id].map((b, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 0', borderBottom: i < BENEFITS[currentLevel.id].length - 1 ? '1px solid var(--border)' : 'none' }}>
-                  <CheckCircle2 size={15} color={currentLevel.color} style={{ marginTop: 2, flexShrink: 0 }} />
-                  <span style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.5 }}>{b.replace('• ', '')}</span>
-                </div>
-              )) : <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Benefits unlock at Day 1+</div>}
-            </div>
-          )}
-
-          {/* Level Roadmap */}
-          <button onClick={() => toggle('levels')} style={sec('levels')}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Trophy size={15} color="var(--brand-warning)" /> Level Roadmap</span>
-            {expandedSection === 'levels' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-          </button>
-          {expandedSection === 'levels' && (
-            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px', marginBottom: 10 }}>
-              {LEVELS.map((lvl, i) => {
-                const isActive = lvl.id === currentLevel.id
-                const isLocked = streakDays < lvl.minDays
-                return (
-                  <div key={lvl.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < LEVELS.length - 1 ? '1px solid var(--border)' : 'none', opacity: isLocked ? 0.4 : 1 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 6, overflow: 'hidden', border: `1px solid ${isActive ? lvl.color : 'var(--border)'}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.2)' }}>
-                      {isLocked ? '🔒' : <img src={lvl.image} alt={lvl.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: isActive ? lvl.color : 'var(--text-primary)' }}>{lvl.label}</span>
-                        {isActive && <span style={{ fontSize: 9, background: lvl.color, color: '#000', borderRadius: 20, padding: '1px 7px', fontWeight: 700 }}>YOU</span>}
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{lvl.maxDays === Infinity ? `${lvl.minDays}+ days` : lvl.minDays === lvl.maxDays ? `Day ${lvl.minDays}` : `${lvl.minDays}–${lvl.maxDays} days`} · +{lvl.auraPerDay} aura/day</div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Milestones */}
-          <button onClick={() => toggle('milestones')} style={sec('milestones')}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Star size={15} color="var(--brand-warning)" /> Milestones ({getCompletedMilestones(streakDays).length}/{MILESTONES.length})</span>
-            {expandedSection === 'milestones' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-          </button>
-          {expandedSection === 'milestones' && (
-            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {MILESTONES.map(m => {
-                const isCompleted = streakDays >= m.day
-                return (
-                  <div key={m.day} style={{
-                    padding: '10px 12px', borderRadius: 8,
-                    background: isCompleted ? 'rgba(46,213,115,0.08)' : 'var(--bg-glass)',
-                    border: `1px solid ${isCompleted ? 'var(--green)' : 'var(--border)'}`,
-                    display: 'flex', alignItems: 'center', gap: 12
-                  }}>
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: isCompleted ? 'var(--green)22' : 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isCompleted ? 'var(--green)' : 'var(--text-muted)', fontSize: 12, fontWeight: 'bold' }}>
-                      {isCompleted ? '✓' : `${m.day}d`}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: isCompleted ? 'var(--green)' : 'var(--text-primary)' }}>{m.label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{m.desc}</div>
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--brand-warning)', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}>+{m.bonus}</div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Challenges */}
-          <button onClick={() => toggle('challenges')} style={sec('challenges')}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Flame size={15} color="var(--red)" /> Challenges</span>
-            {expandedSection === 'challenges' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-          </button>
-          {expandedSection === 'challenges' && (
-            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {CHALLENGES.map(ch => {
-                const isActive = data?.activeChallenge === ch.id
-                const isComplete = isActive && streakDays >= ch.duration
-                return (
-                  <div key={ch.id} onClick={() => setChallenge(isActive ? '' : ch.id)} style={{
-                    padding: '14px', borderRadius: 10, cursor: 'pointer',
-                    background: isActive ? 'rgba(255,69,0,0.08)' : 'var(--bg-glass)',
-                    border: `1px solid ${isActive ? 'var(--red)' : 'var(--border)'}`,
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: isActive ? 'var(--red)' : 'var(--text-primary)' }}>{ch.label}</span>
-                      {isActive && <span style={{ fontSize: 9, background: isComplete ? 'var(--green)' : 'var(--red)', color: isComplete ? '#000' : '#fff', borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>{isComplete ? 'DONE ✅' : 'ACTIVE'}</span>}
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>{ch.desc}</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ch.duration} days</span>
-                      <span style={{ fontSize: 11, color: 'var(--brand-warning)', fontWeight: 700 }}>⚡ +{ch.auraBonus.toLocaleString()}</span>
-                    </div>
-                    {isActive && !isComplete && (
-                      <div style={{ marginTop: 8 }}>
-                        <div style={{ height: 4, background: 'var(--border)', borderRadius: 2 }}>
-                          <div style={{ height: '100%', width: `${Math.min(100, Math.round((streakDays / ch.duration) * 100))}%`, background: 'linear-gradient(90deg,var(--red),var(--brand-warning))', borderRadius: 2 }} />
-                        </div>
-                        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>{ch.duration - streakDays} days left</div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Anti-Relapse Arsenal */}
-          <button onClick={() => toggle('suggestions')} style={sec('suggestions')}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Lightbulb size={15} color="var(--cyan)" /> Anti-Relapse Tools</span>
-            {expandedSection === 'suggestions' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-          </button>
-          {expandedSection === 'suggestions' && (
-            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px', marginBottom: 10 }}>
-              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', marginBottom: 14, paddingBottom: 4 }}>
-                {SUGGESTIONS.map((s, i) => (
-                  <button key={i} onClick={() => setActiveSuggCat(i)} style={{ padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0, border: `1px solid ${activeSuggCat === i ? s.color : 'var(--border)'}`, background: activeSuggCat === i ? s.color + '20' : 'transparent', color: activeSuggCat === i ? s.color : 'var(--text-muted)' }}>
-                    {s.cat.split(' ')[0]}
-                  </button>
-                ))}
-              </div>
-              {(() => {
-                const sg = SUGGESTIONS[activeSuggCat]
-                return sg.items.map((item, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: i < sg.items.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                    <div style={{ width: 34, height: 34, borderRadius: 8, background: sg.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <sg.icon size={15} color={sg.color} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>{item.name}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>{item.desc}</div>
-                    </div>
-                  </div>
-                ))
-              })()}
-            </div>
-          )}
-
-          {/* Relapse History */}
-          {data?.relapses?.length > 0 && (
-            <>
-              <button onClick={() => toggle('history')} style={sec('history')}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Calendar size={15} color="var(--text-muted)" /> History ({data.relapses.length})</span>
-                {expandedSection === 'history' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-              </button>
-              {expandedSection === 'history' && (
-                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px', marginBottom: 10 }}>
-                  {relapseStats && (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                      <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: 8, borderRadius: 8, textAlign: 'center' }}>
-                        <div style={{ fontSize: 8, color: 'var(--text-muted)', fontWeight: 700 }}>AVG STREAK</div>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--green)', marginTop: 2 }}>{relapseStats.avgStreak}d</div>
-                      </div>
-                      <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: 8, borderRadius: 8, textAlign: 'center' }}>
-                        <div style={{ fontSize: 8, color: 'var(--text-muted)', fontWeight: 700 }}>TRIGGERS</div>
-                        <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-primary)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {relapseStats.topTriggers.slice(0,2).join(', ') || 'None'}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {[...data.relapses].reverse().map((r, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderBottom: i < data.relapses.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>{new Date(r.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</div>
-                        <div style={{ flex: 1, fontSize: 13, color: 'var(--text-secondary)' }}>{r.reason || '—'}</div>
-                        <div style={{ fontSize: 11, color: 'var(--red)', fontWeight: 700, flexShrink: 0 }}>Day {r.dayCount}</div>
-                      </div>
-                    ))}
-                  </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: isCompleted ? 'var(--brand-success)' : 'var(--text-primary)' }}>{m.label}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>{m.desc}</div>
+              {isNext && (
+                <div style={{ marginTop: 8, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${milestonePct}%`, background: 'var(--brand-primary)', borderRadius: 2, transition: 'width 0.6s var(--ease-out-expo)' }} />
                 </div>
               )}
-            </>
-          )}
-
-          {/* Daily Quote */}
-          <div style={{ background: `linear-gradient(135deg, var(--bg-card), ${currentLevel.color}08)`, border: `1px solid ${currentLevel.color}30`, borderRadius: 12, padding: '16px' }}>
-            <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: 10 }}>TODAY'S REMINDER</div>
-            <div style={{ fontSize: 15, fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: 1.7, fontWeight: 500 }}>
-              {MOTIVATIONAL[Math.floor((streakDays + new Date().getDate()) % MOTIVATIONAL.length)]}
             </div>
-            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Shield size={12} color={currentLevel.color} />
-              <span style={{ fontSize: 11, color: currentLevel.color, fontWeight: 600 }}>Every day counts.</span>
+            <div style={{ fontSize: 12, color: 'var(--brand-warning)', fontWeight: 700, fontFamily: 'var(--font-mono)', flexShrink: 0 }}>+{m.bonus}</div>
+          </div>
+        )
+      })}
+    </div>
+  )
+
+  const challengesSection = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {CHALLENGES.map(ch => {
+        const isActive = data?.activeChallenge === ch.id
+        const isComplete = isActive && streakDays >= ch.duration
+        return (
+          <div key={ch.id} onClick={() => setChallenge(isActive ? '' : ch.id)} style={{
+            padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
+            background: isActive ? 'var(--red-dim)' : 'var(--bg-glass)',
+            border: `1px solid ${isActive ? 'var(--brand-error)' : 'var(--border)'}`,
+            transition: 'all 0.15s',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, gap: 8 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: isActive ? 'var(--brand-error)' : 'var(--text-primary)' }}>{ch.label}</span>
+              {isActive && <span style={{ fontSize: 9, background: isComplete ? 'var(--brand-success)' : 'var(--brand-error)', color: isComplete ? '#000' : '#fff', borderRadius: 20, padding: '2px 8px', fontWeight: 800, flexShrink: 0 }}>{isComplete ? 'DONE ✓' : 'ACTIVE'}</span>}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>{ch.desc}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ch.duration} days</span>
+              <span style={{ fontSize: 11, color: 'var(--brand-warning)', fontWeight: 700 }}>⚡ +{ch.auraBonus.toLocaleString()}</span>
+            </div>
+            {isActive && !isComplete && (
+              <div style={{ marginTop: 8 }}>
+                <div style={{ height: 4, background: 'var(--border)', borderRadius: 2 }}>
+                  <div style={{ height: '100%', width: `${Math.min(100, Math.round((streakDays / ch.duration) * 100))}%`, background: 'linear-gradient(90deg,var(--red),var(--brand-warning))', borderRadius: 2 }} />
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>{Math.max(0, ch.duration - streakDays)} days left</div>
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+
+  const envToolsSection = (
+    <div>
+      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', marginBottom: 14, paddingBottom: 4 }}>
+        {ENV_TOOLS.map((s, i) => (
+          <button key={i} onClick={() => setActiveSuggCat(i)} style={{ padding: '7px 13px', borderRadius: 'var(--radius-pill)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', flexShrink: 0, minHeight: 34, border: `1px solid ${activeSuggCat === i ? s.color : 'var(--border)'}`, background: activeSuggCat === i ? `color-mix(in srgb, ${s.color} 14%, transparent)` : 'transparent', color: activeSuggCat === i ? s.color : 'var(--text-muted)', transition: 'all 0.15s' }}>
+            {s.cat.split(' ')[0]}
+          </button>
+        ))}
+      </div>
+      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.5 }}>
+        Environment design beats willpower — make the habit harder to start than to stop.
+      </div>
+      {(() => {
+        const sg = ENV_TOOLS[activeSuggCat]
+        return sg.items.map((item, i) => (
+          <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: i < sg.items.length - 1 ? '1px solid var(--border)' : 'none' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: `color-mix(in srgb, ${sg.color} 12%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <sg.icon size={16} color={sg.color} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>{item.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>{item.desc}</div>
             </div>
           </div>
+        ))
+      })()}
+    </div>
+  )
+
+  const historySection = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Urge log */}
+      {data?.urgeLogs?.length > 0 && (
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 8 }}>URGE LOG — {analytics.resistedCount}/{data.urgeLogs.length} SURFED</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {[...data.urgeLogs].reverse().slice(0, 12).map((u, i) => {
+              const t = TRIGGERS.find(x => x.id === u.trigger)
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'var(--bg-glass)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: 15 }}>{t?.emoji || '🌊'}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>{t?.label || 'Urge'}</div>
+                    <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{new Date(u.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} · intensity {u.intensityBefore ?? '–'}→{u.intensityAfter ?? '–'}</div>
+                  </div>
+                  {u.resisted && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--brand-success)', background: 'var(--green-dim)', borderRadius: 20, padding: '2px 8px', flexShrink: 0 }}>SURFED +{URGE_AURA}</span>}
+                </div>
+              )
+            })}
+          </div>
         </div>
+      )}
+      {/* Relapses */}
+      {data?.relapses?.length > 0 && (
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 8 }}>RELAPSE HISTORY — {data.relapses.length}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {[...data.relapses].reverse().map((r, i) => {
+              const t = TRIGGERS.find(x => x.id === r.trigger)
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'var(--bg-glass)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: 15 }}>{t?.emoji || '🌀'}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)' }}>{t?.label || r.reason || 'Not specified'}</div>
+                    <div style={{ fontSize: 10.5, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{new Date(r.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}{r.reason ? ` · ${r.reason}` : ''}</div>
+                  </div>
+                  <span style={{ fontSize: 11, color: 'var(--brand-orange)', fontWeight: 700, flexShrink: 0 }}>Day {r.dayCount}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+      {!data?.urgeLogs?.length && !data?.relapses?.length && (
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '18px 0' }}>
+          Nothing here yet. Every urge you surf or log builds the picture.
+        </div>
+      )}
+    </div>
+  )
+
+  /* ── Collapsible section wrapper ── */
+  const Section = ({ id, icon: Icon, title, hint, color, children }) => {
+    const open = expandedSection === id
+    return (
+      <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+        <button onClick={() => setExpandedSection(s => s === id ? '' : id)}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '16px 20px', minHeight: 52, textAlign: 'left' }}>
+          <Icon size={17} color={color} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</div>
+            {hint && <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 1 }}>{hint}</div>}
+          </div>
+          {open ? <ChevronUp size={16} color="var(--text-muted)" /> : <ChevronDown size={16} color="var(--text-muted)" />}
+        </button>
+        {open && <div style={{ padding: '4px 20px 20px' }}>{children}</div>}
       </div>
     )
   }
 
-  // ─── DESKTOP LAYOUT ────────────────────────────────────────────────────────
+  /* ═══ MOBILE ═══ */
+  if (isMobile) {
+    return (
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <style>{`
+          @keyframes spin { to { transform: rotate(360deg) } }
+          @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+          @keyframes auraFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+          .fapless-scroll > * { flex-shrink: 0; }
+        `}</style>
+
+        {/* Sticky aura header */}
+        <div style={{
+          position: 'sticky', top: 0, zIndex: 100, background: 'var(--bg-overlay)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+          borderBottom: '1px solid var(--border)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Zap size={15} color="var(--brand-warning)" fill="var(--brand-warning)" />
+            <span style={{ fontSize: 17, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--brand-warning)', letterSpacing: '-0.5px' }}>
+              {auraPoints.toLocaleString()}
+            </span>
+            <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.06em' }}>AURA</span>
+          </div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--brand-warning)', background: 'color-mix(in srgb, var(--brand-warning) 12%, transparent)', padding: '4px 10px', borderRadius: 20 }}>
+            +{currentLevel.auraPerDay}/DAY
+          </div>
+        </div>
+
+        <div className="fapless-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 80px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Hero */}
+          <div style={{ background: `linear-gradient(160deg, var(--bg-card), color-mix(in srgb, ${currentLevel.color} 7%, transparent))`, border: `1px solid color-mix(in srgb, ${currentLevel.color} 30%, transparent)`, borderRadius: 'var(--radius-xl)', padding: '18px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 58, height: 58, borderRadius: 14, overflow: 'hidden', border: `2px solid ${currentLevel.color}`, flexShrink: 0, background: 'var(--bg-base)' }}>
+                <img src={currentLevel.image} alt={currentLevel.label} onError={e => { e.currentTarget.style.display = 'none' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 9.5, color: 'var(--text-muted)', letterSpacing: '0.12em', fontWeight: 700 }}>CURRENT STREAK</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                  <span style={{ fontSize: 46, fontWeight: 800, fontFamily: 'var(--font-display)', color: currentLevel.color, lineHeight: 1.05, letterSpacing: '-0.03em', animation: 'auraFloat 5s ease-in-out infinite' }}>{streakDays}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>days</span>
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                  {pad(streakHrs)}:{pad(streakMins)}:{pad(streakSecs)} · {currentLevel.label}
+                </div>
+              </div>
+              <MFRing percent={milestonePct} size={54} stroke={6} color={currentLevel.color} track="var(--border)" label={nextMilestone ? `${nextMilestone.day}d` : 'MAX'} />
+            </div>
+            {nextLevel && (
+              <div style={{ marginTop: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 5 }}>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Next: {nextLevel.label}</span>
+                  <span style={{ color: currentLevel.color, fontWeight: 700 }}>{nextLevel.minDays - streakDays}d to go</span>
+                </div>
+                <div style={{ height: 6, background: 'var(--border)', borderRadius: 3 }}>
+                  <div style={{ height: '100%', width: `${progressToNext}%`, background: `linear-gradient(90deg, ${currentLevel.color}, ${nextLevel.color})`, borderRadius: 3, transition: 'width 0.8s var(--ease-out-expo)' }} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* SOS band — always one tap away */}
+          <button onClick={() => setShowSOS(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
+              background: 'linear-gradient(120deg, var(--red-dim), color-mix(in srgb, var(--brand-orange) 8%, transparent))',
+              border: '1px solid color-mix(in srgb, var(--brand-error) 35%, transparent)',
+              borderRadius: 'var(--radius-xl)', padding: '15px 16px', cursor: 'pointer', minHeight: 72,
+              transition: 'transform 0.15s var(--ease-apple)',
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.008)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--brand-error)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 18px rgba(255,69,58,0.35)' }}>
+              <Siren size={20} color="#fff" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>Urge hitting right now?</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>Open Urge Rescue — surf the wave in 3 minutes</div>
+            </div>
+            <ChevronUp size={16} color="var(--text-muted)" style={{ transform: 'rotate(90deg)' }} />
+          </button>
+
+          {statsRow}
+
+          {!data?.startDate && (
+            <button onClick={handleStart} disabled={saving}
+              style={{ background: 'var(--brand-error)', border: 'none', borderRadius: 14, color: '#fff', padding: '15px', fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 52 }}>
+              <Play size={17} /> Start Journey
+            </button>
+          )}
+
+          <Section id="science" icon={Brain} title="Your brain on Day N" hint="What to expect, day by day" color="var(--brand-secondary)">{scienceSection}</Section>
+          <Section id="levels" icon={Trophy} title="Level roadmap" hint={currentLevel.label} color="var(--brand-warning)">{levelsSection}</Section>
+          <Section id="milestones" icon={Star} title="Milestones" hint={`${getCompletedMilestones(streakDays).length}/${MILESTONES.length} earned`} color="var(--brand-warning)">{milestonesSection}</Section>
+          <Section id="challenges" icon={Flame} title="Challenges" hint={data?.activeChallenge ? CHALLENGES.find(c => c.id === data.activeChallenge)?.label : 'Pick a run to commit to'} color="var(--brand-error)">{challengesSection}</Section>
+          <Section id="tools" icon={Lightbulb} title="Environment design" hint="Blockers & friction tools" color="var(--brand-primary)">{envToolsSection}</Section>
+          <Section id="history" icon={Calendar} title="History" hint="Urge log & relapses" color="var(--text-muted)">{historySection}</Section>
+
+          {/* Daily reminder */}
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '16px' }}>
+            <div style={{ fontSize: 9.5, color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: 8, fontWeight: 700 }}>TODAY'S REMINDER</div>
+            <div style={{ fontSize: 14.5, fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: 1.65, fontWeight: 500 }}>
+              {MOTIVATIONAL[Math.floor((streakDays + new Date().getDate()) % MOTIVATIONAL.length)]}
+            </div>
+            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Shield size={12} color={currentLevel.color} />
+              <span style={{ fontSize: 11, color: currentLevel.color, fontWeight: 600 }}>Every wave you surf makes the next one smaller.</span>
+            </div>
+          </div>
+        </div>
+
+        {showSOS && (
+          <SOSOverlay
+            streakDays={streakDays}
+            onClose={() => setShowSOS(false)}
+            onSurfed={handleSurfed}
+            onRelapse={() => { setShowSOS(false); setShowRelapse(true) }}
+          />
+        )}
+
+        {showRelapse && (
+          <RelapsePanel
+            isMobile={true}
+            streakDays={streakDays}
+            trigger={relapseTrigger} setTrigger={setRelapseTrigger}
+            note={relapseNote} setNote={setRelapseNote}
+            onConfirm={handleRelapse}
+            onCancel={() => setShowRelapse(false)}
+            saving={saving}
+          />
+        )}
+      </div>
+    )
+  }
+
+  /* ═══ DESKTOP ═══ */
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
         @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.7;transform:scale(0.97)} }
-        @keyframes glow {
-          0%,100%{box-shadow:0 0 12px ${currentLevel.color}22}
-          50%{box-shadow:0 0 32px ${currentLevel.color}44}
-        }
-        @keyframes auraFloat {
-          0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}
-        }
-        @keyframes aura-pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.2);opacity:0.8} }
-        @keyframes aura-plus { 0%{opacity:0;transform:translateY(5px)} 20%{opacity:1;transform:translateY(0)} 80%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-5px)} }
-        .fapless-card:hover { border-color: var(--border-bright) !important; transform: translateY(-2px); }
-        .hero-val { font-family: 'Outfit', sans-serif; letter-spacing: -2px; }
+        @keyframes auraFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+        .fapless-scroll > * { flex-shrink: 0; }
       `}</style>
 
-      {/* Aura Floating Header */}
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 100, background: 'var(--bg-overlay)', backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(255,215,0,0.15)', padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Zap size={18} color="var(--brand-warning)" fill="var(--brand-warning)" style={{ animation: 'aura-pulse 1s ease-in-out infinite' }} />
-          <span style={{ fontSize: 24, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--brand-warning)', letterSpacing: '-0.5px' }}>
-            {auraPoints.toLocaleString()}
-          </span>
-          <span style={{ fontSize: 13, color: 'rgba(255,215,0,0.6)', fontWeight: 800, letterSpacing: '0.1em' }}>AURA POINTS</span>
-        </div>
-        <div style={{
-           fontSize: 12, fontWeight: 800, color: 'var(--brand-warning)', background: 'rgba(255,215,0,0.1)',
-           padding: '6px 14px', borderRadius: 20, animation: 'aura-plus 1s ease-out infinite'
-        }}>+{currentLevel.auraPerDay} AURA PER DAY</div>
-      </div>
-
       {/* Header */}
-      <div className="view-pad" style={{ padding: '24px 24px 0', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div style={{ padding: '20px 24px 0', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18, gap: 12, flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontSize: 12, color: 'var(--red)', fontWeight: 800, letterSpacing: '0.25em', marginBottom: 4, textTransform: 'uppercase' }}>Discipline Engine</div>
-            <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>Mastery Journey</h1>
+            <div style={{ fontSize: 12, color: 'var(--brand-error)', fontWeight: 700, letterSpacing: '0.18em', marginBottom: 4 }}>FAPLESS · DISCIPLINE ENGINE</div>
+            <h1 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>Mastery Journey</h1>
           </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            {!data?.startDate ? (
-              <button onClick={handleStart} disabled={saving}
-                style={{ background: 'linear-gradient(135deg, var(--red), var(--brand-orange))', border: 'none', borderRadius: 12, color: '#fff', padding: '10px 22px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Play size={16} /> Start Journey
+          {data?.startDate && (
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setShowRelapse(s => !s)}
+                style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)', color: 'var(--text-secondary)', padding: '10px 18px', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7, minHeight: 44, transition: 'all 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-bright)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+                <RotateCcw size={14} /> Log relapse
               </button>
+              <button onClick={handleStart} disabled={saving}
+                style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)', color: 'var(--text-muted)', padding: '10px 16px', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7, minHeight: 44 }}>
+                <RefreshCw size={13} /> Reset
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Scroll area */}
+      <div className="fapless-scroll" style={{ flex: 1, overflow: 'auto', padding: '0 24px 28px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+        {/* Hero row */}
+        <div className="grid-3col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
+          {/* Streak */}
+          <div style={{ ...card, position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 10, background: `linear-gradient(160deg, var(--bg-card), color-mix(in srgb, ${currentLevel.color} 7%, transparent))`, border: `1px solid color-mix(in srgb, ${currentLevel.color} 28%, transparent)` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.16em', fontWeight: 700 }}>CURRENT STREAK</span>
+              <MFRing percent={milestonePct} size={46} stroke={5} color={currentLevel.color} track="var(--border)" label={nextMilestone ? `${nextMilestone.day}d` : 'MAX'} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+              <span style={{ fontSize: 68, fontWeight: 800, fontFamily: 'var(--font-display)', color: currentLevel.color, lineHeight: 1, letterSpacing: '-0.04em', animation: 'auraFloat 5s ease-in-out infinite' }}>{streakDays}</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{streakDays === 1 ? 'day clean' : 'days clean'}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{pad(streakHrs)}:{pad(streakMins)}:{pad(streakSecs)}</div>
+              </div>
+            </div>
+            {nextLevel ? (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 5 }}>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Next: {nextLevel.label}</span>
+                  <span style={{ color: currentLevel.color, fontWeight: 700 }}>{nextLevel.minDays - streakDays}d to go</span>
+                </div>
+                <div style={{ height: 6, background: 'var(--border)', borderRadius: 3 }}>
+                  <div style={{ height: '100%', width: `${progressToNext}%`, background: `linear-gradient(90deg, ${currentLevel.color}, ${nextLevel.color})`, borderRadius: 3, transition: 'width 0.8s var(--ease-out-expo)' }} />
+                </div>
+              </div>
             ) : (
-              <>
-                <button onClick={() => setShowRelapse(s => !s)}
-                  style={{ background: showRelapse ? 'var(--red-dim)' : 'none', border: '1px solid var(--red-dim)', borderRadius: 10, color: 'var(--red)', padding: '9px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <RotateCcw size={14} /> Relapse
-                </button>
-                <button onClick={handleStart} disabled={saving}
-                  style={{ background: 'linear-gradient(135deg, var(--red), var(--brand-orange))', border: 'none', borderRadius: 10, color: '#fff', padding: '9px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <RefreshCw size={14} /> Reset Streak
-                </button>
-              </>
+              <div style={{ fontSize: 12, color: 'var(--brand-warning)', fontWeight: 700 }}>🏆 ASCENDED — MAX LEVEL</div>
             )}
+          </div>
+
+          {/* Level / identity */}
+          <div style={{ ...card, display: 'flex', alignItems: 'center', gap: 20, background: `linear-gradient(160deg, var(--bg-card), color-mix(in srgb, ${currentLevel.color} 9%, transparent))`, border: `1px solid color-mix(in srgb, ${currentLevel.color} 30%, transparent)` }}>
+            <div style={{ width: 104, height: 104, borderRadius: 18, overflow: 'hidden', border: `2px solid ${currentLevel.color}`, flexShrink: 0, background: 'var(--bg-base)', boxShadow: `0 8px 28px color-mix(in srgb, ${currentLevel.color} 25%, transparent)` }}>
+              <img src={currentLevel.image} alt={currentLevel.label} onError={e => { e.currentTarget.style.display = 'none' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.16em', fontWeight: 700, marginBottom: 6 }}>CURRENT IDENTITY</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: currentLevel.color, marginBottom: 6, letterSpacing: '-0.02em' }}>{currentLevel.label}</div>
+              <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{currentLevel.desc}</div>
+            </div>
+          </div>
+
+          {/* Strength / aura */}
+          <div style={{ ...card, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.16em', fontWeight: 700 }}>DISCIPLINE ENERGY</span>
+              <Zap size={14} color="var(--brand-warning)" fill="var(--brand-warning)" />
+            </div>
+            <div style={{ fontSize: 46, fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--brand-warning)', lineHeight: 1, letterSpacing: '-0.03em' }}>{auraPoints.toLocaleString()}</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {[['Streak', streakAura], ['Milestones', milestoneAura], ['Urge wins', urgeAura], ['Challenges', challengeBonus]].map(([l, v]) => (
+                <span key={l} style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-secondary)', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 20, padding: '3px 9px' }}>
+                  {l} · {v.toLocaleString()}
+                </span>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 'auto' }}>
+              +{currentLevel.auraPerDay} per day · +{URGE_AURA} per surfed urge
+            </div>
           </div>
         </div>
 
-        {/* Relapse panel */}
+        {/* SOS band */}
+        <button onClick={() => setShowSOS(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 16, width: '100%', textAlign: 'left',
+            background: 'linear-gradient(120deg, var(--red-dim), color-mix(in srgb, var(--brand-orange) 7%, transparent))',
+            border: '1px solid color-mix(in srgb, var(--brand-error) 32%, transparent)',
+            borderRadius: 'var(--radius-xl)', padding: '16px 20px', cursor: 'pointer', minHeight: 76,
+            transition: 'transform 0.15s var(--ease-apple), border-color 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.005)'; e.currentTarget.style.borderColor = 'var(--brand-error)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--brand-error) 32%, transparent)' }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--brand-error)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 6px 22px rgba(255,69,58,0.4)' }}>
+            <Siren size={22} color="#fff" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Urge hitting right now?</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
+              Open Urge Rescue — a guided 3-minute wave: breathe, check your state, change the channel. Surfing one earns +{URGE_AURA} aura.
+            </div>
+          </div>
+          <ChevronUp size={18} color="var(--text-muted)" style={{ transform: 'rotate(90deg)', flexShrink: 0 }} />
+        </button>
+
+        {!data?.startDate && (
+          <button onClick={handleStart} disabled={saving}
+            style={{ background: 'var(--brand-error)', border: 'none', borderRadius: 14, color: '#fff', padding: '16px', fontSize: 15.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 54 }}>
+            <Play size={18} /> Start Journey
+          </button>
+        )}
+
+        {statsRow}
+
+        {/* Relapse panel (structured debrief) */}
         {showRelapse && (
-          <div style={{ ...card, marginBottom: 16, border: '1px solid var(--red-dim)', background: 'var(--red-dim)' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--red)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <AlertTriangle size={14} /> Record Relapse — Be honest with yourself
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
-              Current streak: <strong style={{ color: 'var(--text-primary)' }}>{streakDays} day{streakDays !== 1 ? 's' : ''}</strong> — this will reset to 0.
-            </div>
-            <textarea
-              value={relapseReason}
-              onChange={e => setRelapseReason(e.target.value)}
-              placeholder="What triggered you? (boredom, stress, loneliness, late night phone, etc.)"
-              rows={3}
-              style={{ width: '100%', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', fontSize: 14, color: 'var(--text-primary)', resize: 'vertical', lineHeight: 1.5, fontFamily: 'var(--font-display)', boxSizing: 'border-box' }}
-            />
-            <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-              <button onClick={handleRelapse} disabled={saving || !relapseReason.trim()}
-                style={{ background: 'var(--red)', border: 'none', borderRadius: 8, color: '#fff', padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, opacity: relapseReason.trim() ? 1 : 0.5 }}>
-                <XCircle size={14} /> Confirm Relapse
-              </button>
-              <button onClick={() => { setShowRelapse(false); setRelapseReason('') }}
-                style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', padding: '9px 16px', fontSize: 13, cursor: 'pointer' }}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Scrollable content */}
-      <div className="view-scroll" style={{ flex: 1, overflow: 'auto', padding: '0 24px 28px' }}>
-
-        {/* ── Hero: Streak + Level ── */}
-        <div className="grid-3col" style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1fr) minmax(300px, 1fr)', gap: 20, marginBottom: 24 }}>
-          {/* Streak counter */}
-          <div style={{ 
-            ...card, textAlign: 'center', border: `1px solid ${currentLevel.color}33`, position: 'relative', overflow: 'hidden',
-            background: 'linear-gradient(180deg, var(--bg-card), rgba(0,0,0,0.2))', display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 240
-          }}>
-            <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at center, ${currentLevel.color}08 0%, transparent 70%)`, pointerEvents: 'none' }} />
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.2em', fontWeight: 800, marginBottom: 16 }}>CURRENT STREAK</div>
-            <div className="hero-val" style={{ fontSize: 84, fontWeight: 800, color: currentLevel.color, lineHeight: 1, animation: 'auraFloat 4s ease-in-out infinite' }}>
-              {streakDays}
-            </div>
-            {/* Hours & Minutes & Seconds */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 12 }}>
-              {[
-                { v: streakHrs, l: 'HR' },
-                { v: streakMins, l: 'MIN' },
-                { v: streakSecs, l: 'SEC' }
-              ].map((t, i) => (
-                <React.Fragment key={t.l}>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 18, fontWeight: 800, fontFamily: 'var(--font-mono)', color: currentLevel.color, opacity: 0.9 }}>{String(t.v).padStart(2,'0')}</div>
-                    <div style={{ fontSize: 8, color: 'var(--text-muted)', fontWeight: 800, letterSpacing: '0.1em' }}>{t.l}</div>
-                  </div>
-                  {i < 2 && <div style={{ fontSize: 18, color: currentLevel.color, opacity: 0.2, fontWeight: 300 }}>:</div>}
-                </React.Fragment>
-              ))}
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 12, fontWeight: 700, letterSpacing: '0.1em', opacity: 0.8 }}>{streakDays === 1 ? 'DAY' : 'DAYS'} COMPLETED</div>
-          </div>
-
-          {/* Level Card */}
-          <div style={{ 
-            ...card, textAlign: 'center', border: `1px solid ${currentLevel.color}44`, 
-            background: `linear-gradient(180deg, var(--bg-card), ${currentLevel.color}10)`,
-            display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 24, minHeight: 240, position: 'relative', overflow: 'hidden'
-          }}>
-            <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 75% 50%, ${currentLevel.color}0a 0%, transparent 70%)`, pointerEvents: 'none' }} />
-            
-            {/* Level Physique Image */}
-            <div style={{ width: 110, height: 110, borderRadius: 16, overflow: 'hidden', border: `3px solid ${currentLevel.color}`, boxShadow: `0 0 20px ${currentLevel.color}44`, flexShrink: 0, background: 'rgba(0,0,0,0.3)', margin: '0 0 0 8px' }}>
-              <img src={currentLevel.image} alt={currentLevel.label} onError={(e) => { e.currentTarget.style.display = 'none' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-
-            <div style={{ flex: 1, textAlign: 'left' }}>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.2em', fontWeight: 800, marginBottom: 8 }}>CURRENT IDENTITY</div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: currentLevel.color, marginBottom: 8, letterSpacing: '-1px' }}>{currentLevel.label}</div>
-              <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.6 }}>{currentLevel.desc}</div>
-              
-              <div style={{ paddingRight: 16 }}>
-                {nextLevel ? (
-                  <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>Next: {nextLevel.label}</span>
-                      <span style={{ fontSize: 11, color: currentLevel.color, fontWeight: 800 }}>{nextLevel.minDays - streakDays}D REMAINING</span>
-                    </div>
-                    <div style={{ height: 6, background: 'var(--border)', borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)' }}>
-                      <div style={{ height: '100%', width: `${progressToNext}%`, background: `linear-gradient(90deg, ${currentLevel.color}, ${nextLevel.color})`, transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} />
-                    </div>
-                  </>
-                ) : (
-                  <div style={{ fontSize: 12, color: 'var(--brand-warning)', fontWeight: 800, letterSpacing: '0.1em' }}>🏆 ASCENDED GIGACHAD</div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Aura Card */}
-          <div style={{ 
-            ...card, textAlign: 'center', background: 'linear-gradient(180deg, var(--bg-card), rgba(255,215,0,0.05))',
-            display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 240, border: '1px solid rgba(255,215,0,0.2)'
-          }}>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.2em', fontWeight: 800, marginBottom: 16 }}>DISCIPLINE ENERGY</div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 8 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(255,215,0,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Zap size={24} color="var(--brand-warning)" fill="var(--brand-warning)" style={{ animation: 'aura-pulse 1s linear infinite' }} />
-              </div>
-              <span className="hero-val" style={{ fontSize: 52, fontWeight: 800, color: 'var(--brand-warning)', lineHeight: 1 }}>{auraPoints.toLocaleString()}</span>
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--brand-warning)', fontWeight: 800, opacity: 0.8, marginBottom: 12 }}>AURA POINTS EARNED</div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--border)', padding: '6px 14px', borderRadius: 20, margin: '0 auto' }}>
-              <Star size={12} color="var(--brand-warning)" />
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>+{currentLevel.auraPerDay} / DAY STREAK BONUS</span>
-            </div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 16 }}>
-              TOTAL RELAPSES: <span style={{ color: data?.relapses?.length > 0 ? 'var(--red)' : 'var(--green)', fontWeight: 800 }}>{data?.relapses?.length || 0}</span>
-            </div>
-          </div>
-        </div>  {/* end hero grid */}
-
-        {/* ── All Levels Map ── */}
-        <button onClick={() => setExpandedSection(s => s === 'levels' ? '' : 'levels')} style={sectionBtn('levels')}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Trophy size={15} color="var(--brand-warning)" /> Level Roadmap</span>
-          {expandedSection === 'levels' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-        </button>
-        {expandedSection === 'levels' && (
-          <div style={{ ...card, marginBottom: 12, padding: '16px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {LEVELS.map((lvl, i) => {
-                const isActive = lvl.id === currentLevel.id
-                const isLocked = streakDays < lvl.minDays
-                return (
-                  <div key={lvl.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px',
-                    borderRadius: 10, border: `1px solid ${isActive ? lvl.color : 'var(--border)'}`,
-                    background: isActive ? lvl.color + '12' : 'var(--bg-glass)',
-                    opacity: isLocked ? 0.45 : 1, transition: 'all 0.15s',
-                  }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', border: `2px solid ${isActive ? lvl.color : 'var(--border)'}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.2)' }}>
-                      {isLocked ? '🔒' : <img src={lvl.image} alt={lvl.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: isActive ? lvl.color : 'var(--text-primary)' }}>{lvl.label}</span>
-                        {isActive && <span style={{ fontSize: 9, background: lvl.color, color: '#000', borderRadius: 20, padding: '1px 8px', fontWeight: 700, letterSpacing: '0.05em' }}>YOU ARE HERE</span>}
-                      </div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{lvl.desc}</div>
-                    </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700, color: lvl.color }}>{lvl.minDays === lvl.maxDays ? `Day ${lvl.minDays}` : lvl.maxDays === Infinity ? `${lvl.minDays}+ days` : `${lvl.minDays}–${lvl.maxDays} days`}</div>
-                      <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>+{lvl.auraPerDay} aura/day</div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
+          <RelapsePanel
+            isMobile={false}
+            streakDays={streakDays}
+            trigger={relapseTrigger} setTrigger={setRelapseTrigger}
+            note={relapseNote} setNote={setRelapseNote}
+            onConfirm={handleRelapse}
+            onCancel={() => setShowRelapse(false)}
+            saving={saving}
+          />
         )}
 
-        {/* ── Milestones ── */}
-        <button onClick={() => setExpandedSection(s => s === 'milestones' ? '' : 'milestones')} style={sectionBtn('milestones')}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Star size={15} color="var(--brand-warning)" /> Milestone Bonuses ({getCompletedMilestones(streakDays).length}/{MILESTONES.length})</span>
-          {expandedSection === 'milestones' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-        </button>
-        {expandedSection === 'milestones' && (
-          <div style={{ ...card, marginBottom: 12 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
-              {MILESTONES.map(m => {
-                const isCompleted = streakDays >= m.day
-                return (
-                  <div key={m.day} style={{
-                    padding: '14px', borderRadius: 12,
-                    background: isCompleted ? 'rgba(46,213,115,0.08)' : 'var(--bg-glass)',
-                    border: `1px solid ${isCompleted ? 'var(--green)' : 'var(--border)'}`,
-                    display: 'flex', alignItems: 'center', gap: 14,
-                    transition: 'all 0.2s'
-                  }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: isCompleted ? 'var(--green)22' : 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isCompleted ? 'var(--green)' : 'var(--text-muted)', fontSize: 13, fontWeight: 'bold', flexShrink: 0 }}>
-                      {isCompleted ? '✓' : `${m.day}d`}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: isCompleted ? 'var(--green)' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.label}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{m.desc}</div>
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--brand-warning)', fontWeight: 'bold', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>+{m.bonus}</div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
+        <Section id="science" icon={Brain} title="Your brain on Day N" hint="Evidence-informed expectations for each stage" color="var(--brand-secondary)">{scienceSection}</Section>
+        <Section id="levels" icon={Trophy} title="Level roadmap" hint={`Currently: ${currentLevel.label}`} color="var(--brand-warning)">{levelsSection}</Section>
+        <Section id="milestones" icon={Star} title="Milestones" hint={`${getCompletedMilestones(streakDays).length}/${MILESTONES.length} earned`} color="var(--brand-warning)">{milestonesSection}</Section>
+        <Section id="challenges" icon={Flame} title="Challenges" hint={data?.activeChallenge ? CHALLENGES.find(c => c.id === data.activeChallenge)?.label : 'Commit to a run'} color="var(--brand-error)">{challengesSection}</Section>
+        <Section id="tools" icon={Lightbulb} title="Environment design" hint="Blockers & friction — willpower's best friends" color="var(--brand-primary)">{envToolsSection}</Section>
+        <Section id="history" icon={Calendar} title="History & urge log" hint="Your patterns over time" color="var(--text-muted)">{historySection}</Section>
 
-        {/* ── Benefits ── */}
-        <button onClick={() => setExpandedSection(s => s === 'benefits' ? '' : 'benefits')} style={sectionBtn('benefits')}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Star size={15} color="var(--amber)" /> Benefits at Your Level ({currentLevel.label})</span>
-          {expandedSection === 'benefits' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-        </button>
-        {expandedSection === 'benefits' && (
-          <div style={{ ...card, marginBottom: 12 }}>
-            {BENEFITS[currentLevel.id] ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {BENEFITS[currentLevel.id].map((b, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 12px', background: 'var(--bg-glass)', borderRadius: 8, border: '1px solid var(--border)', fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-                    <CheckCircle2 size={15} color={currentLevel.color} style={{ marginTop: 2, flexShrink: 0 }} />
-                    <span>{b.replace('• ', '')}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>Keep going — benefits kick in after Day 1!</div>
-            )}
-            <div style={{ marginTop: 14, padding: '12px 14px', background: `${currentLevel.color}10`, borderRadius: 8, border: `1px solid ${currentLevel.color}33`, fontSize: 12, color: currentLevel.color, fontStyle: 'italic' }}>
-              💡 These are benefits reported by thousands of people on the NoFap journey at your level.
-            </div>
-          </div>
-        )}
-
-        {/* ── Challenges ── */}
-        <button onClick={() => setExpandedSection(s => s === 'challenges' ? '' : 'challenges')} style={sectionBtn('challenges')}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Flame size={15} color="var(--red)" /> Challenges</span>
-          {expandedSection === 'challenges' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-        </button>
-        {expandedSection === 'challenges' && (
-          <div style={{ ...card, marginBottom: 12 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
-              {CHALLENGES.map(ch => {
-                const isActive = data?.activeChallenge === ch.id
-                const isComplete = isActive && streakDays >= ch.duration
-                return (
-                  <div key={ch.id} onClick={() => setChallenge(isActive ? '' : ch.id)}
-                    className="fapless-card"
-                    style={{
-                      background: isActive ? 'rgba(255,69,0,0.1)' : 'var(--bg-glass)',
-                      border: `1px solid ${isActive ? 'var(--red)' : 'var(--border)'}`,
-                      borderRadius: 12, padding: '16px', cursor: 'pointer', transition: 'all 0.15s',
-                    }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: isActive ? 'var(--red)' : 'var(--text-primary)' }}>{ch.label}</span>
-                      {isActive && (isComplete
-                        ? <span style={{ fontSize: 10, background: 'var(--green)', color: '#000', borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>COMPLETE ✅</span>
-                        : <span style={{ fontSize: 10, background: 'var(--red)', color: '#fff', borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>ACTIVE</span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 10, lineHeight: 1.5 }}>{ch.desc}</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ch.duration} days</span>
-                      <span style={{ fontSize: 11, color: 'var(--brand-warning)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>⚡ +{ch.auraBonus.toLocaleString()} bonus</span>
-                    </div>
-                    {isActive && !isComplete && (
-                      <div style={{ marginTop: 10 }}>
-                        <div style={{ height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${Math.min(100, Math.round((streakDays / ch.duration) * 100))}%`, background: 'linear-gradient(90deg, var(--red), var(--brand-warning))', borderRadius: 2, transition: 'width 0.5s' }} />
-                        </div>
-                        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>{Math.min(100, Math.round((streakDays / ch.duration) * 100))}% — {ch.duration - streakDays} days left</div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── Suggestions ── */}
-        <button onClick={() => setExpandedSection(s => s === 'suggestions' ? '' : 'suggestions')} style={sectionBtn('suggestions')}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Lightbulb size={15} color="var(--cyan)" /> Anti-Relapse Arsenal — Tools & Settings</span>
-          {expandedSection === 'suggestions' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-        </button>
-        {expandedSection === 'suggestions' && (
-          <div style={{ ...card, marginBottom: 12 }}>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-              {SUGGESTIONS.map((s, i) => (
-                <button key={i} onClick={() => setActiveSuggCat(i)}
-                  style={{ padding: '7px 16px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: `1px solid ${activeSuggCat === i ? s.color : 'var(--border)'}`, background: activeSuggCat === i ? s.color + '22' : 'transparent', color: activeSuggCat === i ? s.color : 'var(--text-muted)', transition: 'all 0.15s' }}>
-                  {s.cat}
-                </button>
-              ))}
-            </div>
-            {(() => {
-              const sg = SUGGESTIONS[activeSuggCat]
-              return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {sg.items.map((item, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '14px 16px', background: 'var(--bg-glass)', borderRadius: 10, border: `1px solid var(--border)` }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: sg.color + '22', border: `1px solid ${sg.color}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <sg.icon size={16} color={sg.color} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{item.name}</div>
-                        <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{item.desc}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )
-            })()}
-          </div>
-        )}
-
-        {/* ── Relapse History ── */}
-        {data?.relapses?.length > 0 && (
-          <>
-            <button onClick={() => setExpandedSection(s => s === 'history' ? '' : 'history')} style={sectionBtn('history')}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Calendar size={15} color="var(--text-muted)" /> Relapse Analytics & History ({data.relapses.length})</span>
-              {expandedSection === 'history' ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-            </button>
-            {expandedSection === 'history' && (
-              <div style={{ ...card, marginBottom: 12 }}>
-                {relapseStats && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: 16, marginBottom: 20, borderBottom: '1px solid var(--border)', paddingBottom: 20 }}>
-                    <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', padding: '14px', borderRadius: 10, textAlign: 'center' }}>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>AVERAGE STREAK</div>
-                      <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--green)', marginTop: 6 }}>{relapseStats.avgStreak} Days</div>
-                    </div>
-                    <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', padding: '14px', borderRadius: 10, textAlign: 'center' }}>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>TOTAL RESET EVENTS</div>
-                      <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--red)', marginTop: 6 }}>{relapseStats.total} Times</div>
-                    </div>
-                    <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', padding: '14px', borderRadius: 10 }}>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 6 }}>TOP TRIGGER CATEGORIES / INSIGHTS</div>
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
-                        {relapseStats.topTriggers.length > 0 ? (
-                          relapseStats.topTriggers.map((t, idx) => (
-                            <span key={idx} style={{ background: 'var(--red-dim)', color: 'var(--red)', border: '1px solid var(--red-dim)', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
-                              🚨 {t}
-                            </span>
-                          ))
-                        ) : (
-                          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>No recurring triggers detected yet. Maintain honest tracking.</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {[...data.relapses].reverse().map((r, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 14, padding: '12px 14px', background: 'var(--red-dim)', borderRadius: 8, border: '1px solid var(--red-dim)', alignItems: 'center' }}>
-                      <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', minWidth: 100, flexShrink: 0 }}>
-                        {new Date(r.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </div>
-                      <div style={{ flex: 1, fontSize: 13, color: 'var(--text-secondary)' }}>{r.reason || '—'}</div>
-                      <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--red)', fontWeight: 700, flexShrink: 0 }}>Day {r.dayCount}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* ── Daily Motivation ── */}
-        <div className="" style={{ ...card, background: `linear-gradient(135deg, var(--bg-card), ${currentLevel.color}08)`, border: `1px solid ${currentLevel.color}33` }}>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: 12 }}>TODAY'S REMINDER</div>
-          <div style={{ fontSize: 16, fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: 1.7, fontWeight: 500 }}>
+        {/* Daily reminder */}
+        <div style={{ ...card, background: `linear-gradient(140deg, var(--bg-card), color-mix(in srgb, ${currentLevel.color} 6%, transparent))` }}>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.14em', marginBottom: 10, fontWeight: 700 }}>TODAY'S REMINDER</div>
+          <div style={{ fontSize: 16, fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: 1.65, fontWeight: 500 }}>
             {MOTIVATIONAL[Math.floor((streakDays + new Date().getDate()) % MOTIVATIONAL.length)]}
           </div>
-          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Shield size={13} color={currentLevel.color} />
-            <span style={{ fontSize: 12, color: currentLevel.color, fontWeight: 600 }}>Keep your streak alive. Every day counts.</span>
+          <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Shield size={12} color={currentLevel.color} />
+            <span style={{ fontSize: 12, color: currentLevel.color, fontWeight: 600 }}>Every wave you surf makes the next one smaller.</span>
           </div>
         </div>
+      </div>
 
+      {showSOS && (
+        <SOSOverlay
+          streakDays={streakDays}
+          onClose={() => setShowSOS(false)}
+          onSurfed={handleSurfed}
+          onRelapse={() => { setShowSOS(false); setShowRelapse(true) }}
+        />
+      )}
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RELAPSE PANEL — structured, non-judgmental debrief
+═══════════════════════════════════════════════════════════════ */
+function RelapsePanel({ isMobile, streakDays, trigger, setTrigger, note, setNote, onConfirm, onCancel, saving }) {
+  return (
+    <div style={{
+      background: 'var(--bg-card)', border: '1px solid color-mix(in srgb, var(--brand-error) 25%, transparent)',
+      borderRadius: 'var(--radius-xl)', padding: isMobile ? '18px 16px' : '22px 24px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 8 }}>
+        <HeartPulse size={17} color="var(--brand-error)" />
+        <div style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text-primary)' }}>Reset & refocus</div>
+      </div>
+      <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 16, maxWidth: 560 }}>
+        Happens to almost everyone on this journey — what matters is the data you take from it.
+        Your <strong style={{ color: 'var(--text-primary)' }}>{streakDays}-day</strong> streak resets to zero; your aura and history stay.
+      </div>
+
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.06em', marginBottom: 8 }}>WHAT TRIGGERED IT?</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+        {TRIGGERS.map(t => {
+          const on = trigger === t.id
+          return (
+            <button key={t.id} onClick={() => setTrigger(on ? '' : t.id)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 14px', borderRadius: 'var(--radius-pill)',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer', minHeight: 38,
+                border: `1px solid ${on ? 'var(--brand-error)' : 'var(--border)'}`,
+                background: on ? 'var(--red-dim)' : 'transparent',
+                color: on ? 'var(--brand-error)' : 'var(--text-secondary)',
+                transition: 'all 0.15s',
+              }}>
+              <span>{t.emoji}</span> {t.label}
+            </button>
+          )
+        })}
+      </div>
+
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.06em', marginBottom: 8 }}>ANY CONTEXT? <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(optional)</span></div>
+      <textarea value={note} onChange={e => setNote(e.target.value)}
+        placeholder="Where were you, what time, what happened right before?"
+        rows={2}
+        style={{ width: '100%', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '11px 14px', fontSize: 14, color: 'var(--text-primary)', resize: 'vertical', lineHeight: 1.5, fontFamily: 'var(--font-body)', boxSizing: 'border-box' }}
+      />
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
+        <button onClick={onConfirm} disabled={saving}
+          style={{ background: 'var(--brand-error)', border: 'none', borderRadius: 11, color: '#fff', padding: '12px 22px', fontSize: 14, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: 7, minHeight: 46, opacity: saving ? 0.7 : 1 }}>
+          {saving ? <RefreshCw size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={15} />}
+          {saving ? 'Logging…' : 'Log it & start fresh'}
+        </button>
+        <button onClick={onCancel}
+          style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 11, color: 'var(--text-muted)', padding: '12px 18px', fontSize: 14, cursor: 'pointer', minHeight: 46 }}>
+          Cancel
+        </button>
       </div>
     </div>
   )

@@ -2,7 +2,7 @@
   <img src="logo.png" width="120" alt="MindForm Logo" />
 </p>
 
-# 🌌 MindForm 2.0 — Apple-Grade Productivity Suite
+# 🌌 MindForm 2.1 — Apple-Grade Productivity Suite
 
 <p align="center">
   <a href="https://mindform.onrender.com/"><strong>🚀 Live Demo</strong></a>
@@ -51,6 +51,52 @@
 - New `GET /api/stats/summary` aggregate endpoint.
 - Graceful shutdown (SIGTERM/SIGINT), request timeouts, token key migrated to `mf_token` (legacy auto-migrated), 401 → auto-logout.
 - Sanitized `.env.example`; **rotate your MongoDB credentials** — they were committed in the original archive.
+
+---
+
+## ✨ What's new in 2.1 (refinement round)
+
+### Apple Design System charts (`components/MFCharts.jsx`)
+- New chart kit modeled on **Apple Health / Stocks / Fitness**: rounded gradient bars with the max value emphasized, Fitness-style activity rings with rounded caps, smooth Stocks-style area curves, and a floating capsule tooltip with backdrop blur. No gridlines, no axis lines — the data speaks for itself.
+- Applied across **Tasks** (weekly progress, week score, per-day rings) and **Habits** (daily/weekly progress, GOAL·DONE·LEFT rings, mood & motivation curves).
+
+### Tasks — fixed "+" button overflow (MANAGE TASKS)
+- Root cause: the bottom split used a hardcoded `400px 1fr` grid and a non-wrapping add-row, so the time input and "+" button spilled outside the card on narrow viewports.
+- Fix: responsive `mf-split-grid` (collapses to one column ≤768 px), wrapping add-row with `min-width: 0` guards, fixed-width time field, and a 44-pt blue "+" button (HIG touch target). Both desktop and mobile manage tabs verified.
+
+### Goals — rethinked feature
+- **Milestones:** every goal can now carry a measurable checkpoint list (add in the form, tick inline on the card, quick-add without opening the editor). Backend model + controller support added with validation.
+- **Pace tracking:** progress is compared against the goal's creation→deadline window — cards show *Ahead of pace / On track / Behind pace / Overdue* chips, so a 30%-done goal due tomorrow no longer looks "fine".
+- **Progress model:** overall % now averages every available signal (milestones + linked tasks + linked habits) instead of silently reading 0 for unlinked goals.
+- **Templates:** four research-grounded quick-starts (Read 12 books, Run 5K, Ship a project, Emergency fund) that prefill title, deadline and milestones — blank-page friction removed.
+- **Apple Fitness ring** per goal card, quick *Mark complete / Reopen* actions, decoded task-name matching (linked progress actually counts now), and a fully responsive mobile layout.
+
+### Fapless — research-based redesign
+- **Urge Rescue (SOS)** — one prominent band + full-screen flow: 3-minute **urge-surfing timer** with an animated box-breathing pacer, **HALT + digital trigger check** with a tailored tip per state, urge intensity slider, and **replacement action chips** (push-ups, cold water, walk, accountability text…). Surfing an urge is logged and earns **+15 aura** (mastery experiences build self-efficacy).
+- **Urge log** in the database (`urgeLogs`) with trigger, intensity before/after and strategy; the History section shows the log and analytics (urges resisted, wave success rate, best streak, top triggers).
+- **Compassionate relapse flow** — shame-based "demotivational quotes" removed (abstinence violation effect: shame fuels binges). Relapses now use a structured trigger debrief + optional note, followed by a kind reframe screen with your best streak and stats.
+- **"Your brain on Day N"** — evidence-informed timeline of what to expect at each stage, with the current stage highlighted.
+- Shame-y level labels softened ("Clown"→"Day One", "Noob"→"Initiate"); ids and images unchanged.
+- 🐞 **Aura formula bug fixed** — the streak-aura accumulator never advanced its cursor, so every level's full span was double-counted (a 5-day streak earned ~3,300 aura instead of ~50). One server-side engine (`utils/aura.js`) is the single source of truth for Fapless, leaderboard and profiles.
+
+### Social — Game Center & iMessage language
+- **Podium leaderboard** (🥈🥇🥉 blocks) for the top 3, clean ranked rows below, follow buttons and "YOU" chip.
+- **iMessage-style community forum** — blue bubbles for your messages, gray for others, grouped headers with flags/badges/timestamps, capsule input with a round send button.
+- Profile tab rebuilt as an iOS-style hero card + stats band + inset-grouped edit sheet with a real iOS toggle; admin panel restyled into inset groups.
+
+### Settings — iOS Settings app language
+- Inset-grouped rounded lists with uppercase section headers, colored rounded-square icon tiles, chevron/status accessories and 52-pt rows.
+- **Theme picker** is now two visual preview cards (Dark / Light) instead of a bare toggle.
+- Permissions rows show live status chips with Enable actions; About and Session groups added; footnotes under each group.
+
+### Screenshots
+- 16 fresh captures in `Showcase/` (desktop + mobile, dark + light, incl. Urge Rescue and the new Goals form).
+
+
+### v2.2 polish
+- **Overview dashboard**: new Apple Health-style "Last 14 days" activity chart (combined daily task + habit completion, today highlighted) built on the MFCharts kit; dashboard rings now reuse the shared `MFRing` component.
+- Previous-month data now included in the demo seed so the trend renders a full window.
+- Verified AI Coach / Auth / Landing are fully tokenized to the iOS palette (no legacy colors remain).
 
 ---
 
@@ -118,7 +164,7 @@ mindform/
 ---
 
 ## 📸 Screenshots
-See `screenshots/before/` (v1 audit) and `screenshots/after/` (v2 redesign) in the release package.
+See `Showcase/` (v2.1 desktop + mobile) and `screenshots/before/` (v1 audit), `screenshots/after/` (v2 redesign) in the release package.
 
 ---
 

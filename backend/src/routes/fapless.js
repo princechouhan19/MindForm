@@ -6,6 +6,7 @@ const ctrl = require('../controllers/faplessController')
 router.get('/', protect, ctrl.getRecord)
 router.put('/', protect, ctrl.update)
 router.post('/relapse', protect, ctrl.relapse)
+router.post('/urge-log', protect, ctrl.logUrge)
 router.post('/start', protect, ctrl.start)
 router.put('/aura', protect, ctrl.addAura)
 

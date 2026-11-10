@@ -1,5 +1,11 @@
 const mongoose = require('mongoose')
 
+const MilestoneSchema = new mongoose.Schema({
+  id: { type: String, default: () => Math.random().toString(36).slice(2, 10) },
+  title: { type: String, default: '', trim: true },
+  done: { type: Boolean, default: false },
+}, { _id: false })
+
 const goalSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -9,6 +15,8 @@ const goalSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
   description: { type: String, default: '' },
   deadline: { type: Date, required: true },
+  // Measurable checkpoints — break the goal into verifiable sub-steps
+  milestones: { type: [MilestoneSchema], default: [] },
   // Link to which tasks / habits are relevant to this goal
   linkedTasks: { type: [String], default: [] },   // task names
   linkedHabits: { type: [String], default: [] },  // habit names

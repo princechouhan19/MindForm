@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { ArrowUpRight, Flame, CheckSquare, Activity, Target, ChevronRight, Loader, Sparkles, Users2 } from 'lucide-react'
 import { tasksAPI, habitsAPI, goalsAPI, faplessAPI } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { MFBarChart, MFRing } from '../components/MFCharts'
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -23,33 +24,37 @@ function greeting() {
   return 'Good evening'
 }
 
+// Combined task + habit completion for each of the last `days` days
+// (Apple Health-style trend for the dashboard)
+function buildTrend(taskByWeek, habitByMonth, days = 14) {
+  const now = new Date()
+  const out = []
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)
+    const dayNum = d.getDate()
+    const wk = taskByWeek[getWeekKey(d)]
+    const names = (wk?.tasks || []).map(t => String(t).split('|')[0])
+    const tChecks = wk?.checks || {}
+    const tDone = names.filter(n => tChecks[`${dayNum}-${n}`]).length
+    const tPct = names.length ? (tDone / names.length) * 100 : null
+    const hm = habitByMonth[`${d.getFullYear()}-${d.getMonth()}`]
+    const hChecks = hm?.checks || {}
+    const habits = hm?.habits || []
+    const hDone = habits.filter(h => hChecks[`${dayNum}-${h.name}`]).length
+    const hPct = habits.length ? (hDone / habits.length) * 100 : null
+    const signals = [tPct, hPct].filter(v => v !== null)
+    const combined = signals.length ? Math.round(signals.reduce((a, b) => a + b, 0) / signals.length) : null
+    out.push({
+      label: i === 0 ? 'Today' : WEEKDAYS[d.getDay()][0],
+      value: combined ?? 0,
+      isToday: i === 0,
+    })
+  }
+  return out
+}
+
 function Ring({ percent, size = 92, color = 'var(--brand-primary)', label }) {
-  const r = (size - 10) / 2
-  const c = 2 * Math.PI * r
-  const clamped = Math.max(0, Math.min(100, percent))
-  return (
-    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
-      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border)" strokeWidth="8" />
-        <circle
-          cx={size / 2} cy={size / 2} r={r} fill="none"
-          stroke={color} strokeWidth="8" strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={c - (c * clamped) / 100}
-          style={{ transition: 'stroke-dashoffset 0.8s var(--ease-out-expo)' }}
-        />
-      </svg>
-      <div style={{
-        position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: 1,
-      }}>
-        <span style={{ fontSize: 19, fontWeight: 700, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
-          {Math.round(clamped)}<span style={{ fontSize: 11, fontWeight: 600 }}>%</span>
-        </span>
-        {label && <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{label}</span>}
-      </div>
-    </div>
-  )
+  return <MFRing percent={percent} size={size} stroke={8} color={color} label={label} />
 }
 
 function ModuleCard({ icon: Icon, color, title, value, sub, onClick, delay = 0 }) {
@@ -104,6 +109,7 @@ export default function OverviewView({ onNavigate }) {
   const [habitTotal, setHabitTotal] = useState(0)
   const [goals, setGoals] = useState({ active: 0, completed: 0, closest: null })
   const [streak, setStreak] = useState({ days: 0, level: null, aura: 0 })
+  const [trend, setTrend] = useState([])
 
   const today = new Date()
   const dayName = WEEKDAYS[today.getDay()]
@@ -118,14 +124,35 @@ export default function OverviewView({ onNavigate }) {
         const weekKey = getWeekKey(now)
         const dayNum = now.getDate()
 
-        // Tasks (today's checks)
+        // Tasks — today's checks + 14-day trend (fetch both months if the window crosses one)
         try {
-          const wk = await tasksAPI.getMonth(monthKey)
-          const week = wk?.data?.[weekKey]
+          const monthKeys = new Set()
+          for (let i = 0; i < 14; i++) {
+            const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)
+            monthKeys.add(`${d.getFullYear()}-${d.getMonth()}`)
+          }
+          const taskByWeek = {}
+          for (const mk of monthKeys) {
+            try {
+              const wk = await tasksAPI.getMonth(mk)
+              Object.entries(wk?.data || {}).forEach(([k, v]) => { taskByWeek[k] = v })
+            } catch { /* non-fatal */ }
+          }
+          const habitByMonth = {}
+          for (const mk of monthKeys) {
+            try {
+              const hm = await habitsAPI.getMonth(mk)
+              if (hm?.data) habitByMonth[mk] = hm.data
+            } catch { /* non-fatal */ }
+          }
+
+          const week = taskByWeek[weekKey]
           const names = (week?.tasks || []).map(t => String(t).split('|')[0])
           const checks = week?.checks || {}
           const done = names.filter(n => checks[`${dayNum}-${n}`]).length
           if (!cancelled) { setTaskTotal(names.length); setTaskDone(done) }
+
+          if (!cancelled) setTrend(buildTrend(taskByWeek, habitByMonth, 14))
         } catch { /* non-fatal */ }
 
         // Habits (today's checks)
@@ -262,6 +289,30 @@ export default function OverviewView({ onNavigate }) {
               </div>
             </button>
           </div>
+
+          {/* 14-day activity trend — Apple Health style */}
+          {trend.length > 0 && (
+            <div className="animate-in" style={{
+              marginTop: 16, padding: '18px 20px 8px',
+              borderRadius: 'var(--radius-xl)', background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em' }}>Last 14 days</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>
+                  daily completion · tasks & habits
+                </div>
+              </div>
+              <MFBarChart
+                data={trend}
+                height={110}
+                color="var(--brand-primary)"
+                emphasizeMax={false}
+                highlightIndex={trend.length - 1}
+                showTicks
+              />
+            </div>
+          )}
 
           {/* Stat row */}
           <div style={{

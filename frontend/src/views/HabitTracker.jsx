@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts'
-import { Plus, Trash2, ChevronLeft, ChevronRight, Download, Trophy, Cloud, Loader, CheckCircle2, Circle, BarChart2, Pencil, Check, X, GripVertical, ChevronUp, ChevronDown } from 'lucide-react'
+import { MFBarChart, MFRing, MFAreaChart } from '../components/MFCharts'
+import { Plus, Trash2, ChevronLeft, ChevronRight, Download, Trophy, Cloud, Loader, CheckCircle2, Circle, BarChart2, Pencil, Check, X, GripVertical, ChevronUp, ChevronDown, Target } from 'lucide-react'
 import { habitsAPI } from '../api/client'
 import { useSync } from '../hooks/useSync'
 import { useToast } from '../components/Toast'
 import { useConfirm } from '../components/ConfirmDialog'
-import { DonutChart } from '../components/StatCard'
+
 
 const DEFAULT_HABITS = [
   { name: 'Wake up at 06:00', emoji: '⏰', time: '06:00' },
@@ -43,34 +43,8 @@ function useIsMobile() {
   return mobile
 }
 
-// Custom Shadcn UI styled tooltip content
-const ShadcnTooltip = ({ active, payload, label, prefix = '', suffix = '%' }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div style={{
-        background: 'var(--bg-overlay)',
-        backdropFilter: 'blur(8px)',
-        border: '1px solid var(--border)',
-        padding: '8px 12px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 4
-      }}>
-        <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>{prefix}{label}</div>
-        {payload.map((p, idx) => (
-          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: p.color || p.fill || 'var(--amber)' }} />
-            <span style={{ color: 'var(--text-secondary)' }}>{p.name}:</span>
-            <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{p.value}{suffix}</span>
-          </div>
-        ))}
-      </div>
-    )
-  }
-  return null
-}
+// Map {label, pct} datasets to MFBarChart's {label, value} shape
+const toChart = (arr) => arr.map(d => ({ label: d.label, value: d.pct }))
 
 export default function HabitTracker() {
   const toast = useToast()
@@ -398,14 +372,7 @@ export default function HabitTracker() {
               {/* Monthly bar chart */}
               <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px' }}>
                 <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 10 }}>DAILY PROGRESS — {monthName}</div>
-                <ResponsiveContainer width="100%" height={80}>
-                  <BarChart data={dailyData} barSize={5}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                    <XAxis dataKey="label" tick={false} axisLine={false} tickLine={false} />
-                    <Tooltip content={<ShadcnTooltip prefix="Day " />} />
-                    <Bar dataKey="pct" fill="var(--amber)" radius={[2, 2, 0, 0]} opacity={0.85} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <MFBarChart data={toChart(dailyData)} height={80} color="var(--brand-orange)" showTicks={false} />
               </div>
 
               {/* Each habit progress */}
@@ -539,34 +506,24 @@ export default function HabitTracker() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 160px 160px 160px', gap: 12, marginBottom: 20 }}>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr) minmax(120px,160px) minmax(120px,160px) minmax(120px,160px)', gap: 12, marginBottom: 20 }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', minWidth: 0 }}>
             <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 10 }}>DAILY PROGRESS</div>
-            <ResponsiveContainer width="100%" height={55}>
-              <BarChart data={dailyData} barSize={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="label" tick={false} axisLine={false} tickLine={false} />
-                <Tooltip content={<ShadcnTooltip prefix="Day " />} />
-                <Bar dataKey="pct" fill="var(--amber)" radius={[2, 2, 0, 0]} opacity={0.8} />
-              </BarChart>
-            </ResponsiveContainer>
+            <MFBarChart data={toChart(dailyData)} height={60} color="var(--brand-orange)" showTicks={false} />
           </div>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '12px 14px' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '12px 14px', minWidth: 0 }}>
             <div style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 8 }}>WEEKLY PROGRESS</div>
-            <ResponsiveContainer width="100%" height={55}>
-              <BarChart data={weeklyData} barSize={24}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 9, fill: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} />
-                <Tooltip content={<ShadcnTooltip />} />
-                <Bar dataKey="pct" fill="var(--amber)" radius={[3, 3, 0, 0]} opacity={0.85} />
-              </BarChart>
-            </ResponsiveContainer>
+            <MFBarChart data={toChart(weeklyData)} height={60} color="var(--brand-orange)" showTicks />
           </div>
-          {[['GOAL', habits.length * totalDays, 'var(--text-primary)'], ['DONE', totalDone, 'var(--green)'], ['LEFT', totalGoal - totalDone, 'var(--red)']].map(([l, v, c]) => (
-            <div key={l} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          {[['GOAL', habits.length * totalDays, 'var(--text-primary)'], ['DONE', totalDone, 'var(--brand-success)'], ['LEFT', totalGoal - totalDone, 'var(--brand-orange)']].map(([l, v, c]) => (
+            <div key={l} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
               <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>{l}</div>
-              <div style={{ fontSize: 32, fontWeight: 800, fontFamily: 'var(--font-mono)', color: c }}>{v}</div>
-              <DonutChart percent={l === 'GOAL' ? 100 : l === 'DONE' ? overallPct : 100 - overallPct} size={36} color={c} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <div style={{ fontSize: 30, fontWeight: 800, fontFamily: 'var(--font-display)', color: c, letterSpacing: '-0.03em' }}>{v}</div>
+                {l === 'DONE' && <MFRing percent={overallPct} size={40} stroke={5} color={c} />}
+                {l === 'LEFT' && <MFRing percent={100 - overallPct} size={40} stroke={5} color={c} />}
+                {l === 'GOAL' && <Target size={22} color="var(--text-muted)" />}
+              </div>
             </div>
           ))}
         </div>
@@ -721,27 +678,16 @@ export default function HabitTracker() {
 
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
               <div style={{ fontSize: 10, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 10 }}>MENTAL STATE — MOOD & MOTIVATION (1–10)</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'start' }}>
-                <ResponsiveContainer width="100%" height={80}>
-                  <AreaChart data={mentalData}>
-                    <defs>
-                      <linearGradient id="moodGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--cyan)" stopOpacity={0.15} />
-                        <stop offset="100%" stopColor="var(--cyan)" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="motGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--amber)" stopOpacity={0.15} />
-                        <stop offset="100%" stopColor="var(--amber)" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                    <XAxis dataKey="label" tick={false} axisLine={false} tickLine={false} />
-                    <YAxis domain={[0, 10]} tick={{ fontSize: 9, fill: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={20} />
-                    <Tooltip content={<ShadcnTooltip prefix="Day " suffix="/10" />} />
-                    <Area type="monotone" dataKey="mood" stroke="var(--cyan)" strokeWidth={1.5} fill="url(#moodGrad)" dot={false} name="Mood" connectNulls />
-                    <Area type="monotone" dataKey="motivation" stroke="var(--amber)" strokeWidth={1.5} fill="url(#motGrad)" dot={false} name="Motivation" connectNulls />
-                  </AreaChart>
-                </ResponsiveContainer>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 12, alignItems: 'start' }}>
+                <MFAreaChart
+                  data={mentalData}
+                  height={110}
+                  yDomain={[0, 10]}
+                  series={[
+                    { key: 'mood', name: 'Mood', color: 'var(--brand-primary)' },
+                    { key: 'motivation', name: 'Motivation', color: 'var(--brand-orange)' },
+                  ]}
+                />
                 <div style={{ overflowX: 'auto', maxWidth: 500 }}>
                   <table style={{ borderCollapse: 'collapse', fontSize: 10 }}>
                     <thead>
