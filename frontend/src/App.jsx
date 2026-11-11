@@ -14,6 +14,8 @@ import AIChatView from './views/AIChatView'
 import SocialView from './views/SocialView'
 import AuthPage from './views/AuthPage'
 import LandingPage from './views/LandingPage'
+import ErrorPage from './views/ErrorPage'
+import ErrorBoundary from './components/ErrorBoundary'
 import {
   Loader, CheckSquare, Activity, Target, Flame, Settings, Sparkles, Users2, Home, MoreHorizontal, LayoutGrid,
 } from 'lucide-react'
@@ -35,12 +37,48 @@ const MORE_SHEET_ITEMS = ['fapless', 'social', 'ai', 'settings']
 
 function Dashboard() {
   const { user, loading } = useAuth()
-  const [page, setPage] = useState('landing') // 'landing' | 'auth' | 'dashboard'
+  const [page, setPage] = useState(() => {
+    const path = (window.location.pathname || '').toLowerCase()
+    if (path === '/404') return '404'
+    if (path === '/500' || path === '/error') return '500'
+    const known = ['/', '', '/auth', '/login', '/register', '/dashboard']
+    if (!known.includes(path) && !path.startsWith('/api')) {
+      return '404'
+    }
+    return 'landing'
+  })
+  const [authMode, setAuthMode] = useState('login') // 'login' | 'register'
   const [view, setView] = useState('overview')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
   const [showOnboarding, setShowOnboarding] = useState(false)
+
+  const handleOpenAuth = (mode = 'login') => {
+    setAuthMode(mode)
+    setPage('auth')
+  }
+
+  const goHome = () => {
+    window.history.pushState(null, '', '/')
+    if (user) setPage('dashboard')
+    else setPage('landing')
+  }
+
+  // Handle browser back/forward and path events
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = (window.location.pathname || '').toLowerCase()
+      if (path === '/404') setPage('404')
+      else if (path === '/500' || path === '/error') setPage('500')
+      else if (path === '/auth' || path === '/login') { setAuthMode('login'); setPage('auth') }
+      else if (path === '/register') { setAuthMode('register'); setPage('auth') }
+      else if (user) setPage('dashboard')
+      else setPage('landing')
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [user])
 
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('mindform-theme') || 'dark'
@@ -100,14 +138,23 @@ function Dashboard() {
     )
   }
 
+  // ── Error Pages ──────────────────────────────────
+  if (page === '404') {
+    return <ErrorPage code={404} onHome={goHome} onBack={goHome} />
+  }
+
+  if (page === '500') {
+    return <ErrorPage code={500} onHome={goHome} onRetry={() => window.location.reload()} onBack={goHome} />
+  }
+
   // ── Landing Page ──────────────────────────────────
   if (page === 'landing') {
-    return <LandingPage onGetStarted={() => setPage('auth')} theme={theme} setTheme={setTheme} />
+    return <LandingPage onGetStarted={handleOpenAuth} theme={theme} setTheme={setTheme} />
   }
 
   // ── Auth Page (not logged in) ─────────────────────
   if (!user) {
-    return <AuthPage onBack={() => setPage('landing')} />
+    return <AuthPage initialMode={authMode} onBack={() => setPage('landing')} />
   }
 
   // ── Dashboard ─────────────────────────────────────
@@ -286,12 +333,14 @@ function Dashboard() {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <ConfirmProvider>
-        <AuthProvider>
-          <Dashboard />
-        </AuthProvider>
-      </ConfirmProvider>
-    </ToastProvider>
+    <ErrorBoundary>
+      <ToastProvider>
+        <ConfirmProvider>
+          <AuthProvider>
+            <Dashboard />
+          </AuthProvider>
+        </ConfirmProvider>
+      </ToastProvider>
+    </ErrorBoundary>
   )
 }

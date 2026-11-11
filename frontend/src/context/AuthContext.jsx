@@ -29,6 +29,7 @@ export function AuthProvider({ children }) {
       setUser(data.user)
       return true
     } catch (err) {
+      console.error('Login error:', err)
       setError(err.message)
       return false
     }
@@ -42,6 +43,7 @@ export function AuthProvider({ children }) {
       setUser(data.user)
       return true
     } catch (err) {
+      console.error('Registration error:', err)
       setError(err.message)
       return false
     }

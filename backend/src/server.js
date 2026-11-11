@@ -44,11 +44,26 @@ app.use(helmet({
 }))
 
 // CORS
+const isDev = (process.env.NODE_ENV || 'development') === 'development'
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:5173',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:4173', // vite preview
+  'http://127.0.0.1:4173',
+  'http://localhost:5000',
+  'http://127.0.0.1:5000',
+]
+
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:5173',
-    'http://localhost:4173', // vite preview
-  ],
+  origin: (origin, callback) => {
+    // Allow non-browser requests or matching origins, or any localhost/127.0.0.1 in dev
+    if (!origin || allowedOrigins.includes(origin) || (isDev && (/^http:\/\/localhost:\d+$/.test(origin) || /^http:\/\/127\.0\.0\.1:\d+$/.test(origin)))) {
+      callback(null, true)
+    } else {
+      callback(new Error('Blocked by CORS policy'))
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -57,20 +72,20 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200,
+  max: isDev ? 1000 : 200,
   message: { success: false, message: 'Too many requests, please try again later.' },
 })
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: isDev ? 200 : 15,
   message: { success: false, message: 'Too many auth attempts, please slow down.' },
 })
 
-// Strict per-IP registration limiter: max 3 new accounts per hour per IP
+// Strict per-IP registration limiter
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3,
+  max: isDev ? 100 : 5,
   message: { success: false, message: 'Too many registration attempts from this device. Please try again later.' },
   skipSuccessfulRequests: false,
 })

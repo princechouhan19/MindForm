@@ -370,7 +370,7 @@ export default function LandingPage({ onGetStarted, theme, setTheme }) {
           ))}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             aria-label="Toggle theme"
             onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
@@ -380,8 +380,20 @@ export default function LandingPage({ onGetStarted, theme, setTheme }) {
           >
             {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
           </button>
-          <button className="lp-btn-primary" onClick={onGetStarted} style={{ padding: '8px 20px', fontSize: 14, minHeight: 34 }}>
+          <button
+            onClick={() => onGetStarted('login')}
+            style={{
+              background: 'none', border: 'none', color: 'var(--text-secondary)',
+              fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '8px 12px',
+              fontFamily: 'var(--font-body)', transition: 'color 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+          >
             Sign in
+          </button>
+          <button className="lp-btn-primary" onClick={() => onGetStarted('register')} style={{ padding: '8px 18px', fontSize: 14, minHeight: 34 }}>
+            Sign up
           </button>
           {mobileMenu && (
             <div style={{
@@ -392,6 +404,9 @@ export default function LandingPage({ onGetStarted, theme, setTheme }) {
               {NAV_LINKS.map(({ label, id }) => (
                 <button key={id} onClick={() => goTo(id)} style={{ background: 'none', textAlign: 'left', padding: '12px 8px', fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', borderRadius: 10 }}>{label}</button>
               ))}
+              <div style={{ height: 1, background: 'var(--border)', margin: '8px 0' }} />
+              <button onClick={() => onGetStarted('login')} style={{ background: 'none', textAlign: 'left', padding: '12px 8px', fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', border: 'none', cursor: 'pointer' }}>Sign In</button>
+              <button onClick={() => onGetStarted('register')} style={{ background: 'none', textAlign: 'left', padding: '12px 8px', fontSize: 17, fontWeight: 600, color: 'var(--brand-primary)', border: 'none', cursor: 'pointer' }}>Sign Up</button>
             </div>
           )}
         </div>
@@ -431,7 +446,7 @@ export default function LandingPage({ onGetStarted, theme, setTheme }) {
           </p>
 
           <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
-            <button className="lp-btn-primary" onClick={onGetStarted}>
+            <button className="lp-btn-primary" onClick={() => onGetStarted('register')}>
               Get started free <ArrowRight size={16} />
             </button>
             <button className="lp-link" onClick={() => goTo('lp-scenes')}>
@@ -507,7 +522,7 @@ export default function LandingPage({ onGetStarted, theme, setTheme }) {
           The best time to start<br />was today. <span className="lp-gradient-text">The second best is now.</span>
         </h2>
         <p className="lp-body" style={{ marginBottom: 40 }}>Free forever. No credit card. No noise.</p>
-        <button className="lp-btn-primary" onClick={onGetStarted} style={{ padding: '17px 46px', fontSize: 17 }}>
+        <button className="lp-btn-primary" onClick={() => onGetStarted('register')} style={{ padding: '17px 46px', fontSize: 17 }}>
           Start now — it’s free <ArrowRight size={17} />
         </button>
       </section>
@@ -526,7 +541,7 @@ export default function LandingPage({ onGetStarted, theme, setTheme }) {
                   <div key={l} style={{ fontSize: 12.5, color: 'var(--text-muted)', padding: '4px 0', cursor: 'pointer', transition: 'color 0.2s' }}
                     onMouseEnter={e => e.currentTarget.style.color = 'var(--text-secondary)'}
                     onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-                    onClick={l === 'Task Tracker' || l === 'Habit Tracker' || l === 'Goals' || l === 'Fapless' ? onGetStarted : undefined}
+                    onClick={l === 'Task Tracker' || l === 'Habit Tracker' || l === 'Goals' || l === 'Fapless' ? () => onGetStarted('register') : undefined}
                   >{l}</div>
                 ))}
               </div>
@@ -534,9 +549,14 @@ export default function LandingPage({ onGetStarted, theme, setTheme }) {
             <div>
               <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>Get started</div>
               <div style={{ fontSize: 12.5, color: 'var(--text-muted)', padding: '4px 0' }}>Free forever</div>
-              <button className="lp-btn-primary" onClick={onGetStarted} style={{ marginTop: 12, padding: '8px 18px', fontSize: 13 }}>
-                Sign in <ArrowRight size={13} />
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                <button className="lp-btn-primary" onClick={() => onGetStarted('register')} style={{ padding: '8px 18px', fontSize: 13, width: '100%', justifyContent: 'center' }}>
+                  Sign up free <ArrowRight size={13} />
+                </button>
+                <button onClick={() => onGetStarted('login')} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)', color: 'var(--text-secondary)', padding: '7px 16px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)', transition: 'all 0.2s' }}>
+                  Sign in
+                </button>
+              </div>
             </div>
           </div>
 
@@ -554,7 +574,7 @@ export default function LandingPage({ onGetStarted, theme, setTheme }) {
                   onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
                 >{l}</span>
               ))}
-              <button onClick={onGetStarted} style={{ background: 'none', color: 'var(--brand-primary)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+              <button onClick={() => onGetStarted('login')} style={{ background: 'none', border: 'none', color: 'var(--brand-primary)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
                 Sign in →
               </button>
             </div>

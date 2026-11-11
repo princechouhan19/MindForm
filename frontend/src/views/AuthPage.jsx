@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Eye, EyeOff, Loader, ArrowLeft, ShieldAlert, ShieldCheck } from 'lucide-react'
 
@@ -46,13 +46,19 @@ const styles = {
   },
 }
 
-export default function AuthPage({ onBack }) {
+export default function AuthPage({ initialMode = 'login', onBack }) {
   const { login, register, error, setError } = useAuth()
-  const [mode, setMode] = useState('login')
-  const [form, setForm] = useState({ name: '', email: '', password: '', honeypot: '' })
+  const [mode, setMode] = useState(initialMode)
+  const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [showPwd, setShowPwd] = useState(false)
   const [loading, setLoading] = useState(false)
   const [localError, setLocalError] = useState('')
+
+  useEffect(() => {
+    setMode(initialMode)
+    setError('')
+    setLocalError('')
+  }, [initialMode, setError])
 
   const set = (field) => (e) => {
     setError('')
@@ -60,16 +66,34 @@ export default function AuthPage({ onBack }) {
     setForm(prev => ({ ...prev, [field]: e.target.value }))
   }
 
+  const switchMode = (newMode) => {
+    setMode(newMode)
+    setError('')
+    setLocalError('')
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.email || !form.password) return
-    if (mode === 'register' && !form.name) return
-    if (form.honeypot) return
+    setError('')
+    setLocalError('')
+
+    const email = form.email.trim()
+    const password = form.password
+    const name = form.name.trim()
+
+    if (!email || !password) {
+      setLocalError('Please enter both email and password.')
+      return
+    }
 
     if (mode === 'register') {
-      const emailErr = quickEmailCheck(form.email)
+      if (!name) {
+        setLocalError('Please enter your full name.')
+        return
+      }
+      const emailErr = quickEmailCheck(email)
       if (emailErr) { setLocalError(emailErr); return }
-      const strength = getPasswordStrength(form.password)
+      const strength = getPasswordStrength(password)
       if (strength.score < 2) {
         setLocalError('Password is too weak. Use at least 8 characters with letters and numbers.')
         return
@@ -77,9 +101,24 @@ export default function AuthPage({ onBack }) {
     }
 
     setLoading(true)
-    if (mode === 'login') await login(form.email, form.password)
-    else await register(form.name, form.email, form.password)
-    setLoading(false)
+    try {
+      if (mode === 'login') {
+        const ok = await login(email, password)
+        if (!ok && !error) {
+          setLocalError('Could not sign in. Please verify your credentials.')
+        }
+      } else {
+        const ok = await register(name, email, password)
+        if (!ok && !error) {
+          setLocalError('Could not create account. Please check your details.')
+        }
+      }
+    } catch (err) {
+      console.error('Submit error:', err)
+      setLocalError(err.message || 'An unexpected error occurred.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -118,40 +157,88 @@ export default function AuthPage({ onBack }) {
       </div>
 
       {/* Card */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '5vh 20px 40px' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '4vh 20px 40px' }}>
         <form
           onSubmit={handleSubmit}
           className="mf-sheet"
           style={{
-            width: '100%', maxWidth: 400,
-            padding: '40px 36px 34px',
+            width: '100%', maxWidth: 420,
+            padding: '36px 32px 30px',
             position: 'relative', zIndex: 5,
           }}
         >
-          {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 34 }}>
-            <img src="/logo.png" alt="MindForm" style={{ width: 44, height: 44, borderRadius: 12, objectFit: 'contain' }} />
+          {/* Logo & Brand */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 26 }}>
+            <img src="/logo.png" alt="MindForm" style={{ width: 42, height: 42, borderRadius: 12, objectFit: 'contain' }} />
             <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', fontFamily: 'var(--font-display)' }}>
               MindForm
             </div>
           </div>
 
+          {/* Segmented Mode Switcher */}
+          <div style={{
+            display: 'flex',
+            background: 'var(--bg-glass)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-pill)',
+            padding: 4,
+            marginBottom: 24,
+            gap: 4,
+          }}>
+            <button
+              type="button"
+              onClick={() => switchMode('login')}
+              style={{
+                flex: 1,
+                padding: '9px 16px',
+                borderRadius: 'var(--radius-pill)',
+                border: 'none',
+                background: mode === 'login' ? 'var(--brand-primary)' : 'transparent',
+                color: mode === 'login' ? '#ffffff' : 'var(--text-secondary)',
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => switchMode('register')}
+              style={{
+                flex: 1,
+                padding: '9px 16px',
+                borderRadius: 'var(--radius-pill)',
+                border: 'none',
+                background: mode === 'register' ? 'var(--brand-primary)' : 'transparent',
+                color: mode === 'register' ? '#ffffff' : 'var(--text-secondary)',
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              Sign Up
+            </button>
+          </div>
+
           {/* Title */}
-          <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, fontFamily: 'var(--font-display)', letterSpacing: '-0.022em' }}>
+          <h2 style={{ fontSize: 26, fontWeight: 700, marginBottom: 6, fontFamily: 'var(--font-display)', letterSpacing: '-0.022em' }}>
             {mode === 'login' ? 'Welcome back.' : 'Create your account.'}
           </h2>
-          <p style={{ fontSize: 15, color: 'var(--text-secondary)', marginBottom: 30, fontFamily: 'var(--font-body)', lineHeight: 1.55 }}>
+          <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', marginBottom: 24, fontFamily: 'var(--font-body)', lineHeight: 1.5 }}>
             {mode === 'login'
-              ? 'Sign in to pick up where you left off.'
-              : 'Start your journey to unbreakable focus.'}
+              ? 'Sign in to access your dashboard and continue your streak.'
+              : 'Start your journey to unbreakable discipline and focus.'}
           </p>
 
-          {/* Error */}
+          {/* Error Banner */}
           {(error || localError) && (
             <div role="alert" style={{
               background: 'var(--red-dim)', border: '1px solid color-mix(in srgb, var(--red) 30%, transparent)',
               borderRadius: 'var(--radius-md)', padding: '11px 14px', fontSize: 13.5, color: 'var(--brand-error)',
-              marginBottom: 22, display: 'flex', alignItems: 'flex-start', gap: 9,
+              marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 9,
               fontFamily: 'var(--font-body)', lineHeight: 1.45,
             }}>
               <ShieldAlert size={16} style={{ marginTop: 1, flexShrink: 0 }} />
@@ -160,12 +247,15 @@ export default function AuthPage({ onBack }) {
           )}
 
           {/* Fields */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {mode === 'register' && (
               <div>
                 <label htmlFor="mf-name" style={styles.label}>Name</label>
                 <input
                   id="mf-name"
+                  name="name"
+                  type="text"
+                  required
                   value={form.name} onChange={set('name')}
                   placeholder="Alex Carter"
                   autoComplete="name"
@@ -177,21 +267,15 @@ export default function AuthPage({ onBack }) {
               <label htmlFor="mf-email" style={styles.label}>Email</label>
               <input
                 id="mf-email"
-                type="email" value={form.email} onChange={set('email')}
+                name="email"
+                type="email"
+                required
+                value={form.email} onChange={set('email')}
                 placeholder="you@example.com"
                 autoComplete="email"
                 style={styles.field}
               />
             </div>
-            {/* Honeypot */}
-            <input
-              value={form.honeypot}
-              onChange={set('honeypot')}
-              tabIndex={-1}
-              aria-hidden="true"
-              style={{ position: 'absolute', left: -9999, top: -9999, opacity: 0, height: 0, width: 0 }}
-              autoComplete="off"
-            />
             <div>
               <label htmlFor="mf-password" style={styles.label}>
                 Password
@@ -200,6 +284,8 @@ export default function AuthPage({ onBack }) {
               <div style={{ position: 'relative' }}>
                 <input
                   id="mf-password"
+                  name="password"
+                  required
                   type={showPwd ? 'text' : 'password'} value={form.password} onChange={set('password')}
                   placeholder="••••••••"
                   autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
@@ -235,20 +321,20 @@ export default function AuthPage({ onBack }) {
 
           {/* Submit */}
           <button type="submit" disabled={loading} className="lp-btn-primary" style={{
-            width: '100%', marginTop: 28, justifyContent: 'center', minHeight: 50,
+            width: '100%', marginTop: 24, justifyContent: 'center', minHeight: 48,
             opacity: loading ? 0.7 : 1,
-            pointerEvents: loading ? 'none' : 'auto',
+            cursor: loading ? 'not-allowed' : 'pointer',
           }}>
             {loading
               ? <><Loader size={17} style={{ animation: 'spin 1s linear infinite' }} /> {mode === 'login' ? 'Signing in…' : 'Creating account…'}</>
-              : mode === 'login' ? 'Sign In' : 'Create Account'}
+              : mode === 'login' ? 'Sign In' : 'Sign Up'}
           </button>
 
-          {/* Toggle mode */}
-          <div style={{ textAlign: 'center', marginTop: 26, fontSize: 14, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>
+          {/* Footer toggle link */}
+          <div style={{ textAlign: 'center', marginTop: 22, fontSize: 14, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>
             {mode === 'login' ? 'New to MindForm? ' : 'Already have an account? '}
-            <button type="button" onClick={() => { setMode(m => m === 'login' ? 'register' : 'login'); setError(''); setLocalError('') }} style={{
-              background: 'none', color: 'var(--brand-primary)', fontWeight: 600, fontSize: 14,
+            <button type="button" onClick={() => switchMode(mode === 'login' ? 'register' : 'login')} style={{
+              background: 'none', border: 'none', color: 'var(--brand-primary)', fontWeight: 600, fontSize: 14,
               cursor: 'pointer', fontFamily: 'var(--font-body)', padding: '4px 2px',
             }}>
               {mode === 'login' ? 'Create an account' : 'Sign in'}
