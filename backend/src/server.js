@@ -46,28 +46,57 @@ app.use(helmet({
 // CORS
 const isDev = (process.env.NODE_ENV || 'development') === 'development'
 const allowedOrigins = [
-  process.env.FRONTEND_URL || 'http://localhost:5173',
+  process.env.FRONTEND_URL,
+  process.env.RENDER_EXTERNAL_URL,
+  'https://mindform.onrender.com',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:4173', // vite preview
   'http://127.0.0.1:4173',
   'http://localhost:5000',
   'http://127.0.0.1:5000',
-]
+].filter(Boolean)
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow non-browser requests or matching origins, or any localhost/127.0.0.1 in dev
-    if (!origin || allowedOrigins.includes(origin) || (isDev && (/^http:\/\/localhost:\d+$/.test(origin) || /^http:\/\/127\.0\.0\.1:\d+$/.test(origin)))) {
-      callback(null, true)
-    } else {
-      callback(new Error('Blocked by CORS policy'))
+app.use(cors((req, callback) => {
+  const origin = req.header('Origin')
+  let isAllowed = false
+
+  if (!origin) {
+    // Non-browser or same-origin requests without an Origin header
+    isAllowed = true
+  } else if (allowedOrigins.includes(origin)) {
+    isAllowed = true
+  } else if (/^https:\/\/([a-zA-Z0-9-]+\.)*onrender\.com$/.test(origin)) {
+    // Allow any Render deployment origin
+    isAllowed = true
+  } else if (isDev && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+    isAllowed = true
+  } else {
+    // Allow if request Origin host matches server Host header (e.g. custom domains)
+    try {
+      const originHost = new URL(origin).host
+      if (req.headers.host && originHost === req.headers.host) {
+        isAllowed = true
+      }
+    } catch {
+      isAllowed = false
     }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  }
+
+  callback(null, {
+    origin: isAllowed,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
 }))
+
+// Serve static assets (placed before body parsers for performance)
+const publicPath = path.join(__dirname, '../public')
+const hasPublicAssets = require('fs').existsSync(path.join(publicPath, 'index.html'))
+if (process.env.NODE_ENV === 'production' || process.env.SERVE_FRONTEND === 'true' || process.env.RENDER || hasPublicAssets) {
+  app.use(express.static(publicPath))
+}
 
 // Rate limiting
 const limiter = rateLimit({
@@ -174,12 +203,14 @@ app.use('/api', (req, res) => {
   res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found.` })
 })
 
-// Serve static assets in production
-if (process.env.NODE_ENV === 'production' || process.env.SERVE_FRONTEND === 'true') {
-  app.use(express.static(path.join(__dirname, '../public')))
-
+// SPA catch-all — serve index.html for non-API client routes
+if (process.env.NODE_ENV === 'production' || process.env.SERVE_FRONTEND === 'true' || process.env.RENDER || hasPublicAssets) {
   app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../public', 'index.html'))
+    // If request has a file extension (e.g. missing /assets/*.js, *.css, *.png), return 404 instead of index.html
+    if (path.extname(req.path)) {
+      return res.status(404).json({ success: false, message: `Asset ${req.originalUrl} not found.` })
+    }
+    res.sendFile(path.resolve(publicPath, 'index.html'))
   })
 }
 
