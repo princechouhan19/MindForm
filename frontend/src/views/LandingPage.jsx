@@ -103,13 +103,32 @@ function useReveal(options = {}) {
 function ProgressBar() {
   const fill = useRef(null)
   useEffect(() => {
-    const onScroll = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      if (fill.current) fill.current.style.transform = `scaleX(${max > 0 ? window.scrollY / max : 0})`
+    let ticking = false
+    let max = 0
+
+    const updateMax = () => {
+      max = document.documentElement.scrollHeight - window.innerHeight
     }
+
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          if (max <= 0) updateMax()
+          if (fill.current) fill.current.style.transform = `scaleX(${max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0})`
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    updateMax()
     window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', updateMax, { passive: true })
     onScroll()
-    return () => window.removeEventListener('scroll', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', updateMax)
+    }
   }, [])
   return (
     <div className="lp-progress-bar">
@@ -153,9 +172,12 @@ function ProductFrame({ image, alt, glow = 'var(--brand-primary)' }) {
         <img
           src={image}
           alt={alt}
+          width="980"
+          height="588"
           loading="lazy"
+          decoding="async"
           onError={(e) => { e.currentTarget.style.display = 'none' }}
-          style={{ width: '100%', display: 'block', aspectRatio: '16 / 9.6', objectFit: 'cover', objectPosition: 'top' }}
+          style={{ width: '100%', height: 'auto', display: 'block', aspectRatio: '16 / 9.6', objectFit: 'cover', objectPosition: 'top' }}
         />
       </div>
     </div>
@@ -282,7 +304,14 @@ export default function LandingPage({ onGetStarted, theme, setTheme }) {
     let raf = 0
     const loop = (time) => { lenis.raf(time); raf = requestAnimationFrame(loop) }
     raf = requestAnimationFrame(loop)
-    const onLenisScroll = () => setScrolled(window.scrollY > 24)
+    let lastScrolled = false
+    const onLenisScroll = () => {
+      const isScrolled = window.scrollY > 24
+      if (isScrolled !== lastScrolled) {
+        lastScrolled = isScrolled
+        setScrolled(isScrolled)
+      }
+    }
     lenis.on('scroll', onLenisScroll)
     // recalc triggers once fonts/images settle
     const t1 = setTimeout(() => ScrollTrigger.refresh(), 300)
