@@ -10,6 +10,7 @@ MindForm is a full-stack productivity ecosystem that helps people build discipli
 - **Habit Tracker**: 30-day habit matrix with streaks, completion rates, daily/weekly charts, mood and motivation tracking (1-10 scale), and CSV export.
 - **Goals**: create career, health, personal or general goals with deadlines, categories, statuses and progress computed from linked tasks and habits.
 - **Fapless**: a discipline streak engine with 10 identity levels (Novice → Legend), milestone bonuses, challenges (30-day, 90-day protocol), relapse history with reasons and aura points.
+- **Speak**: guided voice and communication training in 15, 30 or 60-minute sessions. Drills include 4–2–6 diaphragm breathing, SOVT hums and lip trills, neck release with sustained vowels, English tongue twister ladders (bronze/silver/gold), style-shifting read-alouds and on-camera impromptu speaking with the PREP framework. Camera recordings use the browser MediaRecorder and never leave the device.
 - **Social Hub**: opt-in public profiles, a global leaderboard ranked by streak, a follow system and a private community forum where messages auto-delete after 48 hours.
 - **AI Coach**: a chat interface with your data in context. Works with Google Gemini or Mistral models; you bring your own API key, which is stored only in your browser.
 
@@ -20,6 +21,17 @@ MindForm is a full-stack productivity ecosystem that helps people build discipli
 - Community forum messages automatically delete after 48 hours (TTL index).
 - Profiles are private by default; you opt in to appear on the leaderboard.
 - Disposable email providers are blocked; bot protection uses honeypots and rate limiting.
+
+## Speak session flow (15-minute daily routine)
+
+1. Breathe — Diaphragm Breathing (4–2–6), 2 minutes.
+2. Warm up — SOVT Hum & Lip Trills, 3 minutes.
+3. Release — Neck Release + Long Vowels, 2 minutes.
+4. Articulate — Tongue Twister Ladder, 4 minutes.
+5. Read — Style-Shifting Read-aloud in six styles, 3 minutes.
+6. Perform — Camera Studio impromptu with the PREP framework, 1 minute.
+
+A 30-minute "Full workout" adds an Obstacle Course drill (pen-in-mouth / over-tongue) and longer blocks; the 1-hour "Deep practice" adds a Pace & Pause Trainer. Every drill cites the voice-research principle behind it inside the app.
 
 ## Technology
 

@@ -1,9 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://mindform.onrender.com/</loc>
-    <lastmod>2026-11-10</lastmod>
+    <lastmod>2026-11-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <loc>https://mindform.onrender.com/shots/10-overview.png</loc>
+      <title>MindForm overview dashboard</title>
+    </image:image>
+    <image:image>
+      <loc>https://mindform.onrender.com/shots/12-tasks.png</loc>
+      <title>Minute-level task planner</title>
+    </image:image>
+    <image:image>
+      <loc>https://mindform.onrender.com/shots/14-habits.png</loc>
+      <title>30-day habit matrix</title>
+    </image:image>
+    <image:image>
+      <loc>https://mindform.onrender.com/shots/21-voice.png</loc>
+      <title>Speak — guided voice training session</title>
+    </image:image>
   </url>
 </urlset>

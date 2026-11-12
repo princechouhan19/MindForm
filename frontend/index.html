@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!-- Primary SEO -->
-    <title>MindForm — Habit Tracker, Task Planner & Discipline Dashboard</title>
-    <meta name="description" content="MindForm is a private, focused productivity dashboard: plan tasks to the minute, build unbreakable habit streaks, track long-term goals and grow your discipline — all in one elegant, Apple-inspired workspace." />
-    <meta name="keywords" content="habit tracker, task planner, productivity dashboard, goal tracking, streak tracker, discipline app, daily routine app, focus app" />
+    <title>MindForm — Habit Tracker, Task Planner & Voice Training</title>
+    <meta name="description" content="MindForm is a private, focused productivity dashboard: plan tasks to the minute, build unbreakable habit streaks, track long-term goals, grow your discipline and train your voice with guided 15, 30 and 60-minute Speak sessions — all in one elegant, Apple-inspired workspace." />
+    <meta name="keywords" content="habit tracker, task planner, productivity dashboard, goal tracking, streak tracker, discipline app, voice training, communication skills, public speaking practice, daily routine app, focus app" />
     <meta name="author" content="MindForm" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
     <link rel="canonical" href="https://mindform.onrender.com/" />
@@ -27,18 +27,22 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="MindForm" />
     <meta property="og:title" content="MindForm — Build the mind you want to live with" />
-    <meta property="og:description" content="Tasks, habits, goals and discipline in one focused dashboard. Private by design, free forever." />
+    <meta property="og:description" content="Tasks, habits, goals, discipline and voice training in one focused dashboard. Private by design, free forever." />
     <meta property="og:url" content="https://mindform.onrender.com/" />
     <meta property="og:image" content="https://mindform.onrender.com/TaskTracker.png" />
+    <meta property="og:image:alt" content="MindForm task planner dashboard screenshot" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image" content="https://mindform.onrender.com/shots/21-voice.png" />
+    <meta property="og:image:alt" content="MindForm Speak — guided voice training session" />
     <meta property="og:locale" content="en_US" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="MindForm — Build the mind you want to live with" />
-    <meta name="twitter:description" content="Tasks, habits, goals and discipline in one focused dashboard. Private by design." />
+    <meta name="twitter:description" content="Tasks, habits, goals, discipline and voice training in one focused dashboard. Private by design." />
     <meta name="twitter:image" content="https://mindform.onrender.com/TaskTracker.png" />
+    <meta name="twitter:image:alt" content="MindForm task planner dashboard screenshot" />
 
     <!-- PWA -->
     <link rel="manifest" href="/site.webmanifest" />
@@ -67,9 +71,40 @@
         "Goal tracking with linked progress",
         "Discipline streak engine with levels",
         "Community leaderboard and forum",
-        "AI coach (bring your own key)"
+        "AI coach (bring your own key)",
+        "Voice & communication training with guided 15, 30 and 60-minute sessions"
       ],
       "author": { "@type": "Organization", "name": "MindForm" }
+    }
+    </script>
+
+    <!-- Structured data: Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "MindForm",
+      "url": "https://mindform.onrender.com/",
+      "logo": "https://mindform.onrender.com/logo.png"
+    }
+    </script>
+
+    <!-- Structured data: HowTo — the 15-minute Speak session (AEO) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to complete a 15-minute MindForm Speak session",
+      "description": "The daily-maintenance voice training routine in MindForm's Speak module: six guided steps that take you from breath support to on-camera delivery in 15 minutes.",
+      "totalTime": "PT15M",
+      "step": [
+        { "@type": "HowToStep", "position": 1, "name": "Breathe", "text": "Diaphragm Breathing (4–2–6): two minutes of paced inhale-hold-exhale breathing to lower your breath and steady your voice." },
+        { "@type": "HowToStep", "position": 2, "name": "Warm up", "text": "SOVT Hum & Lip Trills: three minutes of semi-occluded hums and trills to warm the vocal folds without strain." },
+        { "@type": "HowToStep", "position": 3, "name": "Release", "text": "Neck Release + Long Vowels: two minutes of behind-the-neck stretches while sustaining vowels to free tension." },
+        { "@type": "HowToStep", "position": 4, "name": "Articulate", "text": "Tongue Twister Ladder: four minutes of English twisters at bronze, silver and gold speeds for crisp articulation." },
+        { "@type": "HowToStep", "position": 5, "name": "Read with style", "text": "Style-Shifting Read-aloud: three minutes reading a passage in six different styles to build flexible, expressive delivery." },
+        { "@type": "HowToStep", "position": 6, "name": "Perform on camera", "text": "Camera Studio: one minute of impromptu speaking on a random topic using the PREP framework, recorded locally on your device only." }
+      ]
     }
     </script>
 
@@ -98,6 +133,16 @@
           "@type": "Question",
           "name": "How does the streak and aura system work?",
           "acceptedAnswer": { "@type": "Answer", "text": "Every day you keep your discipline streak you earn aura points, level up through identities from Novice to Legend, and can take on challenges like the 30-day or 90-day protocol." }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the Speak module?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Speak is MindForm's voice and communication training module. It offers guided 15, 30 and 60-minute sessions covering diaphragm breathing (4–2–6), SOVT hums and lip trills, neck release with vowels, English tongue twister ladders, style-shifting read-alouds and on-camera impromptu speaking with the PREP framework — every drill grounded in published voice research." }
+        },
+        {
+          "@type": "Question",
+          "name": "Does the Speak camera recording upload my video?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. Camera Studio uses your browser's MediaRecorder and the video never leaves your device: recordings live only in memory as temporary blob URLs and disappear when you close the session. Nothing is uploaded to any server." }
         }
       ]
     }

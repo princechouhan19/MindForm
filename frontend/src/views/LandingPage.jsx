@@ -80,6 +80,41 @@ const STATS = [
   { value: 100, suffix: '%',    label: 'Free & open source' },
 ]
 
+/* The real 15-minute plan from Speak (VoiceCoachView PLANS[15]) —
+   kept in sync with the HowTo JSON-LD in index.html. */
+const HOW_STEPS = [
+  { n: '1', name: 'Breathe',     drill: 'Diaphragm Breathing (4–2–6)',  min: 2, desc: 'Paced inhale–hold–exhale breathing that lowers your breath and steadies your voice.' },
+  { n: '2', name: 'Warm up',     drill: 'SOVT Hum & Lip Trills',         min: 3, desc: 'Semi-occluded hums and trills that warm the vocal folds without strain.' },
+  { n: '3', name: 'Release',     drill: 'Neck Release + Long Vowels',    min: 2, desc: 'Behind-the-neck stretches while sustaining vowels to free built-up tension.' },
+  { n: '4', name: 'Articulate',  drill: 'Tongue Twister Ladder',         min: 4, desc: 'English twisters climbed at bronze, silver and gold speeds for crisp speech.' },
+  { n: '5', name: 'Read',        drill: 'Style-Shifting Read-aloud',     min: 3, desc: 'One passage, six styles — building flexible, expressive delivery.' },
+  { n: '6', name: 'Perform',     drill: 'Camera Studio (PREP)',          min: 1, desc: 'Impromptu speaking on a random topic — recorded locally, never uploaded.' },
+]
+
+/* Mirrors the FAQPage JSON-LD in index.html — keep the two in sync. */
+const FAQS = [
+  { q: 'What is MindForm?',
+    a: 'MindForm is a free, private productivity dashboard that combines minute-level task planning, a 30-day habit matrix, goal tracking with linked progress, and a discipline streak engine — in one Apple-inspired interface.' },
+  { q: 'Is MindForm free?',
+    a: 'Yes. MindForm is 100% free and open source. You can inspect the code, contribute, or self-host it on your own infrastructure.' },
+  { q: 'Does MindForm store my data?',
+    a: 'Your tasks, habits and goals are stored privately in your account. AI chat history is automatically deleted every 24 hours and community forum messages every 48 hours. AI keys you provide are stored only in your browser.' },
+  { q: 'How does the streak and aura system work?',
+    a: 'Every day you keep your discipline streak you earn aura points, level up through identities from Novice to Legend, and can take on challenges like the 30-day or 90-day protocol.' },
+  { q: 'What is the Speak module?',
+    a: 'Speak is MindForm’s voice and communication training module. It offers guided 15, 30 and 60-minute sessions covering diaphragm breathing (4–2–6), SOVT hums and lip trills, neck release with vowels, English tongue twister ladders, style-shifting read-alouds and on-camera impromptu speaking with the PREP framework — every drill grounded in published voice research.' },
+  { q: 'Does the Speak camera recording upload my video?',
+    a: 'No. Camera Studio uses your browser’s MediaRecorder and the video never leaves your device: recordings live only in memory as temporary blob URLs and disappear when you close the session. Nothing is uploaded to any server.' },
+]
+
+/* Footer links that scroll to on-page sections (was: dead links). */
+const FOOTER_TARGETS = {
+  'How it works': 'lp-how',
+  'Privacy model': 'lp-privacy',
+  'Self-hosting': 'lp-faq',
+  'FAQ': 'lp-faq',
+}
+
 const FOOTER_COLS = [
   {
     title: 'Product',
@@ -536,6 +571,45 @@ export default function LandingPage({ onGetStarted, theme, setTheme }) {
         {SCENES.map((s, i) => <Scene key={s.id} scene={s} index={i} onCTA={onGetStarted} />)}
       </div>
 
+      {/* ── How it works — the 15-minute Speak session (AEO) ─ */}
+      <section id="lp-how" style={{ padding: 'clamp(72px, 10vw, 120px) clamp(20px, 5vw, 80px)', background: 'var(--lp-parchment)' }}>
+        <div style={{ maxWidth: 980, margin: '0 auto' }}>
+          <h2 className="lp-h2" style={{ textAlign: 'center', marginBottom: 12 }}>
+            The 15-minute Speak session.
+          </h2>
+          <p className="lp-lead" style={{ textAlign: 'center', color: 'var(--lp-ink-3)', marginBottom: 8, fontSize: 'clamp(17px, 1.8vw, 21px)' }}>
+            Six guided steps. One stronger voice — every day.
+          </p>
+          <p className="lp-fine" style={{ textAlign: 'center', color: 'var(--lp-ink-3)', marginBottom: 48 }}>
+            Grounded in published voice research: SOVT semi-occluded phonation, 4–2–6 diaphragmatic pacing and articulation drill protocols.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+            {HOW_STEPS.map((s) => (
+              <div key={s.n} style={{
+                background: 'var(--lp-card-bg)', borderRadius: 18,
+                border: '1px solid var(--lp-hairline)', padding: '24px 24px 20px',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <span className="lp-caption-strong" style={{ fontSize: 12, color: 'var(--lp-accent)' }}>Step {s.n}</span>
+                  <span className="lp-caption" style={{ fontSize: 12, color: 'var(--lp-ink-3)', border: '1px solid var(--lp-hairline)', borderRadius: 980, padding: '2px 10px' }}>{s.min} min</span>
+                </div>
+                <h3 style={{ margin: '0 0 2px', fontSize: 19, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--lp-ink)' }}>{s.name}</h3>
+                <div className="lp-caption-strong" style={{ fontSize: 13, color: 'var(--lp-ink-2)', marginBottom: 8 }}>{s.drill}</div>
+                <p className="lp-body" style={{ fontSize: 15, color: 'var(--lp-ink-3)', margin: 0 }}>{s.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 36 }}>
+            <button className="lp-btn-primary" onClick={onGetStarted}>
+              Open Speak <ArrowRight size={16} />
+            </button>
+            <div className="lp-fine" style={{ color: 'var(--lp-ink-3)', marginTop: 14 }}>
+              Also available as 30-minute and 1-hour routines.
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Privacy tile — canvas ──────────────────────────── */}
       <section id="lp-privacy" style={{ padding: 'clamp(72px, 10vw, 120px) clamp(20px, 5vw, 80px)', maxWidth: 720, margin: '0 auto', textAlign: 'center', background: 'var(--lp-canvas)' }}>
         <Shield size={28} strokeWidth={1.6} style={{ color: 'var(--lp-ink)', marginBottom: 20 }} />
@@ -547,6 +621,33 @@ export default function LandingPage({ onGetStarted, theme, setTheme }) {
         <button className="lp-link" onClick={onGetStarted}>
           See how your data stays private <ChevronRight size={16} />
         </button>
+      </section>
+
+      {/* ── FAQ — canvas, native details accordions (AEO) ──── */}
+      <section id="lp-faq" style={{ padding: 'clamp(72px, 10vw, 120px) clamp(20px, 5vw, 80px)', maxWidth: 720, margin: '0 auto', background: 'var(--lp-canvas)' }}>
+        <h2 className="lp-h2" style={{ textAlign: 'center', marginBottom: 12 }}>Questions, answered.</h2>
+        <p className="lp-lead" style={{ textAlign: 'center', color: 'var(--lp-ink-3)', marginBottom: 44, fontSize: 'clamp(17px, 1.8vw, 21px)' }}>
+          Everything people ask before their first day.
+        </p>
+        <div style={{ borderTop: '1px solid var(--lp-hairline)' }}>
+          {FAQS.map((f) => (
+            <details key={f.q} style={{ borderBottom: '1px solid var(--lp-hairline)' }}>
+              <summary style={{
+                listStyle: 'none', cursor: 'pointer', display: 'flex',
+                alignItems: 'center', justifyContent: 'space-between', gap: 16,
+                padding: '18px 4px', fontSize: 17, fontWeight: 500, color: 'var(--lp-ink)',
+              }}>
+                {f.q}
+                <ChevronRight size={16} style={{ flexShrink: 0, color: 'var(--lp-ink-3)', transform: 'rotate(90deg)', transition: 'transform 0.25s' }} className="lp-faq-chevron" />
+              </summary>
+              <p className="lp-body" style={{ color: 'var(--lp-ink-3)', padding: '0 4px 20px', margin: 0 }}>{f.a}</p>
+            </details>
+          ))}
+        </div>
+        <style>{`
+          details[open] .lp-faq-chevron { transform: rotate(-90deg) !important; }
+          details summary::-webkit-details-marker { display: none; }
+        `}</style>
       </section>
 
       {/* ── CTA finale — parchment ─────────────────────────── */}
@@ -577,7 +678,7 @@ export default function LandingPage({ onGetStarted, theme, setTheme }) {
                   <div key={l} className="lp-fine" style={{ color: 'var(--lp-ink-2)', padding: '5px 0', cursor: 'pointer', lineHeight: 1.9 }}
                     onMouseEnter={e => { e.currentTarget.style.color = 'var(--lp-accent)'; e.currentTarget.style.textDecoration = 'underline' }}
                     onMouseLeave={e => { e.currentTarget.style.color = 'var(--lp-ink-2)'; e.currentTarget.style.textDecoration = 'none' }}
-                    onClick={l === 'Task Tracker' || l === 'Habit Tracker' || l === 'Goals' || l === 'Fapless' || l === 'Speak' ? onGetStarted : undefined}
+                    onClick={FOOTER_TARGETS[l] ? () => goTo(FOOTER_TARGETS[l]) : onGetStarted}
                   >{l}</div>
                 ))}
               </div>
