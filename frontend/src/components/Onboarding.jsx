@@ -17,7 +17,7 @@ const STEPS = [
       { icon: Activity,    color: 'var(--amber)',    name: 'Habits',  desc: 'Build streaks on a 30-day grid. Consistency compounds.' },
       { icon: Target,      color: 'var(--brand-secondary)', name: 'Goals',  desc: 'Link goals to habits and tasks — progress computes itself.' },
       { icon: Flame,       color: 'var(--red)',      name: 'Fapless', desc: 'A discipline streak engine with levels and aura.' },
-      { icon: Sparkles,    color: 'var(--purple)',   name: 'AI Coach', desc: 'Advice grounded in your real data (bring your own key).' },
+      { icon: Sparkles,    color: 'var(--purple)',   name: 'Coach', desc: 'AI that plans your week and applies edits with your approval.' },
     ],
   },
   {

@@ -1,22 +1,27 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ToastProvider } from './components/Toast'
 import { ConfirmProvider } from './components/ConfirmDialog'
 import Onboarding from './components/Onboarding'
 import Sidebar from './components/Sidebar'
-import OverviewView from './views/OverviewView'
-import TaskTracker from './views/TaskTracker'
-import HabitTracker from './views/HabitTracker'
-import GoalsView from './views/GoalsView'
-import FaplessView from './views/FaplessView'
-import SettingsView from './views/SettingsView'
-import AIChatView from './views/AIChatView'
-import SocialView from './views/SocialView'
-import AuthPage from './views/AuthPage'
 import LandingPage from './views/LandingPage'
-import VoiceCoachView from './views/VoiceCoachView'
+import SubPage, { SUB_PAGES } from './views/SubPages'
+
+// Route-level code splitting: each module loads on demand, so the
+// landing page and first dashboard paint ship a fraction of the JS
+// (Lighthouse: bootup-time 0 / TBT 0.13 were caused by one 1 MB bundle).
+const OverviewView  = lazy(() => import('./views/OverviewView'))
+const TaskTracker   = lazy(() => import('./views/TaskTracker'))
+const HabitTracker  = lazy(() => import('./views/HabitTracker'))
+const GoalsView     = lazy(() => import('./views/GoalsView'))
+const FaplessView   = lazy(() => import('./views/FaplessView'))
+const SettingsView  = lazy(() => import('./views/SettingsView'))
+const CoachView     = lazy(() => import('./views/CoachView'))
+const SocialView    = lazy(() => import('./views/SocialView'))
+const VoiceCoachView = lazy(() => import('./views/VoiceCoachView'))
+const AuthPage      = lazy(() => import('./views/AuthPage'))
 import {
-  Loader, CheckSquare, Activity, Target, Flame, Settings, Sparkles, Users2, Home, MoreHorizontal, LayoutGrid, Mic,
+  Loader, CheckSquare, Activity, Target, Flame, Settings, Brain, Users2, Home, MoreHorizontal, LayoutGrid, Mic,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -27,13 +32,23 @@ const NAV_ITEMS = [
   { id: 'fapless',  label: 'Fapless',  icon: Flame,       color: 'var(--red)' },
   { id: 'voice',    label: 'Speak',    icon: Mic,         color: 'var(--brand-teal)', badge: 'NEW' },
   { id: 'social',   label: 'Social',   icon: Users2,      color: 'var(--pink)' },
-  { id: 'ai',       label: 'AI Coach', icon: Sparkles,    color: 'var(--purple)' },
+  { id: 'ai',       label: 'Coach',    icon: Brain,       color: 'var(--purple)', badge: 'NEW' },
   { id: 'settings', label: 'Settings', icon: Settings,    color: 'var(--text-secondary)' },
 ]
 
 /* Mobile bottom nav — max 5 tabs (HIG). Overflow lives in a "More" sheet. */
 const MOBILE_TABS = ['overview', 'tasks', 'habits', 'goals', 'more']
 const MORE_SHEET_ITEMS = ['fapless', 'voice', 'social', 'ai', 'settings']
+
+/* Shared chunk-loading fallback (Suspense) */
+function ViewLoader() {
+  return (
+    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'var(--text-muted)', fontSize: 14 }}>
+      <Loader size={17} style={{ animation: 'spin 1s linear infinite' }} />
+      Loading…
+    </div>
+  )
+}
 
 function Dashboard() {
   const { user, loading } = useAuth()
@@ -47,6 +62,25 @@ function Dashboard() {
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('mindform-theme') || 'dark'
   })
+
+  // Lightweight path router for landing sub-pages (/privacy, /terms, /faq, /how-it-works).
+  // Served behind the Express SPA fallback in production.
+  const readPath = () => window.location.pathname.replace(/\/+$/, '') || '/'
+  const [path, setPath] = useState(readPath)
+  useEffect(() => {
+    const onPop = () => setPath(readPath())
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+  const goHome = () => {
+    window.history.pushState({}, '', '/')
+    setPath('/')
+    setPage('landing')
+  }
+  const subPage = SUB_PAGES.find(p => p.path === path)
+  if (subPage) {
+    return <SubPage page={subPage} theme={theme} setTheme={setTheme} onHome={goHome} />
+  }
 
   // Once user logs in, jump to dashboard
   useEffect(() => {
@@ -104,12 +138,16 @@ function Dashboard() {
 
   // ── Landing Page ──────────────────────────────────
   if (page === 'landing') {
-    return <LandingPage onGetStarted={() => setPage('auth')} theme={theme} setTheme={setTheme} />
+    return <LandingPage onGetStarted={() => setPage('auth')} theme={theme} setTheme={setTheme} onSubPage={(p) => { window.history.pushState({}, '', p); setPath(p) }} />
   }
 
   // ── Auth Page (not logged in) ─────────────────────
   if (!user) {
-    return <AuthPage onBack={() => setPage('landing')} />
+    return (
+      <Suspense fallback={<ViewLoader />}>
+        <AuthPage onBack={() => setPage('landing')} />
+      </Suspense>
+    )
   }
 
   // ── Dashboard ─────────────────────────────────────
@@ -120,7 +158,7 @@ function Dashboard() {
     if (view === 'fapless')  return <FaplessView />
     if (view === 'voice')    return <VoiceCoachView />
     if (view === 'social')   return <SocialView />
-    if (view === 'ai')       return <AIChatView />
+    if (view === 'ai')       return <CoachView />
     if (view === 'settings') return <SettingsView theme={theme} setTheme={setTheme} />
     return <TaskTracker />
   }
@@ -191,7 +229,9 @@ function Dashboard() {
         )}
 
         <div key={view} className="animate-in" style={{ flex: 1, overflow: 'hidden' }}>
-          {renderView()}
+          <Suspense fallback={<ViewLoader />}>
+            {renderView()}
+          </Suspense>
         </div>
       </main>
 

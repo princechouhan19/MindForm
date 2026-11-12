@@ -20,12 +20,14 @@ router.post('/chat', protect, async (req, res) => {
     const now = new Date()
     const monthKey = `${now.getFullYear()}-${now.getMonth()}`
 
+    // NOTE: schema field is `user`, not `userId` - the old { userId } query
+    // silently returned nothing, so the AI never saw any user data.
     // ── Gather all user data ────────────────────────────────────
     const [tasks, habits, goals, fapless] = await Promise.allSettled([
-      TaskWeek.find({ userId }).sort({ weekKey: -1 }).limit(8).lean(),
-      HabitMonth.findOne({ userId, monthKey }).lean(),
-      Goal.find({ userId }).lean(),
-      Fapless.findOne({ userId }).lean(),
+      TaskWeek.find({ user: userId }).sort({ weekKey: -1 }).limit(8).lean(),
+      HabitMonth.findOne({ user: userId, monthKey }).lean(),
+      Goal.find({ user: userId }).lean(),
+      Fapless.findOne({ user: userId }).lean(),
     ])
 
     const taskData  = tasks.status  === 'fulfilled' ? tasks.value  : []
@@ -85,6 +87,35 @@ router.post('/chat', protect, async (req, res) => {
     }
 
     lines.push('=== END CONTEXT ===')
+    lines.push('')
+    lines.push([
+      "=== ACTION PROTOCOL (Coach can edit the user's account) ===",
+      'When the user asks you to create, add, change, replan, or delete tasks / habits / goals - or asks you to plan their week or build a routine - you MUST:',
+      '1. Briefly explain your plan in plain text (1-3 short paragraphs max).',
+      '2. Then append ONE fenced code block tagged `mf-actions` containing a JSON array of operations:',
+      '',
+      '```mf-actions',
+      '[',
+      '  { "type": "create_task",  "title": "Deep work - report draft (09:00)" },',
+      '  { "type": "create_habit", "name": "Read 20 pages", "emoji": "\u{1F4DA}", "time": "21:30" },',
+      '  { "type": "create_goal",  "title": "Run a half marathon", "category": "health", "deadline": "2027-03-01", "description": "5k to 10k to half, 3 runs a week" },',
+      '  { "type": "update_habit", "name": "Read books", "newName": "Read 20 pages", "time": "21:30" },',
+      '  { "type": "complete_goal", "title": "Read 12 books in 2026" },',
+      '  { "type": "delete_habit",  "name": "Doomscroll before bed" },',
+      '  { "type": "delete_task",   "title": "Old cancelled meeting" }',
+      ']',
+      '```',
+      '',
+      'Rules:',
+      '- Allowed types: create_task, create_habit, create_goal, update_habit, complete_goal, delete_habit, delete_task.',
+      '- create_goal REQUIRES deadline (YYYY-MM-DD). category must be one of: career, health, personal, general.',
+      '- create_task: title only - include the time inside the title when relevant (e.g. "(07:00)"). Tasks apply to the CURRENT week; do not include day names.',
+      '- create_habit: name + emoji + optional time (HH:MM).',
+      '- update_habit: match an existing habit by exact name, then give newName and/or time and/or emoji.',
+      '- Emit the mf-actions block ONLY when the user clearly wants to change their data or asked for a plan/routine. For pure questions, answer normally with NO block.',
+      '- Valid JSON only: no comments, no trailing commas, double quotes.',
+      '- Keep each plan focused: at most 10 actions per reply.',
+    ].join('\n'))
     lines.push('')
     // Filter out messages with empty content to prevent provider validation errors (e.g. Mistral 400)
     const sanitizedMessages = messages.filter(m => m.content && m.content.trim().length > 0)

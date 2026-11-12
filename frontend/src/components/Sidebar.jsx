@@ -1,8 +1,7 @@
 import React from 'react'
 import {
   CheckSquare, Activity, Target, Settings, LogOut, User, PanelLeftClose,
-  PanelLeftOpen, Flame, Sparkles, Users2, Sun, Moon, Home, Mic,
-} from 'lucide-react'
+  PanelLeftOpen, Flame, Sparkles, Users2, Sun, Moon, Home, Mic, Brain } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const navItems = [
@@ -13,7 +12,7 @@ const navItems = [
   { id: 'fapless',  label: 'Fapless',  icon: Flame,       color: 'var(--red)' },
   { id: 'voice',    label: 'Speak',    icon: Mic,         color: 'var(--brand-teal)', badge: 'NEW' },
   { id: 'social',   label: 'Social',   icon: Users2,      color: 'var(--pink)', badge: 'NEW' },
-  { id: 'ai',       label: 'AI Coach', icon: Sparkles,    color: 'var(--purple)' },
+  { id: 'ai',       label: 'Coach',    icon: Brain,       color: 'var(--purple)', badge: 'NEW' },
   { id: 'settings', label: 'Settings', icon: Settings,    color: 'var(--text-secondary)' },
 ]
 

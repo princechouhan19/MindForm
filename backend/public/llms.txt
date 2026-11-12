@@ -12,7 +12,8 @@ MindForm is a full-stack productivity ecosystem that helps people build discipli
 - **Fapless**: a discipline streak engine with 10 identity levels (Novice → Legend), milestone bonuses, challenges (30-day, 90-day protocol), relapse history with reasons and aura points.
 - **Speak**: guided voice and communication training in 15, 30 or 60-minute sessions. Drills include 4–2–6 diaphragm breathing, SOVT hums and lip trills, neck release with sustained vowels, English tongue twister ladders (bronze/silver/gold), style-shifting read-alouds and on-camera impromptu speaking with the PREP framework. Camera recordings use the browser MediaRecorder and never leave the device.
 - **Social Hub**: opt-in public profiles, a global leaderboard ranked by streak, a follow system and a private community forum where messages auto-delete after 48 hours.
-- **AI Coach**: a chat interface with your data in context. Works with Google Gemini or Mistral models; you bring your own API key, which is stored only in your browser.
+- **Coach** (AI assistant): a chat interface grounded in the user's real tasks, habits, goals and streak. Coach can propose concrete changes — new tasks, habit replans, goals with deadlines — as review cards; nothing is written until the user taps Apply. Quick starts include "Plan my week", "Add habits", "Replan habits", "Set a goal" and "Edit goals". Works with OpenAI, Google Gemini, Anthropic Claude and Mistral; the user brings their own API key, which is stored only in their browser.
+- **MCP server**: a Model Context Protocol (stdio) server ships with the backend, exposing 12 tools (list/create/update/delete for tasks, habits and goals) so external MCP clients such as Claude Desktop can make the same quick edits against the signed-in user's account.
 
 ## Privacy model
 
@@ -41,6 +42,10 @@ A 30-minute "Full workout" adds an Obstacle Course drill (pen-in-mouth / over-to
 ## Links
 
 - Live app: https://mindform.onrender.com/
+- FAQ: https://mindform.onrender.com/faq
+- How it works: https://mindform.onrender.com/how-it-works
+- Privacy Policy: https://mindform.onrender.com/privacy
+- Terms of Use: https://mindform.onrender.com/terms
 - Docs and self-hosting: see the repository README.
 
 ## Pricing

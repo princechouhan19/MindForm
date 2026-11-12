@@ -346,7 +346,7 @@ export default function OverviewView({ onNavigate }) {
                 { id: 'fapless', icon: Flame, color: 'var(--red)', label: 'Fapless', desc: 'Discipline streaks, levels and aura' },
                 { id: 'voice', icon: Mic, color: 'var(--brand-teal)', label: 'Speak', desc: 'Voice & communication studio — new' },
                 { id: 'social', icon: Users2, color: 'var(--pink)', label: 'Social', desc: 'Leaderboard, forum and your profile' },
-                { id: 'ai', icon: Sparkles, color: 'var(--purple)', label: 'AI Coach', desc: 'Advice grounded in your data' },
+                { id: 'ai', icon: Sparkles, color: 'var(--purple)', label: 'Coach', desc: 'AI that can edit your plan — with approval' },
               ].map(({ id, icon: Icon, color, label, desc }, i) => (
                 <button
                   key={id}

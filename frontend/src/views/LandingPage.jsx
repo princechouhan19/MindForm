@@ -171,13 +171,16 @@ function ProgressBar() {
 }
 
 /* ── Product render — the one shadow in the system ─────────── */
-function ProductShot({ image, alt, dark }) {
+function ProductShot({ image, alt, dark, eager }) {
   return (
     <div style={{ position: 'relative', maxWidth: 980, margin: '0 auto', width: '100%' }}>
       <img
         src={image}
         alt={alt}
         className="lp-shot"
+        loading={eager ? 'eager' : 'lazy'}
+        decoding={eager ? 'sync' : 'async'}
+        fetchpriority={eager ? 'high' : 'low'}
         onError={(e) => { e.currentTarget.style.display = 'none' }}
         style={{
           aspectRatio: '16 / 10', objectFit: 'cover', objectPosition: 'top',
@@ -307,7 +310,7 @@ function RibbonCard({ icon: Icon, title, desc }) {
 /* ═══════════════════════════════════════════════════════════════
    Main Landing Page
 ═══════════════════════════════════════════════════════════════ */
-export default function LandingPage({ onGetStarted, theme, setTheme }) {
+export default function LandingPage({ onGetStarted, theme, setTheme, onSubPage }) {
   const [mobileMenu, setMobileMenu] = useState(false)
   const scrollRef = useRef(null)
   const heroImgRef = useRef(null)
@@ -522,7 +525,7 @@ export default function LandingPage({ onGetStarted, theme, setTheme }) {
 
         {/* Product render */}
         <div ref={heroImgRef} style={{ width: '100%', marginTop: 'clamp(48px, 8vh, 84px)', opacity: 0, position: 'relative', zIndex: 1 }}>
-          <ProductShot image="/shots/10-overview.png" alt="MindForm overview" dark={theme === 'dark'} />
+          <ProductShot image="/shots/10-overview.png" alt="MindForm overview" dark={theme === 'dark'} eager />
         </div>
       </section>
 
@@ -644,6 +647,11 @@ export default function LandingPage({ onGetStarted, theme, setTheme }) {
             </details>
           ))}
         </div>
+        <div style={{ textAlign: 'center', marginTop: 32 }}>
+          <button className="lp-link" onClick={() => onSubPage && onSubPage('/faq')}>
+            View the full FAQ <ChevronRight size={16} />
+          </button>
+        </div>
         <style>{`
           details[open] .lp-faq-chevron { transform: rotate(-90deg) !important; }
           details summary::-webkit-details-marker { display: none; }
@@ -698,8 +706,9 @@ export default function LandingPage({ onGetStarted, theme, setTheme }) {
               <span>© 2026 MindForm. All rights reserved.</span>
             </div>
             <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
-              {['Privacy Policy', 'Terms of Use', 'Open Source'].map((l) => (
+              {[['Privacy Policy', '/privacy'], ['Terms of Use', '/terms'], ['How it works', '/how-it-works'], ['FAQ', '/faq']].map(([l, target]) => (
                 <span key={l} style={{ cursor: 'pointer', transition: 'color 0.2s' }}
+                  onClick={() => onSubPage && onSubPage(target)}
                   onMouseEnter={e => e.currentTarget.style.color = 'var(--lp-ink)'}
                   onMouseLeave={e => e.currentTarget.style.color = 'var(--lp-ink-3)'}
                 >{l}</span>
