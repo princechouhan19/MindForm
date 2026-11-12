@@ -14,11 +14,7 @@ export function AuthProvider({ children }) {
     if (token) {
       authAPI.me()
         .then(data => setUser(data.user))
-        .catch((err) => {
-          // Only a hard 401 means the session is truly dead.
-          // 429/5xx/network errors must NOT log the user out.
-          if (err?.status === 401) authAPI.clearToken()
-        })
+        .catch(() => authAPI.clearToken())
         .finally(() => setLoading(false))
     } else {
       setLoading(false)

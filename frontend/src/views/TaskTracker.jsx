@@ -427,11 +427,11 @@ export default function TaskTracker() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '6px 10px' }}>
               <button onClick={() => setWeekNum(w => Math.max(1, w - 1))} style={{ background: 'none', color: 'var(--text-secondary)', display: 'flex', padding: 2 }}><ChevronLeft size={16} /></button>
-              <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--cyan)', fontWeight: 700 }}>Week {weekNum}</span>
+              <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--cyan)', fontWeight: 600 }}>Week {weekNum}</span>
               <button onClick={() => setWeekNum(w => Math.min(totalWeeks, w + 1))} style={{ background: 'none', color: 'var(--text-secondary)', display: 'flex', padding: 2 }}><ChevronRight size={16} /></button>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)' }}>{monthName.slice(0, 3)} {year}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>{monthName.slice(0, 3)} {year}</span>
               <SyncIndicator />
             </div>
           </div>
@@ -439,20 +439,20 @@ export default function TaskTracker() {
           {/* Upcoming Live Timer banner */}
           {nextTaskInfo && (
             <div style={{
-              background: 'linear-gradient(135deg, var(--bg-card), var(--cyan-dim))',
+              background: 'var(--bg-card)',
               border: '1px solid var(--cyan-dim)', borderRadius: 12, padding: '12px 14px',
               marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               animation: 'fadeUp 0.3s ease'
             }}>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>UPCOMING IN {nextTaskInfo.countdownStr}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}>
                   {nextTaskInfo.task.name} ({nextTaskInfo.task.time})
                 </div>
               </div>
               <button onClick={requestNotificationAccess} style={{
                 background: 'var(--cyan-dim)', border: '1px solid var(--cyan-glow)',
-                borderRadius: 8, padding: '6px 12px', fontSize: 11, color: 'var(--cyan)', fontWeight: 700,
+                borderRadius: 8, padding: '6px 12px', fontSize: 11, color: 'var(--cyan)', fontWeight: 600,
                 display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer'
               }}>
                 🔔 {notifPermission === 'granted' ? 'Active' : 'Allow'}
@@ -465,7 +465,7 @@ export default function TaskTracker() {
             <div style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>WEEK SCORE</span>
-                <span style={{ fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-mono)', color: weekScore >= 80 ? 'var(--green)' : weekScore >= 50 ? 'var(--amber)' : 'var(--red)' }}>{weekScore}%</span>
+                <span style={{ fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-mono)', color: weekScore >= 80 ? 'var(--green)' : weekScore >= 50 ? 'var(--amber)' : 'var(--red)' }}>{weekScore}%</span>
               </div>
               <div style={{ height: 5, background: 'var(--border)', borderRadius: 3 }}>
                 <div style={{ height: '100%', width: `${weekScore}%`, background: weekScore >= 80 ? 'var(--green)' : weekScore >= 50 ? 'var(--amber)' : 'var(--red)', borderRadius: 3, transition: 'width 0.4s' }} />
@@ -497,7 +497,7 @@ export default function TaskTracker() {
                     transition: 'all 0.15s', minWidth: 42,
                   }}>
                   <span style={{ fontSize: 9, fontWeight: 600, color: isSel ? 'var(--cyan)' : 'var(--text-muted)', letterSpacing: '0.05em' }}>{SHORT_DAYS[i]}</span>
-                  <span style={{ fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-mono)', color: isSel ? 'var(--cyan)' : isToday ? 'var(--text-primary)' : 'var(--text-secondary)', lineHeight: 1 }}>{day}</span>
+                  <span style={{ fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-mono)', color: isSel ? 'var(--cyan)' : isToday ? 'var(--text-primary)' : 'var(--text-secondary)', lineHeight: 1 }}>{day}</span>
                   {pct > 0 && <div style={{ width: 20, height: 3, borderRadius: 2, background: col }} />}
                   {pct === 0 && <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--border)' }} />}
                 </button>
@@ -529,11 +529,11 @@ export default function TaskTracker() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{SHORT_DAYS[weekDays.indexOf(selectedDay)]}</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--cyan)', lineHeight: 1.1 }}>{selectedDay} {monthName.slice(0, 3)}</div>
+                  <div style={{ fontSize: 22, fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--cyan)', lineHeight: 1.1 }}>{selectedDay} {monthName.slice(0, 3)}</div>
                 </div>
                 {selStats && (
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 28, fontWeight: 900, fontFamily: 'var(--font-mono)', color: scoreColor, lineHeight: 1 }}>{selStats.pct}%</div>
+                    <div style={{ fontSize: 28, fontWeight: 600, fontFamily: 'var(--font-mono)', color: scoreColor, lineHeight: 1 }}>{selStats.pct}%</div>
                     <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{selStats.completed}/{selStats.total} done</div>
                   </div>
                 )}
@@ -575,7 +575,7 @@ export default function TaskTracker() {
                       </div>
                       <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0 }}>
                         <span style={{
-                          fontSize: 15, fontWeight: 500,
+                          fontSize: 15, fontWeight: 600,
                           color: done ? 'var(--text-muted)' : 'var(--text-primary)',
                           textDecoration: done ? 'line-through' : 'none',
                           lineHeight: 1.4, transition: 'all 0.2s',
@@ -647,7 +647,7 @@ export default function TaskTracker() {
                             />
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
-                            <button onClick={() => handleSaveRename(t.name)} style={{ background: 'var(--green-dim)', border: '1px solid var(--green)', color: 'var(--green)', borderRadius: 8, padding: '4px 12px', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <button onClick={() => handleSaveRename(t.name)} style={{ background: 'var(--green-dim)', border: '1px solid var(--green)', color: 'var(--green)', borderRadius: 8, padding: '4px 12px', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                               <Check size={13} /> Save
                             </button>
                             <button onClick={() => setEditingTask(null)} style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-muted)', borderRadius: 8, padding: '4px 12px', fontSize: 12 }}>
@@ -682,7 +682,7 @@ export default function TaskTracker() {
                   <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} aria-label="Task time"
                     style={{ flex: '0 0 auto', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 8px', color: 'var(--cyan)', fontFamily: 'var(--font-mono)', fontSize: 13, width: 104 }} />
                 </div>
-                <button onClick={addTask} style={{ background: 'var(--brand-primary)', border: 'none', borderRadius: 12, color: '#fff', padding: '13px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontWeight: 600, fontSize: 15, minHeight: 44 }}>
+                <button onClick={addTask} style={{ background: 'var(--btn-primary-bg)', border: 'none', borderRadius: 980, color: '#fff', padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontWeight: 400, letterSpacing: '-0.022em', fontSize: 15, minHeight: 44 }}>
                   <Plus size={18} /> Add Task
                 </button>
               </div>
@@ -705,14 +705,14 @@ export default function TaskTracker() {
           {toasts.map(t => (
             <div key={t.id} style={{
               background: 'var(--bg-overlay)', backdropFilter: 'blur(12px)', border: '1px solid var(--cyan-glow)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 15px var(--cyan-dim)', borderRadius: 12, padding: '14px 16px',
+              border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px',
               pointerEvents: 'auto', animation: 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards', display: 'flex', alignItems: 'center', gap: 12
             }}>
               <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--cyan-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Zap size={18} color="var(--cyan)" fill="var(--cyan)" />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)' }}>{t.title}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{t.title}</div>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}>{t.desc}</div>
                 <div style={{ fontSize: 10, color: 'var(--cyan)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>Scheduled for {t.time}</div>
               </div>
@@ -743,7 +743,7 @@ export default function TaskTracker() {
           <div>
             <div style={{ fontSize: 13, color: 'var(--cyan)', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 6 }}>TASK TRACKER</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <h1 style={{ fontSize: 28, fontWeight: 800 }}>{monthName} {year}</h1>
+              <h1 style={{ fontSize: 28, fontWeight: 600 }}>{monthName} {year}</h1>
               <SyncIndicator />
             </div>
           </div>
@@ -774,7 +774,7 @@ export default function TaskTracker() {
           
           {/* Live Countdown Timer Card */}
           <div style={{
-            background: 'linear-gradient(135deg, var(--bg-card), var(--cyan-dim))',
+            background: 'var(--bg-card)',
             border: '1px solid var(--cyan-glow)', borderRadius: 'var(--radius-md)', padding: '16px',
             display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0,
             position: 'relative', overflow: 'hidden'
@@ -791,7 +791,7 @@ export default function TaskTracker() {
             </div>
             {nextTaskInfo ? (
               <>
-                <div style={{ fontSize: 22, fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--cyan)', marginTop: 8, letterSpacing: '-0.5px' }}>
+                <div style={{ fontSize: 22, fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--cyan)', marginTop: 8, letterSpacing: '-0.5px' }}>
                   {nextTaskInfo.countdownStr}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 4 }}>
@@ -800,7 +800,7 @@ export default function TaskTracker() {
               </>
             ) : (
               <>
-                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-muted)', marginTop: 12 }}>
+                <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-muted)', marginTop: 12 }}>
                   No upcoming tasks today
                 </div>
                 <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>All scheduled tasks completed</div>
@@ -811,8 +811,8 @@ export default function TaskTracker() {
           {/* Insights */}
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0, justifyContent: 'center' }}>
             <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>THIS WEEK INSIGHTS</div>
-            {bestDay && <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><Star size={14} color="var(--amber)" fill="var(--amber)" style={{ flexShrink: 0 }} /><div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Strongest</div><div style={{ fontSize: 14, fontWeight: 700, color: 'var(--amber)', whiteSpace: 'nowrap' }}>{bestDay.label} · {bestDay.pct}%</div></div></div>}
-            {worstDay && worstDay.label !== bestDay?.label && <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><AlertTriangle size={14} color="var(--red)" style={{ flexShrink: 0 }} /><div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Needs Focus</div><div style={{ fontSize: 14, fontWeight: 700, color: 'var(--red)', whiteSpace: 'nowrap' }}>{worstDay.label} · {worstDay.pct}%</div></div></div>}
+            {bestDay && <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><Star size={14} color="var(--amber)" fill="var(--amber)" style={{ flexShrink: 0 }} /><div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Strongest</div><div style={{ fontSize: 14, fontWeight: 600, color: 'var(--amber)', whiteSpace: 'nowrap' }}>{bestDay.label} · {bestDay.pct}%</div></div></div>}
+            {worstDay && worstDay.label !== bestDay?.label && <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><AlertTriangle size={14} color="var(--red)" style={{ flexShrink: 0 }} /><div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Needs Focus</div><div style={{ fontSize: 14, fontWeight: 600, color: 'var(--red)', whiteSpace: 'nowrap' }}>{worstDay.label} · {worstDay.pct}%</div></div></div>}
           </div>
 
           {/* Week Score */}
@@ -827,7 +827,7 @@ export default function TaskTracker() {
             {[['Goal', totalGoal, 'var(--text-primary)'], ['Done', totalCompleted, 'var(--green)'], ['Left', totalGoal - totalCompleted, 'var(--red)']].map(([l, v, c]) => (
               <div key={l} style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{l}</span>
-                <span style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-mono)', color: c }}>{v}</span>
+                <span style={{ fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-mono)', color: c }}>{v}</span>
               </div>
             ))}
           </div>
@@ -853,8 +853,8 @@ export default function TaskTracker() {
                     )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                       <div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: isToday ? 'var(--cyan)' : 'var(--text-secondary)', letterSpacing: '0.08em' }}>{SHORT_DAYS[i]}</div>
-                        <div style={{ fontSize: 24, fontWeight: 800, color: isToday ? 'var(--cyan)' : 'var(--text-primary)', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{day || '—'}</div>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: isToday ? 'var(--cyan)' : 'var(--text-secondary)', letterSpacing: '0.08em' }}>{SHORT_DAYS[i]}</div>
+                        <div style={{ fontSize: 24, fontWeight: 600, color: isToday ? 'var(--cyan)' : 'var(--text-primary)', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{day || '—'}</div>
                       </div>
                       <MFRing percent={stats.pct} size={50} stroke={6} color={stats.pct >= 80 ? 'var(--brand-success)' : stats.pct >= 50 ? 'var(--brand-orange)' : 'var(--brand-accent)'} />
                     </div>
@@ -924,7 +924,7 @@ export default function TaskTracker() {
                               />
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
-                              <button onClick={() => handleSaveRename(t.name)} style={{ background: 'var(--green-dim)', border: '1px solid var(--green)', color: 'var(--green)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
+                              <button onClick={() => handleSaveRename(t.name)} style={{ background: 'var(--green-dim)', border: '1px solid var(--green)', color: 'var(--green)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
                                 <Check size={12} /> Save
                               </button>
                               <button onClick={() => setEditingTask(null)} style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-muted)', borderRadius: 6, padding: '2px 8px', fontSize: 11, cursor: 'pointer' }}>
@@ -959,7 +959,7 @@ export default function TaskTracker() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   <input value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTask()} placeholder="Add task..." style={{ flex: '1 1 140px', minWidth: 0, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: 'var(--text-primary)' }} />
                   <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} aria-label="Task time" style={{ flex: '0 0 auto', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 8px', color: 'var(--cyan)', fontFamily: 'var(--font-mono)', fontSize: 13, width: 108 }} />
-                  <button onClick={addTask} aria-label="Add task" style={{ flex: '0 0 auto', width: 44, height: 44, background: 'var(--brand-primary)', border: 'none', borderRadius: 12, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'transform 0.15s var(--ease-apple), filter 0.15s' }}
+                  <button onClick={addTask} aria-label="Add task" style={{ flex: '0 0 auto', width: 44, height: 44, background: 'var(--btn-primary-bg)', border: 'none', borderRadius: 980, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'transform 0.15s var(--ease-apple), filter 0.15s' }}
                     onMouseEnter={e => e.currentTarget.style.filter = 'brightness(1.1)'}
                     onMouseLeave={e => e.currentTarget.style.filter = 'none'}><Plus size={20} /></button>
                 </div>
@@ -985,14 +985,14 @@ export default function TaskTracker() {
         {toasts.map(t => (
           <div key={t.id} style={{
             background: 'var(--bg-overlay)', backdropFilter: 'blur(12px)', border: '1px solid var(--cyan-glow)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 15px var(--cyan-dim)', borderRadius: 12, padding: '14px 16px',
+            border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px',
             width: '320px', pointerEvents: 'auto', animation: 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards', display: 'flex', alignItems: 'center', gap: 12
           }}>
             <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--cyan-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Zap size={18} color="var(--cyan)" fill="var(--cyan)" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)' }}>{t.title}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{t.title}</div>
               <div style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}>{t.desc}</div>
               <div style={{ fontSize: 10, color: 'var(--cyan)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>Scheduled for {t.time}</div>
             </div>

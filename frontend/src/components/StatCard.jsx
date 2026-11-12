@@ -12,7 +12,7 @@ export default function StatCard({ label, value, accent = 'var(--cyan)', sub }) 
       gap: 4,
     }}>
       <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 800, color: accent, fontFamily: 'var(--font-mono)', lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontSize: 26, fontWeight: 600, color: accent, fontFamily: 'var(--font-mono)', lineHeight: 1.1 }}>{value}</div>
       {sub && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{sub}</div>}
     </div>
   )
@@ -40,7 +40,7 @@ export function DonutChart({ percent, size = 80, color = 'var(--cyan)', bg = 'va
           position: 'absolute', inset: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: size > 70 ? 14 : 11,
-          fontWeight: 700,
+          fontWeight: 600,
           fontFamily: 'var(--font-mono)',
           color: 'var(--text-primary)',
         }}>

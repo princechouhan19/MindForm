@@ -38,7 +38,7 @@ export default function Sidebar({ active, onChange, isOpen, onToggle, isMobile, 
         <div style={{ display: 'flex', alignItems: 'center', gap: 11, overflow: 'hidden' }}>
           <img src="/logo.png" alt="MindForm" style={{ width: 38, height: 38, borderRadius: 10, objectFit: 'contain', flexShrink: 0 }} />
           {isOpen && (
-            <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.15, fontFamily: 'var(--font-display)', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.15, fontFamily: 'var(--font-display)', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
               MindForm
               <div style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Productivity</div>
             </div>
@@ -66,7 +66,7 @@ export default function Sidebar({ active, onChange, isOpen, onToggle, isMobile, 
 
       {/* Nav */}
       <nav style={{ padding: isOpen ? '18px 12px' : '18px 8px', flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-        {isOpen && <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.1em', padding: '0 10px', marginBottom: 10, fontFamily: 'var(--font-body)', textTransform: 'uppercase' }}>Modules</div>}
+        {isOpen && <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.1em', padding: '0 10px', marginBottom: 10, fontFamily: 'var(--font-body)', textTransform: 'uppercase' }}>Modules</div>}
         {navItems.map(({ id, label, icon: Icon, color, badge }) => {
           const isActive = active === id
           return (
@@ -102,7 +102,7 @@ export default function Sidebar({ active, onChange, isOpen, onToggle, isMobile, 
                   {badge && (
                     <span style={{
                       fontSize: 9,
-                      fontWeight: 700,
+                      fontWeight: 600,
                       letterSpacing: '0.04em',
                       background: `color-mix(in srgb, ${color} 14%, transparent)`,
                       color,

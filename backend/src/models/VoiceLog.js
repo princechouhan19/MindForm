@@ -1,17 +1,8 @@
 const mongoose = require('mongoose')
 
-/* Speak module — communication & voice practice log.
-   One document per user; sessions capped at 500 entries (trimmed on write). */
-const sessionSchema = new mongoose.Schema({
-  date:       { type: String, required: true },  // YYYY-MM-DD
-  ts:         { type: Number, required: true },  // epoch ms
-  planId:     { type: String, enum: ['15', '30', '60'], required: true },
-  planMinutes:{ type: Number, min: 1, max: 120, required: true },
-  minutes:    { type: Number, min: 1, max: 180, required: true },
-  stepsDone:  { type: Number, min: 0, max: 20, default: 0 },
-  totalSteps: { type: Number, min: 0, max: 20, default: 0 },
-}, { _id: false })
-
+// Voice Coach — practice session log.
+// NOTE: audio/video recordings are NEVER uploaded; only session metadata
+// (exercise id, plan duration, timestamps) is persisted.
 const voiceLogSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -19,14 +10,18 @@ const voiceLogSchema = new mongoose.Schema({
     required: true,
   },
   sessions: {
-    type: [sessionSchema],
+    type: [
+      {
+        // exercise id, e.g. 'breathe' | 'hum' | 'neck' | 'twister' | 'read' | 'camera'
+        ex: { type: String, default: 'unknown' },
+        // plan the session came from: 15 | 30 | 60 (minutes)
+        plan: { type: Number, default: 15 },
+        // minutes actually practiced
+        min: { type: Number, default: 0 },
+        at: { type: Date, default: Date.now },
+      },
+    ],
     default: [],
-  },
-  weeklyGoalMinutes: {
-    type: Number,
-    min: 0,
-    max: 2000,
-    default: 60,
   },
   updatedAt: {
     type: Date,

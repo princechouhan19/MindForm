@@ -2,7 +2,7 @@
   <img src="logo.png" width="120" alt="MindForm Logo" />
 </p>
 
-# 🌌 MindForm 2.1 — Apple-Grade Productivity Suite
+# MindForm 2.4 — Apple-Grade Productivity Suite
 
 <p align="center">
   <a href="https://mindform.onrender.com/"><strong>🚀 Live Demo</strong></a>
@@ -22,9 +22,10 @@
 - **Contrast** — all text/label pairs meet WCAG AA in both themes; buttons use white-on-blue instead of failing black-on-gold.
 
 ### Landing page — apple.com storytelling
-- Keynote hero with masked-line reveal (fixes the old invisible-headline bug), ambient gradient, product window frame with scroll parallax.
-- Feature ribbon, scroll-triggered product scenes (Tasks → Habits → Goals → Fapless), animated stat counters, privacy strip, gradient CTA finale, Apple-style footer.
-- Replaced the WebGL starfield with CSS gradients — lighter, calmer, on-brand. Removed `three.js`, `split-type` and `@studio-freight/lenis` dependencies (**bundle 0.92 MB**).
+- **Built on the apple.com design spec** — `frontend/DESIGN.md` (VoltAgent apple design analysis) is the single source of truth for the landing surface: Action Blue `#0066cc` as the only accent (`#2997ff` on dark tiles), canvas `#ffffff` ↔ parchment `#f5f5f7` ↔ near-black tiles `#272729/#2a2a2c/#252527`, weight-600 tight-tracked headlines, 17 px body, pill CTAs with the `scale(0.95)` press state, hairline utility cards, zero decorative gradients and exactly one product shadow (`3px 5px 30px rgba(0,0,0,0.22)`).
+- Keynote hero with masked-line reveal (fixes the old invisible-headline bug), product render with scroll parallax and a frosted always-black global nav.
+- Feature ribbon, full-bleed scroll-triggered product tiles (Tasks → Habits → Goals → Fapless), animated stat counters, privacy tile, parchment CTA finale and apple.com-style fine-print footer.
+- Replaced the WebGL starfield with flat canvases — lighter, calmer, on-brand. Removed `three.js`, `split-type` and `@studio-freight/lenis` dependencies (**bundle 0.92 MB**).
 
 ### New features & sub-features
 - **Today (Overview) dashboard** — greeting, task/habit progress rings, streak & goal cards, one-tap module jumps; now the default view.
@@ -90,7 +91,16 @@
 - Permissions rows show live status chips with Enable actions; About and Session groups added; footnotes under each group.
 
 ### Screenshots
-- 16 fresh captures in `Showcase/` (desktop + mobile, dark + light, incl. Urge Rescue and the new Goals form).
+- 28 fresh captures in `Showcase/` (desktop + mobile, dark + light) — now covering the rebuilt **Speak** studio, every landing tile and the new Goals form.
+
+
+### v2.4 — DESIGN.md as the single source of truth + Speak module
+- **`frontend/DESIGN.md`** (VoltAgent apple design analysis, 563 lines) is committed to the repo and now governs the **entire frontend**, not just the landing page.
+- **Token layer rebuilt** — one accent (Action Blue `#0066cc` / Sky Link `#2997ff` on dark), hairline cards at 18 px, radii locked to the 5/8/11/18/980 scale, weight ladder 300/400/600/700 (500 removed), card & button shadows eliminated (the single `3px 5px 30px` product shadow survives on landing imagery only), focus ring `#0071e3`.
+- **Real SF substitute** — Inter Variable is bundled at `public/fonts/` and wired into both font stacks, so the Apple-tight cadence renders identically off-Apple platforms.
+- **Every view scrubbed** — Tasks, Habits, Goals, Fapless, Social, AI Coach, Settings, Auth: all decorative gradients flattened to flat surfaces, neon glows removed, primary CTAs normalized to the Action Blue pill grammar (`scale(0.95)` press), page headers set at 600/-0.022em.
+- **New: Speak — Voice & Communication Studio** (`VoiceCoachView.jsx`) — research-based drills (4-2-6 diaphragm breathing pacer, SOVT hums & lip trills, neck release + vowels, bronze/silver/gold twister ladder, style-shifting read-alouds, pen-in-mouth obstacle round, pace & pause trainer, on-camera PREP impromptu studio with local-only recording) packaged as **15 / 30 / 60-minute guided sessions** with a fullscreen session player, progress ring and completion logging (`/api/voice`, `VoiceLog` model, localStorage fallback).
+- **Landing** — a fifth product tile introduces Speak (`Speak — new`), stats and footer updated, and every product render in the tiles was re-captured from the redesigned app.
 
 
 ### v2.2 polish

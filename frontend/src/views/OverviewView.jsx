@@ -77,8 +77,8 @@ function ModuleCard({ icon: Icon, color, title, value, sub, onClick, delay = 0 }
         transition: 'opacity 0.5s var(--ease-out-expo), transform 0.25s var(--ease-apple), border-color 0.25s, box-shadow 0.3s',
         transform: entered ? 'none' : 'translateY(14px)',
       }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-bright)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; e.currentTarget.style.transform = 'translateY(-3px)' }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none' }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-bright)' }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)' }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
         <div style={{
@@ -92,9 +92,9 @@ function ModuleCard({ icon: Icon, color, title, value, sub, onClick, delay = 0 }
         <ArrowUpRight size={16} style={{ color: 'var(--text-muted)' }} />
       </div>
       <div>
-        <div style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', lineHeight: 1.05 }}>{value}</div>
+        <div style={{ fontSize: 28, fontWeight: 600, fontFamily: 'var(--font-display)', letterSpacing: '-0.022em', lineHeight: 1.05 }}>{value}</div>
         <div style={{ fontSize: 13.5, fontWeight: 600, marginTop: 3 }}>{title}</div>
-        {sub && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2, fontWeight: 500 }}>{sub}</div>}
+        {sub && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2, fontWeight: 600 }}>{sub}</div>}
       </div>
     </button>
   )
@@ -208,7 +208,7 @@ export default function OverviewView({ onNavigate }) {
         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
           {dayName}, {dateLabel}
         </div>
-        <h1 style={{ fontSize: 32, fontWeight: 700, fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', marginTop: 6, marginBottom: 4 }}>
+        <h1 style={{ fontSize: 32, fontWeight: 600, fontFamily: 'var(--font-display)', letterSpacing: '-0.022em', marginTop: 6, marginBottom: 4 }}>
           {greeting()}{firstName ? `, ${firstName}` : ''}.
         </h1>
         <p style={{ fontSize: 15.5, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>
@@ -244,7 +244,7 @@ export default function OverviewView({ onNavigate }) {
             >
               <Ring percent={taskPct} color="var(--cyan)" label="Tasks" />
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em' }}>Today’s tasks</div>
+                <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em' }}>Today’s tasks</div>
                 <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
                   {taskTotal ? `${taskDone} of ${taskTotal} complete` : 'No tasks scheduled — add some'}
                 </div>
@@ -277,7 +277,7 @@ export default function OverviewView({ onNavigate }) {
             >
               <Ring percent={habitPct} color="var(--amber)" label="Habits" />
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em' }}>Habit check-in</div>
+                <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em' }}>Habit check-in</div>
                 <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
                   {habitTotal ? `${habitDone} of ${habitTotal} done today` : 'No habits yet — start a chain'}
                 </div>
@@ -298,8 +298,8 @@ export default function OverviewView({ onNavigate }) {
               border: '1px solid var(--border)',
             }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em' }}>Last 14 days</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em' }}>Last 14 days</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>
                   daily completion · tasks & habits
                 </div>
               </div>
@@ -344,7 +344,7 @@ export default function OverviewView({ onNavigate }) {
                 { id: 'habits', icon: Activity, color: 'var(--amber)', label: 'Habit Tracker', desc: 'Your 30-day consistency grid' },
                 { id: 'goals', icon: Target, color: 'var(--brand-secondary)', label: 'Goals', desc: 'Long-term targets with linked progress' },
                 { id: 'fapless', icon: Flame, color: 'var(--red)', label: 'Fapless', desc: 'Discipline streaks, levels and aura' },
-                { id: 'voice', icon: Mic, color: 'var(--brand-teal)', label: 'Speak', desc: 'Voice & communication gym — breath to impromptu' },
+                { id: 'voice', icon: Mic, color: 'var(--brand-teal)', label: 'Speak', desc: 'Voice & communication studio — new' },
                 { id: 'social', icon: Users2, color: 'var(--pink)', label: 'Social', desc: 'Leaderboard, forum and your profile' },
                 { id: 'ai', icon: Sparkles, color: 'var(--purple)', label: 'AI Coach', desc: 'Advice grounded in your data' },
               ].map(({ id, icon: Icon, color, label, desc }, i) => (

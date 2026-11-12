@@ -185,7 +185,7 @@ function GoalForm({ onSave, onCancel, initial, availableTasks, availableHabits, 
   return (
     <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 24, marginBottom: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-        <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)' }}>
+        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>
           {isEdit ? 'Edit Goal' : 'New Goal'}
         </div>
         <button onClick={onCancel} aria-label="Close form"
@@ -339,7 +339,7 @@ function GoalForm({ onSave, onCancel, initial, availableTasks, availableHabits, 
 
       <div style={{ display: 'flex', gap: 10 }}>
         <button onClick={handleSave} disabled={saving || !form.title.trim() || !form.deadline}
-          style={{ background: 'var(--brand-primary)', border: 'none', borderRadius: 'var(--radius-md)', color: '#fff', padding: '12px 24px', fontSize: 15, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: saving ? 0.7 : 1, minHeight: 44 }}>
+          style={{ background: 'var(--btn-primary-bg)', border: 'none', borderRadius: 980, color: '#fff', padding: '10px 22px', fontSize: 15, fontWeight: 400, letterSpacing: '-0.022em', cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: saving ? 0.7 : 1, minHeight: 44, transition: 'transform 0.15s ease' }}>
           {saving ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={14} />}
           {saving ? 'Saving…' : 'Save Goal'}
         </button>
@@ -377,19 +377,19 @@ function GoalCard({ goal, taskStats, habitStats, onEdit, onDelete, onToggleMiles
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{
-              fontSize: 10.5, fontWeight: 700, color: statusMeta.color,
+              fontSize: 10.5, fontWeight: 600, color: statusMeta.color,
               background: `color-mix(in srgb, ${statusMeta.color} 12%, transparent)`,
               border: `1px solid color-mix(in srgb, ${statusMeta.color} 30%, transparent)`,
               borderRadius: 'var(--radius-pill)', padding: '2px 9px', letterSpacing: '0.04em', textTransform: 'uppercase',
             }}>{statusMeta.label}</span>
             <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-muted)', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 'var(--radius-pill)', padding: '2px 9px', textTransform: 'capitalize' }}>{goal.category}</span>
             {pace && (
-              <span style={{ fontSize: 10.5, fontWeight: 700, color: pace.color, background: `color-mix(in srgb, ${pace.color} 12%, transparent)`, borderRadius: 'var(--radius-pill)', padding: '2px 9px', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 10.5, fontWeight: 600, color: pace.color, background: `color-mix(in srgb, ${pace.color} 12%, transparent)`, borderRadius: 'var(--radius-pill)', padding: '2px 9px', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <pace.icon size={10} /> {pace.chip}
               </span>
             )}
           </div>
-          <div style={{ fontSize: isMobile ? 16.5 : 17.5, fontWeight: 700, color: 'var(--text-primary)', marginTop: 7, letterSpacing: '-0.01em', lineHeight: 1.3 }}>
+          <div style={{ fontSize: isMobile ? 16.5 : 17.5, fontWeight: 600, color: 'var(--text-primary)', marginTop: 7, letterSpacing: '-0.01em', lineHeight: 1.3 }}>
             {goal.title}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)', marginTop: 5, flexWrap: 'wrap' }}>
@@ -466,7 +466,7 @@ function GoalCard({ goal, taskStats, habitStats, onEdit, onDelete, onToggleMiles
           {/* Milestones checklist */}
           {(goal.milestones?.length || 0) > 0 && (
             <div style={{ background: 'var(--bg-glass)', borderRadius: 12, padding: '14px', border: '1px solid var(--border)' }}>
-              <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Flag size={11} /> MILESTONES — {goal.milestones.filter(m => m.done).length}/{goal.milestones.length}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -494,7 +494,7 @@ function GoalCard({ goal, taskStats, habitStats, onEdit, onDelete, onToggleMiles
           {/* Linked progress */}
           {(taskItems.length > 0 || habitItems.length > 0) && (
             <div style={{ background: 'var(--bg-glass)', borderRadius: 12, padding: '14px', border: '1px solid var(--border)' }}>
-              <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Link2 size={11} /> LINKED PROGRESS
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
@@ -502,7 +502,7 @@ function GoalCard({ goal, taskStats, habitStats, onEdit, onDelete, onToggleMiles
                   <div key={item.name}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 4 }}>
                       <span style={{ color: 'var(--text-secondary)' }}>{item.name}</span>
-                      <span style={{ color: 'var(--brand-primary)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{item.pct}%</span>
+                      <span style={{ color: 'var(--brand-primary)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{item.pct}%</span>
                     </div>
                     <div style={{ height: 5, background: 'var(--border)', borderRadius: 3 }}>
                       <div style={{ height: '100%', width: `${item.pct}%`, background: 'var(--brand-primary)', borderRadius: 3, transition: 'width 0.5s var(--ease-out-expo)' }} />
@@ -513,7 +513,7 @@ function GoalCard({ goal, taskStats, habitStats, onEdit, onDelete, onToggleMiles
                   <div key={item.name}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 4 }}>
                       <span style={{ color: 'var(--text-secondary)' }}>{item.name}</span>
-                      <span style={{ color: 'var(--brand-orange)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{item.pct}%</span>
+                      <span style={{ color: 'var(--brand-orange)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{item.pct}%</span>
                     </div>
                     <div style={{ height: 5, background: 'var(--border)', borderRadius: 3 }}>
                       <div style={{ height: '100%', width: `${item.pct}%`, background: 'var(--brand-orange)', borderRadius: 3, transition: 'width 0.5s var(--ease-out-expo)' }} />
@@ -719,13 +719,13 @@ export default function GoalsView() {
       <div style={{ padding: isMobile ? '16px 16px 0' : '20px 24px 0', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontSize: isMobile ? 24 : 28, fontWeight: 800, letterSpacing: '-0.02em' }}>Goals</h1>
+            <h1 style={{ fontSize: isMobile ? 24 : 28, fontWeight: 600, letterSpacing: '-0.02em' }}>Goals</h1>
             <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>
               Set targets, break them into milestones, and track pace.
             </div>
           </div>
           <button onClick={() => { setShowForm(true); setEditGoal(null) }}
-            style={{ background: 'var(--brand-primary)', border: 'none', borderRadius: 'var(--radius-pill)', color: '#fff', padding: '11px 22px', fontSize: 14.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, boxShadow: 'var(--shadow-brand)' }}>
+            style={{ background: 'var(--btn-primary-bg)', border: 'none', borderRadius: 980, color: '#fff', padding: '10px 20px', fontSize: 14.5, fontWeight: 400, letterSpacing: '-0.022em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, transition: 'transform 0.15s ease' }}>
             <Plus size={16} /> New Goal
           </button>
         </div>
@@ -735,8 +735,8 @@ export default function GoalsView() {
           <div style={{ flex: '1 1 180px', display: 'flex', alignItems: 'center', gap: 14, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px 18px', minWidth: 0 }}>
             <MFRing percent={summary.activeOverall} size={54} stroke={7} color="var(--brand-primary)" />
             <div>
-              <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>{summary.activeOverall}%</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontWeight: 500 }}>avg. active progress</div>
+              <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>{summary.activeOverall}%</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontWeight: 600 }}>avg. active progress</div>
             </div>
           </div>
           {[
@@ -745,8 +745,8 @@ export default function GoalsView() {
             ['Overdue', summary.overdue, 'var(--brand-error)'],
           ].map(([label, val, color]) => (
             <div key={label} style={{ flex: '1 1 120px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px 18px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
-              <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'var(--font-display)', color, letterSpacing: '-0.02em' }}>{val}</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontWeight: 500 }}>{label}</div>
+              <div style={{ fontSize: 24, fontWeight: 600, fontFamily: 'var(--font-display)', color, letterSpacing: '-0.02em' }}>{val}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', fontWeight: 600 }}>{label}</div>
             </div>
           ))}
         </div>

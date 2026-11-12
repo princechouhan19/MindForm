@@ -14,9 +14,9 @@ const taskRoutes    = require('./routes/tasks')
 const habitRoutes   = require('./routes/habits')
 const goalRoutes    = require('./routes/goals')
 const faplessRoutes = require('./routes/fapless')
-const voiceRoutes   = require('./routes/voice')
 const aiRoutes      = require('./routes/ai')
 const socialRoutes  = require('./routes/social')
+const voiceRoutes   = require('./routes/voice')
 
 const app = express()
 
@@ -45,77 +45,33 @@ app.use(helmet({
 }))
 
 // CORS
-const isDev = (process.env.NODE_ENV || 'development') === 'development'
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  process.env.RENDER_EXTERNAL_URL,
-  'https://mindform.onrender.com',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:4173', // vite preview
-  'http://127.0.0.1:4173',
-  'http://localhost:5000',
-  'http://127.0.0.1:5000',
-].filter(Boolean)
-
-app.use(cors((req, callback) => {
-  const origin = req.header('Origin')
-  let isAllowed = false
-
-  if (!origin) {
-    // Non-browser or same-origin requests without an Origin header
-    isAllowed = true
-  } else if (allowedOrigins.includes(origin)) {
-    isAllowed = true
-  } else if (/^https:\/\/([a-zA-Z0-9-]+\.)*onrender\.com$/.test(origin)) {
-    // Allow any Render deployment origin
-    isAllowed = true
-  } else if (isDev && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
-    isAllowed = true
-  } else {
-    // Allow if request Origin host matches server Host header (e.g. custom domains)
-    try {
-      const originHost = new URL(origin).host
-      if (req.headers.host && originHost === req.headers.host) {
-        isAllowed = true
-      }
-    } catch {
-      isAllowed = false
-    }
-  }
-
-  callback(null, {
-    origin: isAllowed,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
+app.use(cors({
+  origin: [
+    process.env.FRONTEND_URL || 'http://localhost:5173',
+    'http://localhost:4173', // vite preview
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }))
-
-// Serve static assets (placed before body parsers for performance)
-const publicPath = path.join(__dirname, '../public')
-const hasPublicAssets = require('fs').existsSync(path.join(publicPath, 'index.html'))
-if (process.env.NODE_ENV === 'production' || process.env.SERVE_FRONTEND === 'true' || process.env.RENDER || hasPublicAssets) {
-  app.use(express.static(publicPath))
-}
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDev ? 1000 : 200,
+  max: 200,
   message: { success: false, message: 'Too many requests, please try again later.' },
 })
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: isDev ? 200 : 15,
+  max: 10,
   message: { success: false, message: 'Too many auth attempts, please slow down.' },
 })
 
-// Strict per-IP registration limiter
+// Strict per-IP registration limiter: max 3 new accounts per hour per IP
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: isDev ? 100 : 5,
+  max: 3,
   message: { success: false, message: 'Too many registration attempts from this device. Please try again later.' },
   skipSuccessfulRequests: false,
 })
@@ -164,9 +120,9 @@ app.use('/api/tasks',   taskRoutes)
 app.use('/api/habits',  habitRoutes)
 app.use('/api/goals',   goalRoutes)
 app.use('/api/fapless', faplessRoutes)
-app.use('/api/voice',   voiceRoutes)
 app.use('/api/ai',      aiRoutes)
 app.use('/api/social',  socialRoutes)
+app.use('/api/voice',   voiceRoutes)
 
 // Cross-module aggregate — powers the Overview ("Today") page in one round-trip
 app.get('/api/stats/summary', require('./middleware/auth').protect, async (req, res) => {
@@ -205,14 +161,12 @@ app.use('/api', (req, res) => {
   res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found.` })
 })
 
-// SPA catch-all — serve index.html for non-API client routes
-if (process.env.NODE_ENV === 'production' || process.env.SERVE_FRONTEND === 'true' || process.env.RENDER || hasPublicAssets) {
+// Serve static assets in production
+if (process.env.NODE_ENV === 'production' || process.env.SERVE_FRONTEND === 'true') {
+  app.use(express.static(path.join(__dirname, '../public')))
+
   app.get('*', (req, res) => {
-    // If request has a file extension (e.g. missing /assets/*.js, *.css, *.png), return 404 instead of index.html
-    if (path.extname(req.path)) {
-      return res.status(404).json({ success: false, message: `Asset ${req.originalUrl} not found.` })
-    }
-    res.sendFile(path.resolve(publicPath, 'index.html'))
+    res.sendFile(path.resolve(__dirname, '../public', 'index.html'))
   })
 }
 

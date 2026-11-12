@@ -70,7 +70,7 @@ export function ConfirmProvider({ children }) {
             }}>
               <AlertTriangle size={22} style={{ color: dialog.danger ? 'var(--brand-error)' : 'var(--brand-primary)' }} />
             </div>
-            <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', marginBottom: 8 }}>
+            <div style={{ fontSize: 18, fontWeight: 600, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', marginBottom: 8 }}>
               {dialog.title}
             </div>
             {dialog.body && (

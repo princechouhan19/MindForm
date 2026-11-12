@@ -95,7 +95,7 @@ function MdText({ text }) {
     const parts = str.split(/(\*\*[^*]+\*\*|`[^`]+`)/g)
     return parts.map((p, i) => {
       if (p.startsWith('**') && p.endsWith('**')) {
-        return <strong key={i} style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{p.slice(2, -2)}</strong>
+        return <strong key={i} style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{p.slice(2, -2)}</strong>
       }
       if (p.startsWith('`') && p.endsWith('`') && p.length > 2) {
         return <code key={i} style={{
@@ -147,14 +147,14 @@ function MdText({ text }) {
 
 function Line({ trimmed, ln, parseInline }) {
   // Headings
-  if (trimmed.startsWith('### ')) return <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', margin: '14px 0 6px' }}>{parseInline(trimmed.slice(4))}</div>
-  if (trimmed.startsWith('## '))  return <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', margin: '16px 0 8px' }}>{parseInline(trimmed.slice(3))}</div>
-  if (trimmed.startsWith('# '))   return <div style={{ fontWeight: 700, fontSize: 20, color: 'var(--text-primary)', margin: '18px 0 10px' }}>{parseInline(trimmed.slice(2))}</div>
+  if (trimmed.startsWith('### ')) return <div style={{ fontWeight: 600, fontSize: 16, color: 'var(--text-primary)', margin: '14px 0 6px' }}>{parseInline(trimmed.slice(4))}</div>
+  if (trimmed.startsWith('## '))  return <div style={{ fontWeight: 600, fontSize: 18, color: 'var(--text-primary)', margin: '16px 0 8px' }}>{parseInline(trimmed.slice(3))}</div>
+  if (trimmed.startsWith('# '))   return <div style={{ fontWeight: 600, fontSize: 20, color: 'var(--text-primary)', margin: '18px 0 10px' }}>{parseInline(trimmed.slice(2))}</div>
 
   // Lists
   if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ')) {
     return <div style={{ display: 'flex', gap: 8, paddingLeft: 4, margin: '4px 0' }}>
-      <span style={{ color: 'var(--cyan)', fontWeight: 700 }}>•</span>
+      <span style={{ color: 'var(--cyan)', fontWeight: 600 }}>•</span>
       <div style={{ flex: 1 }}>{parseInline(trimmed.slice(2))}</div>
     </div>
   }
@@ -163,7 +163,7 @@ function Line({ trimmed, ln, parseInline }) {
   const numMatch = trimmed.match(/^(\d+\.)\s+(.*)/)
   if (numMatch) {
     return <div style={{ display: 'flex', gap: 8, paddingLeft: 4, margin: '8px 0 4px' }}>
-      <span style={{ color: 'var(--cyan)', fontWeight: 700, fontFamily: 'var(--font-mono)', fontSize: 13 }}>{numMatch[1]}</span>
+      <span style={{ color: 'var(--cyan)', fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: 13 }}>{numMatch[1]}</span>
       <div style={{ flex: 1, color: 'var(--text-primary)', fontWeight: 600 }}>{parseInline(numMatch[2])}</div>
     </div>
   }
@@ -273,7 +273,7 @@ function AISettings({ config, onSave, onClose }) {
               <Settings2 size={18} color="var(--cyan)" />
             </div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: 16 }}>AI Configuration</div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>AI Configuration</div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Your key stays on your device</div>
             </div>
           </div>
@@ -283,7 +283,7 @@ function AISettings({ config, onSave, onClose }) {
         </div>
 
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 10 }}>PROVIDER</div>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 10 }}>PROVIDER</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {PROVIDERS.map(p => (
               <button key={p.id} onClick={() => handleProviderSwitch(p.id)} style={{
@@ -294,7 +294,7 @@ function AISettings({ config, onSave, onClose }) {
               }}>
                 <img src={p.logo} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: provider === p.id ? p.color : 'var(--text-secondary)' }}>{p.name}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: provider === p.id ? p.color : 'var(--text-secondary)' }}>{p.name}</div>
                   {allKeys[p.id] && <div style={{ fontSize: 9, color: 'var(--green)', marginTop: 2 }}>● Key saved</div>}
                 </div>
               </button>
@@ -304,7 +304,7 @@ function AISettings({ config, onSave, onClose }) {
 
         {/* Model selector */}
         <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 8 }}>MODEL</div>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 8 }}>MODEL</div>
           <CustomSelect
             value={model}
             options={prov?.models || []}
@@ -315,7 +315,7 @@ function AISettings({ config, onSave, onClose }) {
 
         {/* API Key */}
         <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 8 }}>
             API KEY
           </div>
           <div style={{ position: 'relative' }}>
@@ -347,8 +347,8 @@ function AISettings({ config, onSave, onClose }) {
           disabled={!model || !apiKey.trim()}
           style={{
             width: '100%', padding: '13px',
-            background: !model || !apiKey.trim() ? 'var(--bg-glass)' : `linear-gradient(135deg, ${prov?.color || 'var(--cyan)'}, var(--cyan))`,
-            border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700,
+            background: !model || !apiKey.trim() ? 'var(--bg-glass)' : 'var(--btn-primary-bg)',
+            border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600,
             color: !model || !apiKey.trim() ? 'var(--text-muted)' : '#000',
             cursor: !model || !apiKey.trim() ? 'not-allowed' : 'pointer',
             fontFamily: 'var(--font-display)',
@@ -368,7 +368,7 @@ function Bubble({ msg }) {
   return (
     <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', justifyContent: isUser ? 'flex-end' : 'flex-start', marginBottom: 16 }}>
       {!isUser && (
-        <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, var(--cyan-dim), var(--purple-dim))', border: '1px solid var(--border-bright)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+        <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--bg-glass)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
           <Bot size={14} color="var(--cyan)" />
         </div>
       )}
@@ -497,7 +497,7 @@ export default function AIChatView() {
             <Sparkles size={18} color="var(--cyan)" />
           </div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 16 }}>MindForm AI</div>
+            <div style={{ fontWeight: 600, fontSize: 16 }}>MindForm AI</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
               {isReady
                 ? <span style={{ color: 'var(--green)' }}>● {prov?.name} · {prov?.models.find(m => m.id === config.model)?.label}</span>
@@ -528,7 +528,7 @@ export default function AIChatView() {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 28 }}>
             <div>
               <div style={{ fontSize: 48, marginBottom: 12 }}>🧠</div>
-              <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Your Personal AI Coach</div>
+              <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>Your Personal AI Coach</div>
               <div style={{ fontSize: 14, color: 'var(--text-muted)', maxWidth: 380, lineHeight: 1.6 }}>
                 I have access to your tasks, habits, goals, and streak — so I can give you truly personalized advice.
               </div>
@@ -539,7 +539,7 @@ export default function AIChatView() {
                 <AlertCircle size={16} color="var(--amber)" style={{ flexShrink: 0 }} />
                 <div style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'left' }}>
                   Add your API key to get started. Your key is stored locally and never sent to us.
-                  <button onClick={() => setShowSettings(true)} style={{ display: 'block', marginTop: 6, background: 'none', color: 'var(--cyan)', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-display)', padding: 0 }}>
+                  <button onClick={() => setShowSettings(true)} style={{ display: 'block', marginTop: 6, background: 'none', color: 'var(--cyan)', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-display)', padding: 0 }}>
                     Configure now →
                   </button>
                 </div>
@@ -548,7 +548,7 @@ export default function AIChatView() {
 
             {isReady && (
               <div style={{ width: '100%', maxWidth: 500 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 12 }}>SUGGESTED QUESTIONS</div>
+                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 12 }}>SUGGESTED QUESTIONS</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                   {SUGGESTIONS.map(s => (
                     <button key={s} className="ai-suggest" onClick={() => sendMessage(s)} style={{
@@ -572,7 +572,7 @@ export default function AIChatView() {
         {/* Loading */}
         {loading && (
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 16 }}>
-            <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, var(--cyan-dim), var(--purple-dim))', border: '1px solid var(--border-bright)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--bg-glass)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Bot size={14} color="var(--cyan)" />
             </div>
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '18px 18px 18px 4px', padding: '14px 18px', display: 'flex', gap: 5, alignItems: 'center' }}>
@@ -588,13 +588,13 @@ export default function AIChatView() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--red-dim)', border: '1px solid var(--red-dim)', borderRadius: 12, padding: '14px 18px', marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <AlertCircle size={14} color="var(--red)" style={{ flexShrink: 0 }} />
-              <div style={{ flex: 1, fontSize: 13, color: 'var(--red)', fontWeight: 500 }}>{error.message}</div>
+              <div style={{ flex: 1, fontSize: 13, color: 'var(--red)', fontWeight: 600 }}>{error.message}</div>
               <button onClick={() => setError('')} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 4 }}><X size={14} /></button>
             </div>
             {error.isAuth && (
               <button onClick={() => { setError(''); setShowSettings(true) }} style={{
                 alignSelf: 'flex-start', background: 'var(--red)', color: '#fff', border: 'none',
-                borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 700,
+                borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 600,
                 cursor: 'pointer', fontFamily: 'var(--font-display)', marginLeft: 24,
               }}>
                 Update AI Configuration
@@ -640,7 +640,7 @@ export default function AIChatView() {
             style={{
               width: 44, height: 44, borderRadius: 12, flexShrink: 0,
               background: isReady && input.trim() && !loading
-                ? `linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))`
+                ? 'var(--btn-primary-bg)'
                 : 'var(--bg-glass)',
               border: `1px solid ${isReady && input.trim() ? 'transparent' : 'var(--border)'}`,
               color: isReady && input.trim() && !loading ? '#fff' : 'var(--text-muted)',

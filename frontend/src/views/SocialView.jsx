@@ -49,7 +49,7 @@ function BadgePill({ badge }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px',
-      borderRadius: 20, fontSize: 11, fontWeight: 700,
+      borderRadius: 20, fontSize: 11, fontWeight: 600,
       background: `${badge.color}20`, border: `1px solid ${badge.color}55`, color: badge.color,
     }}>
       {badge.emoji} {badge.label}
@@ -92,10 +92,10 @@ function Podium({ entries, onOpen, followList, onFollow, myId }) {
                 <Avatar user={{ name: e.name, avatar: e.avatar }} size={rank === 0 ? 64 : 52} border />
                 <span style={{ position: 'absolute', bottom: -4, right: -6, fontSize: 18 }}>{medal[rank]}</span>
               </div>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {e.name}{e.country ? ` ${flag(e.country)}` : ''}
               </span>
-              <span style={{ fontSize: 18, fontWeight: 800, color: rank === 0 ? 'var(--brand-warning)' : 'var(--text-secondary)', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', marginTop: 2 }}>
+              <span style={{ fontSize: 18, fontWeight: 600, color: rank === 0 ? 'var(--brand-warning)' : 'var(--text-secondary)', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', marginTop: 2 }}>
                 {e.streakDays}<span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>d</span>
               </span>
               <span style={{ fontSize: 10.5, color: 'var(--brand-warning)', fontWeight: 600 }}>⚡ {e.aura?.toLocaleString?.() ?? e.aura}</span>
@@ -103,10 +103,10 @@ function Podium({ entries, onOpen, followList, onFollow, myId }) {
             <div style={{
               width: '100%', height: heights[rank], marginTop: 10,
               borderRadius: '14px 14px 0 0',
-              background: `linear-gradient(180deg, ${glow[rank]}, transparent)`,
+              background: `color-mix(in srgb, ${glow[rank]} 12%, transparent)`,
               border: '1px solid var(--border)', borderBottom: 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: rank === 0 ? 26 : 20, fontWeight: 800, color: 'var(--text-muted)',
+              fontSize: rank === 0 ? 26 : 20, fontWeight: 600, color: 'var(--text-muted)',
             }}>
               {rank + 1}
             </div>
@@ -129,7 +129,7 @@ function LeaderRow({ entry, rank, onClick, isFollowing, onFollow, isMe }) {
       }}
       onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-glass)'}
       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-      <span style={{ width: 26, textAlign: 'center', fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
+      <span style={{ width: 26, textAlign: 'center', fontSize: 14, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
         {rank + 1}
       </span>
       <Avatar user={{ name: entry.name, avatar: entry.avatar }} size={40} />
@@ -137,7 +137,7 @@ function LeaderRow({ entry, rank, onClick, isFollowing, onFollow, isMe }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.name}</span>
           {entry.country && <span style={{ fontSize: 12 }}>{flag(entry.country)}</span>}
-          {isMe && <span style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--brand-primary)', background: 'var(--brand-primary-dim)', padding: '2px 8px', borderRadius: 20 }}>YOU</span>}
+          {isMe && <span style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--brand-primary)', background: 'var(--brand-primary-dim)', padding: '2px 8px', borderRadius: 20 }}>YOU</span>}
           {entry.badges?.slice(0, 2).map(b => <BadgePill key={b.id} badge={b} />)}
         </div>
         <div style={{ display: 'flex', gap: 14, marginTop: 3 }}>
@@ -185,7 +185,7 @@ export function IOSToggle({ on, onChange }) {
         width: 27, height: 27, borderRadius: '50%', background: '#fff',
         position: 'absolute', top: 2, left: on ? 22 : 2,
         transition: 'left 0.2s var(--ease-spring)',
-        boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+        
       }} />
     </button>
   )
@@ -312,7 +312,7 @@ export default function SocialView() {
   const leaderboardContent = (
     <div style={{ maxWidth: 760, margin: '0 auto', width: '100%' }}>
       <div style={{ marginBottom: 6 }}>
-        <h2 style={{ fontSize: 21, fontWeight: 800, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <h2 style={{ fontSize: 21, fontWeight: 600, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 8 }}>
           <Trophy size={19} color="var(--brand-warning)" /> Global Leaderboard
         </h2>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Top {leaderboard.length} public profiles ranked by clean streak</div>
@@ -351,7 +351,7 @@ export default function SocialView() {
   const forumContent = (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', maxWidth: 760, margin: '0 auto', width: '100%' }}>
       <div style={{ marginBottom: 14, flexShrink: 0 }}>
-        <h2 style={{ fontSize: 21, fontWeight: 800, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <h2 style={{ fontSize: 21, fontWeight: 600, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 8 }}>
           <MessageCircle size={19} color="var(--brand-primary)" /> Community
         </h2>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Support, share, and stay accountable. Messages auto-delete after 2 days.</div>
@@ -428,7 +428,7 @@ export default function SocialView() {
     <div style={{ maxWidth: 640, margin: '0 auto', width: '100%' }}>
       {/* Hero card */}
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', marginBottom: 20 }}>
-        <div style={{ height: 76, background: 'linear-gradient(120deg, var(--brand-primary-dim), color-mix(in srgb, var(--brand-secondary) 12%, transparent))' }} />
+        <div style={{ height: 76, background: 'var(--brand-primary-dim)' }} />
         <div style={{ padding: '0 24px 22px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div style={{ width: 76, height: 76, borderRadius: '50%', background: 'var(--bg-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, border: '4px solid var(--bg-card)', marginTop: -38, boxShadow: 'var(--shadow-md)' }}>
@@ -442,9 +442,9 @@ export default function SocialView() {
           </div>
           <div style={{ marginTop: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <h2 style={{ fontSize: 23, fontWeight: 800, letterSpacing: '-0.02em' }}>{profile.name}</h2>
+              <h2 style={{ fontSize: 23, fontWeight: 600, letterSpacing: '-0.02em' }}>{profile.name}</h2>
               {profile.country && <span style={{ fontSize: 20 }}>{flag(profile.country)}</span>}
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: profile.isPublic ? 'var(--brand-success)' : 'var(--text-muted)', background: profile.isPublic ? 'var(--green-dim)' : 'var(--bg-glass)', padding: '3px 10px', borderRadius: 20 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: profile.isPublic ? 'var(--brand-success)' : 'var(--text-muted)', background: profile.isPublic ? 'var(--green-dim)' : 'var(--bg-glass)', padding: '3px 10px', borderRadius: 20 }}>
                 {profile.isPublic ? <Eye size={12} /> : <EyeOff size={12} />} {profile.isPublic ? 'PUBLIC' : 'PRIVATE'}
               </span>
             </div>
@@ -460,7 +460,7 @@ export default function SocialView() {
             [profile.streakDays, 'Day Streak', 'var(--brand-error)'],
           ].map(([v, l, c], i) => (
             <div key={l} style={{ padding: '14px 10px', textAlign: 'center', borderLeft: i > 0 ? '1px solid var(--border)' : 'none' }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: c, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>{v}</div>
+              <div style={{ fontSize: 20, fontWeight: 600, color: c, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>{v}</div>
               <div style={{ fontSize: 10.5, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{l}</div>
             </div>
           ))}
@@ -471,7 +471,7 @@ export default function SocialView() {
       {editing && (
         <InsetGroup title="Edit profile">
           <div style={{ padding: 18 }}>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>AVATAR</label>
+            <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>AVATAR</label>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
               {AVATARS.map(e => (
                 <button key={e} onClick={() => setEditForm(f => ({ ...f, avatar: e }))}
@@ -480,13 +480,13 @@ export default function SocialView() {
                 </button>
               ))}
             </div>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>COUNTRY</label>
+            <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>COUNTRY</label>
             <select value={editForm.country} onChange={e => setEditForm(f => ({ ...f, country: e.target.value }))}
               style={{ width: '100%', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontSize: 15, color: 'var(--text-primary)', outline: 'none', marginBottom: 16 }}>
               <option value="">Select country...</option>
               {COUNTRIES.map(c => <option key={c.code} value={c.code}>{flag(c.code)} {c.name}</option>)}
             </select>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>BIO ({editForm.bio?.length || 0}/200)</label>
+            <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em', display: 'block', marginBottom: 8 }}>BIO ({editForm.bio?.length || 0}/200)</label>
             <textarea value={editForm.bio} onChange={e => setEditForm(f => ({ ...f, bio: e.target.value.slice(0, 200) }))} rows={3}
               style={{ width: '100%', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontSize: 15, color: 'var(--text-primary)', resize: 'none', outline: 'none', marginBottom: 16 }} />
             {/* Public toggle row */}
@@ -548,7 +548,7 @@ export default function SocialView() {
       {/* Navigation */}
       {isMobile ? (
         <div style={{ padding: '16px 16px 0', flexShrink: 0 }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12, letterSpacing: '-0.02em' }}>Social</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 12, letterSpacing: '-0.02em' }}>Social</h1>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 4 }}>
             {TABS.map(({ id, label, icon: Icon }) => (
               <button key={id} onClick={() => setTab(id)}
@@ -565,7 +565,7 @@ export default function SocialView() {
         </div>
       ) : (
         <aside style={{ width: 232, flexShrink: 0, borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', padding: '28px 14px', background: 'var(--bg-surface)', gap: 2 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.14em', padding: '0 12px', marginBottom: 12 }}>SOCIAL</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.14em', padding: '0 12px', marginBottom: 12 }}>SOCIAL</div>
           {TABS.map(({ id, label, icon: Icon }) => {
             const active = tab === id
             return (
@@ -586,7 +586,7 @@ export default function SocialView() {
           })}
           {/* Community stats mini-card */}
           <div style={{ marginTop: 'auto', padding: 14, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12 }}>
-            <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 8 }}>HUB</div>
+            <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 8 }}>HUB</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5, color: 'var(--text-secondary)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Ranked</span><strong style={{ color: 'var(--text-primary)' }}>{leaderboard.length}</strong></div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Following</span><strong style={{ color: 'var(--text-primary)' }}>{profile?.following?.length || 0}</strong></div>
@@ -617,7 +617,7 @@ function ProfileModal({ profile, onClose, myId, isFollowing, onFollow }) {
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={onClose}>
       <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '36px 28px', maxWidth: 360, textAlign: 'center' }} onClick={e => e.stopPropagation()}>
         <Lock size={34} color="var(--text-muted)" style={{ marginBottom: 14, opacity: 0.5 }} />
-        <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>Private Profile</h3>
+        <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 6 }}>Private Profile</h3>
         <div style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.5 }}>This user has set their profile to private.</div>
         <button onClick={onClose} style={{ ...BTN('ghost'), marginTop: 22, width: '100%' }}>Close</button>
       </div>
@@ -632,7 +632,7 @@ function ProfileModal({ profile, onClose, myId, isFollowing, onFollow }) {
           <Avatar user={profile} size={64} border />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' }}>
-              <h3 style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em' }}>{profile.name}</h3>
+              <h3 style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-0.02em' }}>{profile.name}</h3>
               {profile.country && <span style={{ fontSize: 18 }}>{flag(profile.country)}</span>}
             </div>
             {profile.bio && <div style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>{profile.bio}</div>}
@@ -647,7 +647,7 @@ function ProfileModal({ profile, onClose, myId, isFollowing, onFollow }) {
             [profile.followers?.length || 0, 'Followers', 'var(--brand-primary)'],
           ].map(([v, l, c]) => (
             <div key={l} style={{ background: 'var(--bg-glass)', borderRadius: 12, padding: '10px 6px', textAlign: 'center' }}>
-              <div style={{ fontSize: 17, fontWeight: 800, color: c, fontFamily: 'var(--font-display)' }}>{v}</div>
+              <div style={{ fontSize: 17, fontWeight: 600, color: c, fontFamily: 'var(--font-display)' }}>{v}</div>
               <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{l}</div>
             </div>
           ))}
@@ -713,10 +713,10 @@ function AdminPanel() {
       <InsetGroup title="Administration" footer="Assign recognition badges to members of the community.">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 16, borderBottom: '1px solid var(--border)' }}>
           <Crown size={18} color="var(--brand-warning)" />
-          <div style={{ fontSize: 14.5, fontWeight: 700 }}>{users.length} registered users</div>
+          <div style={{ fontSize: 14.5, fontWeight: 600 }}>{users.length} registered users</div>
         </div>
         <div style={{ padding: 16, borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 10 }}>BADGE CATALOG</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 10 }}>BADGE CATALOG</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {badges.map(b => <BadgePill key={b.id} badge={b} />)}
           </div>
@@ -734,10 +734,10 @@ function AdminPanel() {
               <Avatar user={u} size={40} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 14.5, fontWeight: 700 }}>{u.name}</span>
+                  <span style={{ fontSize: 14.5, fontWeight: 600 }}>{u.name}</span>
                   {u.country && <span>{flag(u.country)}</span>}
                   {u.isPublic ? <Globe size={12} color="var(--brand-success)" /> : <Lock size={12} color="var(--text-muted)" />}
-                  {u.isAdmin && <span style={{ fontSize: 9, background: 'color-mix(in srgb, var(--brand-warning) 14%, transparent)', color: 'var(--brand-warning)', padding: '2px 7px', borderRadius: 20, fontWeight: 800 }}>ADMIN</span>}
+                  {u.isAdmin && <span style={{ fontSize: 9, background: 'color-mix(in srgb, var(--brand-warning) 14%, transparent)', color: 'var(--brand-warning)', padding: '2px 7px', borderRadius: 20, fontWeight: 600 }}>ADMIN</span>}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   <span>{u.email}</span>
@@ -765,11 +765,11 @@ function AdminPanel() {
 
             {selectedUser?._id === u._id && (
               <div style={{ marginTop: 14, paddingLeft: 54, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 800, marginBottom: 10, letterSpacing: '0.1em' }}>ASSIGN BADGE</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 10, letterSpacing: '0.1em' }}>ASSIGN BADGE</div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {badges.filter(b => !u.badges?.some(ub => ub.id === b.id)).map(b => (
                     <button key={b.id} onClick={() => assignBadge(u._id, b.id)}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '7px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: `${b.color}15`, border: `1px solid ${b.color}44`, color: b.color, transition: 'all 0.15s', minHeight: 34 }}>
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '7px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: `${b.color}15`, border: `1px solid ${b.color}44`, color: b.color, transition: 'all 0.15s', minHeight: 34 }}>
                       {b.emoji} + {b.label}
                     </button>
                   ))}

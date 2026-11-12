@@ -76,7 +76,7 @@ function Row({ icon, iconBg, title, subtitle, accessory, onClick, last = false }
       onMouseLeave={clickable ? (e => e.currentTarget.style.background = 'transparent') : undefined}>
       {icon && <IconTile icon={icon} bg={iconBg} />}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14.5, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.3 }}>{title}</div>
+        <div style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3 }}>{title}</div>
         {subtitle && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2, lineHeight: 1.4 }}>{subtitle}</div>}
       </div>
       {accessory}
@@ -86,7 +86,7 @@ function Row({ icon, iconBg, title, subtitle, accessory, onClick, last = false }
 
 const statusChip = (text, color) => (
   <span style={{
-    fontSize: 12, fontWeight: 700, color,
+    fontSize: 12, fontWeight: 600, color,
     background: `color-mix(in srgb, ${color} 12%, transparent)`,
     padding: '4px 11px', borderRadius: 20, whiteSpace: 'nowrap',
   }}>
@@ -126,7 +126,7 @@ function ThemeCard({ mode, active, onSelect, icon: Icon, name, hint }) {
         <Icon size={15} color={active ? 'var(--brand-primary)' : 'var(--text-secondary)'} />
         <span style={{ fontSize: 14, fontWeight: active ? 700 : 600, color: 'var(--text-primary)' }}>{name}</span>
         {active && (
-          <span style={{ marginLeft: 'auto', width: 20, height: 20, borderRadius: '50%', background: 'var(--brand-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#fff', fontWeight: 800 }}>✓</span>
+          <span style={{ marginLeft: 'auto', width: 20, height: 20, borderRadius: '50%', background: 'var(--brand-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#fff', fontWeight: 600 }}>✓</span>
         )}
       </div>
       <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 3 }}>{hint}</div>
@@ -236,14 +236,14 @@ export default function SettingsView({ theme, setTheme }) {
       }}>
         <div style={{
           width: 60, height: 60, borderRadius: '50%',
-          background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))',
+          background: 'var(--btn-primary-bg)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 24, fontWeight: 800, color: '#fff', flexShrink: 0,
+          fontSize: 24, fontWeight: 600, color: '#fff', flexShrink: 0,
         }}>
           {user?.name?.[0]?.toUpperCase() || '?'}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{user?.name}</div>
+          <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{user?.name}</div>
           <div style={{ fontSize: 13, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
         </div>
         <User size={18} color="var(--text-muted)" />
@@ -280,7 +280,7 @@ export default function SettingsView({ theme, setTheme }) {
               {notifPermission !== 'granted' && (
                 <button onClick={requestNotif}
                   style={{
-                    background: 'var(--brand-primary)', color: '#fff', border: 'none', borderRadius: 20,
+                    background: 'var(--btn-primary-bg)', color: '#fff', border: 'none', borderRadius: 980,
                     padding: '7px 15px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', minHeight: 32,
                   }}>
                   {notifPermission === 'denied' ? 'How to fix' : 'Enable'}
@@ -297,7 +297,7 @@ export default function SettingsView({ theme, setTheme }) {
               {geoStatus !== 'granted' && (
                 <button onClick={requestGeo}
                   style={{
-                    background: 'var(--brand-primary)', color: '#fff', border: 'none', borderRadius: 20,
+                    background: 'var(--btn-primary-bg)', color: '#fff', border: 'none', borderRadius: 980,
                     padding: '7px 15px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', minHeight: 32,
                   }}>
                   Enable
@@ -352,7 +352,7 @@ export default function SettingsView({ theme, setTheme }) {
   if (isMobile) return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div style={{ padding: '16px 14px 0', flexShrink: 0 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em' }}>Settings</h1>
+        <h1 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em' }}>Settings</h1>
       </div>
       <div style={{ flex: 1, overflow: 'auto', padding: '14px 14px 96px' }}>
         {content}
@@ -364,10 +364,10 @@ export default function SettingsView({ theme, setTheme }) {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div style={{ padding: '20px 24px 0', flexShrink: 0 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--brand-primary)', letterSpacing: '0.16em', marginBottom: 4 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--brand-primary)', letterSpacing: '0.16em', marginBottom: 4 }}>
           MINDFORM
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em' }}>Settings</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em' }}>Settings</h1>
       </div>
       <div style={{ flex: 1, overflow: 'auto', padding: '18px 24px 28px' }}>
         {content}

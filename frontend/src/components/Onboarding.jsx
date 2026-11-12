@@ -61,7 +61,7 @@ export default function Onboarding({ onDone }) {
         </div>
 
         <h2 style={{
-          fontSize: 27, fontWeight: 700, fontFamily: 'var(--font-display)',
+          fontSize: 27, fontWeight: 600, fontFamily: 'var(--font-display)',
           letterSpacing: '-0.025em', textAlign: 'center', marginBottom: 10,
         }}>
           {current.title}

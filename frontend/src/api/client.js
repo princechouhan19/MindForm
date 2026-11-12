@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || '/api'
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 export const TOKEN_KEY = 'mf_token'
 
@@ -17,9 +17,8 @@ try {
 
 async function request(method, path, body = null, { timeout = 15000 } = {}) {
   const headers = { 'Content-Type': 'application/json' }
-  const isAuthRoute = path.startsWith('/auth/login') || path.startsWith('/auth/register')
   const token = getToken()
-  if (token && !isAuthRoute) headers['Authorization'] = `Bearer ${token}`
+  if (token) headers['Authorization'] = `Bearer ${token}`
 
   const config = { method, headers }
   if (body) config.body = JSON.stringify(body)
@@ -33,9 +32,8 @@ async function request(method, path, body = null, { timeout = 15000 } = {}) {
     res = await fetch(`${BASE_URL}${path}`, config)
   } catch (err) {
     clearTimeout(timer)
-    console.error(`Fetch error [${method} ${BASE_URL}${path}]:`, err)
     if (err.name === 'AbortError') throw new Error('Request timed out. Check your connection and try again.')
-    throw new Error('Failed to connect to server. Is the backend running?')
+    throw new Error('Failed to fetch — is the server running?')
   }
   clearTimeout(timer)
 
@@ -44,8 +42,8 @@ async function request(method, path, body = null, { timeout = 15000 } = {}) {
   try { data = await res.json() } catch { data = null }
 
   if (!res.ok) {
-    // Session expired → clean logout so the user sees the auth screen (do NOT trigger on login/register failures)
-    if (res.status === 401 && getToken() && !isAuthRoute) {
+    // Session expired → clean logout so the user sees the auth screen
+    if (res.status === 401 && getToken()) {
       clearToken()
       // Soft reload so AuthContext re-evaluates from a clean state
       if (typeof window !== 'undefined' && !window.__mfLoggingOut) {
@@ -54,7 +52,7 @@ async function request(method, path, body = null, { timeout = 15000 } = {}) {
       }
     }
     const message = data?.message
-      || (res.status === 401 ? (isAuthRoute ? 'Invalid email or password.' : 'Session expired. Please sign in again.')
+      || (res.status === 401 ? 'Session expired. Please sign in again.'
         : res.status === 429 ? 'Too many requests — slow down and try again.'
         : res.status >= 500 ? 'Server error. Please try again shortly.'
         : 'Request failed.')
@@ -106,12 +104,6 @@ export const faplessAPI = {
   addAura: (points) => request('PUT', '/fapless/aura', { points }),
 }
 
-// Speak — communication & voice practice log
-export const voiceAPI = {
-  get: () => request('GET', '/voice'),
-  update: (payload) => request('PUT', '/voice', payload),
-}
-
 // Social
 export const socialAPI = {
   leaderboard: () => request('GET', '/social/leaderboard'),
@@ -131,6 +123,12 @@ export const adminAPI = {
   assignBadge: (userId, badgeId) => request('POST', `/social/admin/badge/${userId}`, { badgeId }),
   revokeBadge: (userId, badgeId) => request('DELETE', `/social/admin/badge/${userId}`, { badgeId }),
   deleteForumMsg: (msgId) => request('DELETE', `/social/admin/forum/${msgId}`),
+}
+
+// Voice Coach — practice session log (sessions only; media never leaves the device)
+export const voiceAPI = {
+  get: () => request('GET', '/voice'),
+  update: (payload) => request('PUT', '/voice', payload),
 }
 
 // Cross-module aggregate for the Overview page

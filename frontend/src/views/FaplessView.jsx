@@ -285,7 +285,7 @@ function SOSOverlay({ streakDays, onClose, onSurfed, onRelapse }) {
       <div style={{ width: '100%', maxWidth: 640, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--brand-primary)' }}>
           <Siren size={18} />
-          <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.06em' }}>URGE RESCUE</span>
+          <span style={{ fontSize: 14, fontWeight: 600, letterSpacing: '0.06em' }}>URGE RESCUE</span>
         </div>
         <button onClick={onClose} aria-label="Close rescue"
           style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--bg-glass)', border: '1px solid var(--border)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -295,7 +295,7 @@ function SOSOverlay({ streakDays, onClose, onSurfed, onRelapse }) {
 
       {/* Surf card */}
       <div style={{ width: '100%', maxWidth: 640, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-2xl)', padding: '28px 24px', textAlign: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.1em', marginBottom: 4 }}>
           <Waves size={14} color="var(--brand-primary)" /> URGE SURFING
         </div>
         <div style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.55, marginBottom: 20, maxWidth: 440, margin: '0 auto 20px' }}>
@@ -306,7 +306,7 @@ function SOSOverlay({ streakDays, onClose, onSurfed, onRelapse }) {
         <div style={{ position: 'relative', width: 168, height: 168, margin: '0 auto 8px' }}>
           <div style={{
             position: 'absolute', inset: 0, borderRadius: '50%',
-            background: 'radial-gradient(circle, var(--brand-primary-dim) 0%, transparent 70%)',
+            background: 'transparent',
           }} />
           <div style={{
             position: 'absolute', left: '50%', top: '50%', width: 128, height: 128, marginLeft: -64, marginTop: -64,
@@ -320,7 +320,7 @@ function SOSOverlay({ streakDays, onClose, onSurfed, onRelapse }) {
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             background: 'var(--bg-elevated)',
           }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 30, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 30, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
               {mm}:{pad(ss)}
             </span>
             <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--brand-primary)', marginTop: 2 }}>
@@ -339,7 +339,7 @@ function SOSOverlay({ streakDays, onClose, onSurfed, onRelapse }) {
 
       {/* Trigger check (HALT) */}
       <div style={{ width: '100%', maxWidth: 640, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '20px 22px', marginTop: 14 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.08em', marginBottom: 4 }}>WHAT'S DRIVING THIS?</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.08em', marginBottom: 4 }}>WHAT'S DRIVING THIS?</div>
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>Name it to tame it — most urges trace back to one of these.</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {TRIGGERS.map(t => {
@@ -379,7 +379,7 @@ function SOSOverlay({ streakDays, onClose, onSurfed, onRelapse }) {
 
       {/* Replacement actions */}
       <div style={{ width: '100%', maxWidth: 640, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '20px 22px', marginTop: 14 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.08em', marginBottom: 4 }}>CHANGE THE CHANNEL</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.08em', marginBottom: 4 }}>CHANGE THE CHANNEL</div>
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>Do one or two — physical state changes beat willpower.</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {REPLACEMENT_ACTIONS.map(a => {
@@ -405,7 +405,7 @@ function SOSOverlay({ streakDays, onClose, onSurfed, onRelapse }) {
       {/* Footer actions */}
       <div style={{ width: '100%', maxWidth: 640, display: 'flex', flexDirection: 'column', gap: 10, marginTop: 18 }}>
         <button onClick={finishSurf} disabled={logging}
-          style={{ background: 'var(--brand-success)', border: 'none', borderRadius: 14, color: '#fff', padding: '15px 24px', fontSize: 15.5, fontWeight: 700, cursor: logging ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 52, opacity: logging ? 0.7 : 1 }}>
+          style={{ background: 'var(--brand-success)', border: 'none', borderRadius: 14, color: '#fff', padding: '15px 24px', fontSize: 15.5, fontWeight: 600, cursor: logging ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 52, opacity: logging ? 0.7 : 1 }}>
           {logging ? <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Waves size={17} />}
           {logging ? 'Logging…' : `I surfed it — log the win (+${URGE_AURA} aura)`}
         </button>
@@ -598,7 +598,7 @@ export default function FaplessView() {
           ['Urges resisted', analytics.resistedCount, 'var(--brand-primary)'],
           ['Comebacks', analytics.comebacks, 'var(--text-secondary)']].map(([l, v, c]) => (
           <div key={l} style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: c, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>{v}</div>
+            <div style={{ fontSize: 24, fontWeight: 600, color: c, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>{v}</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{l}</div>
           </div>
         ))}
@@ -607,7 +607,7 @@ export default function FaplessView() {
         Your trigger was saved. Spotting patterns early is how future waves get smaller.
       </div>
       <button onClick={() => { setReframe(null); load() }}
-        style={{ background: 'var(--brand-primary)', border: 'none', borderRadius: 14, color: '#fff', padding: '14px 30px', fontSize: 15, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, minHeight: 50, boxShadow: 'var(--shadow-brand)' }}>
+        style={{ background: 'var(--btn-primary-bg)', border: 'none', borderRadius: 980, color: '#fff', padding: '12px 24px', fontSize: 15, fontWeight: 400, letterSpacing: '-0.022em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, transition: 'transform 0.15s ease, filter 0.2s' }}>
         <RefreshCw size={16} /> Start Fresh
       </button>
     </div>
@@ -625,9 +625,9 @@ export default function FaplessView() {
         <div key={s.label} style={{ ...card, display: 'flex', flexDirection: 'column', gap: 6, padding: '14px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <s.icon size={13} color={s.color} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>{s.label}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>{s.label}</span>
           </div>
-          <div style={{ fontSize: 26, fontWeight: 800, color: s.color, fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', lineHeight: 1 }}>{s.value}</div>
+          <div style={{ fontSize: 26, fontWeight: 600, color: s.color, fontFamily: 'var(--font-display)', letterSpacing: '-0.022em', lineHeight: 1 }}>{s.value}</div>
         </div>
       ))}
     </div>
@@ -651,9 +651,9 @@ export default function FaplessView() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
               <t.icon size={15} color={t.color} />
-              <span style={{ fontSize: 13.5, fontWeight: 700, color: active ? t.color : 'var(--text-primary)' }}>{t.title}</span>
-              <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginLeft: 'auto' }}>{t.range}</span>
-              {active && <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: t.color, borderRadius: 20, padding: '2px 8px' }}>NOW</span>}
+              <span style={{ fontSize: 13.5, fontWeight: 600, color: active ? t.color : 'var(--text-primary)' }}>{t.title}</span>
+              <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginLeft: 'auto' }}>{t.range}</span>
+              {active && <span style={{ fontSize: 9, fontWeight: 600, color: '#fff', background: t.color, borderRadius: 20, padding: '2px 8px' }}>NOW</span>}
             </div>
             <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{t.body}</div>
           </div>
@@ -679,13 +679,13 @@ export default function FaplessView() {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: isActive ? lvl.color : 'var(--text-primary)' }}>{lvl.label}</span>
-                {isActive && <span style={{ fontSize: 9, background: lvl.color, color: '#000', borderRadius: 20, padding: '1px 8px', fontWeight: 800, letterSpacing: '0.05em' }}>YOU ARE HERE</span>}
+                <span style={{ fontSize: 14, fontWeight: 600, color: isActive ? lvl.color : 'var(--text-primary)' }}>{lvl.label}</span>
+                {isActive && <span style={{ fontSize: 9, background: lvl.color, color: '#000', borderRadius: 20, padding: '1px 8px', fontWeight: 600, letterSpacing: '0.05em' }}>YOU ARE HERE</span>}
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{lvl.desc}</div>
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700, color: lvl.color }}>
+              <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 600, color: lvl.color }}>
                 {lvl.minDays === lvl.maxDays ? 'Day 0' : lvl.maxDays === Infinity ? `${lvl.minDays}+ days` : `${lvl.minDays}–${lvl.maxDays}d`}
               </div>
               <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>+{lvl.auraPerDay} aura/day</div>
@@ -712,12 +712,12 @@ export default function FaplessView() {
               width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
               background: isCompleted ? 'var(--brand-success)' : 'var(--border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: isCompleted ? '#000' : 'var(--text-muted)', fontSize: 11, fontWeight: 800,
+              color: isCompleted ? '#000' : 'var(--text-muted)', fontSize: 11, fontWeight: 600,
             }}>
               {isCompleted ? <Check size={15} color="#000" /> : `${m.day}d`}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: isCompleted ? 'var(--brand-success)' : 'var(--text-primary)' }}>{m.label}</div>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: isCompleted ? 'var(--brand-success)' : 'var(--text-primary)' }}>{m.label}</div>
               <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>{m.desc}</div>
               {isNext && (
                 <div style={{ marginTop: 8, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
@@ -725,7 +725,7 @@ export default function FaplessView() {
                 </div>
               )}
             </div>
-            <div style={{ fontSize: 12, color: 'var(--brand-warning)', fontWeight: 700, fontFamily: 'var(--font-mono)', flexShrink: 0 }}>+{m.bonus}</div>
+            <div style={{ fontSize: 12, color: 'var(--brand-warning)', fontWeight: 600, fontFamily: 'var(--font-mono)', flexShrink: 0 }}>+{m.bonus}</div>
           </div>
         )
       })}
@@ -745,18 +745,18 @@ export default function FaplessView() {
             transition: 'all 0.15s',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, gap: 8 }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: isActive ? 'var(--brand-error)' : 'var(--text-primary)' }}>{ch.label}</span>
-              {isActive && <span style={{ fontSize: 9, background: isComplete ? 'var(--brand-success)' : 'var(--brand-error)', color: isComplete ? '#000' : '#fff', borderRadius: 20, padding: '2px 8px', fontWeight: 800, flexShrink: 0 }}>{isComplete ? 'DONE ✓' : 'ACTIVE'}</span>}
+              <span style={{ fontSize: 14, fontWeight: 600, color: isActive ? 'var(--brand-error)' : 'var(--text-primary)' }}>{ch.label}</span>
+              {isActive && <span style={{ fontSize: 9, background: isComplete ? 'var(--brand-success)' : 'var(--brand-error)', color: isComplete ? '#000' : '#fff', borderRadius: 20, padding: '2px 8px', fontWeight: 600, flexShrink: 0 }}>{isComplete ? 'DONE ✓' : 'ACTIVE'}</span>}
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>{ch.desc}</div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ch.duration} days</span>
-              <span style={{ fontSize: 11, color: 'var(--brand-warning)', fontWeight: 700 }}>⚡ +{ch.auraBonus.toLocaleString()}</span>
+              <span style={{ fontSize: 11, color: 'var(--brand-warning)', fontWeight: 600 }}>⚡ +{ch.auraBonus.toLocaleString()}</span>
             </div>
             {isActive && !isComplete && (
               <div style={{ marginTop: 8 }}>
                 <div style={{ height: 4, background: 'var(--border)', borderRadius: 2 }}>
-                  <div style={{ height: '100%', width: `${Math.min(100, Math.round((streakDays / ch.duration) * 100))}%`, background: 'linear-gradient(90deg,var(--red),var(--brand-warning))', borderRadius: 2 }} />
+                  <div style={{ height: '100%', width: `${Math.min(100, Math.round((streakDays / ch.duration) * 100))}%`, background: 'var(--brand-accent)', borderRadius: 2 }} />
                 </div>
                 <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>{Math.max(0, ch.duration - streakDays)} days left</div>
               </div>
@@ -787,7 +787,7 @@ export default function FaplessView() {
               <sg.icon size={16} color={sg.color} />
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>{item.name}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{item.name}</div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>{item.desc}</div>
             </div>
           </div>
@@ -801,7 +801,7 @@ export default function FaplessView() {
       {/* Urge log */}
       {data?.urgeLogs?.length > 0 && (
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 8 }}>URGE LOG — {analytics.resistedCount}/{data.urgeLogs.length} SURFED</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 8 }}>URGE LOG — {analytics.resistedCount}/{data.urgeLogs.length} SURFED</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[...data.urgeLogs].reverse().slice(0, 12).map((u, i) => {
               const t = TRIGGERS.find(x => x.id === u.trigger)
@@ -812,7 +812,7 @@ export default function FaplessView() {
                     <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>{t?.label || 'Urge'}</div>
                     <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{new Date(u.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} · intensity {u.intensityBefore ?? '–'}→{u.intensityAfter ?? '–'}</div>
                   </div>
-                  {u.resisted && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--brand-success)', background: 'var(--green-dim)', borderRadius: 20, padding: '2px 8px', flexShrink: 0 }}>SURFED +{URGE_AURA}</span>}
+                  {u.resisted && <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--brand-success)', background: 'var(--green-dim)', borderRadius: 20, padding: '2px 8px', flexShrink: 0 }}>SURFED +{URGE_AURA}</span>}
                 </div>
               )
             })}
@@ -822,7 +822,7 @@ export default function FaplessView() {
       {/* Relapses */}
       {data?.relapses?.length > 0 && (
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 8 }}>RELAPSE HISTORY — {data.relapses.length}</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 8 }}>RELAPSE HISTORY — {data.relapses.length}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[...data.relapses].reverse().map((r, i) => {
               const t = TRIGGERS.find(x => x.id === r.trigger)
@@ -833,7 +833,7 @@ export default function FaplessView() {
                     <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)' }}>{t?.label || r.reason || 'Not specified'}</div>
                     <div style={{ fontSize: 10.5, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{new Date(r.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}{r.reason ? ` · ${r.reason}` : ''}</div>
                   </div>
-                  <span style={{ fontSize: 11, color: 'var(--brand-orange)', fontWeight: 700, flexShrink: 0 }}>Day {r.dayCount}</span>
+                  <span style={{ fontSize: 11, color: 'var(--brand-orange)', fontWeight: 600, flexShrink: 0 }}>Day {r.dayCount}</span>
                 </div>
               )
             })}
@@ -857,7 +857,7 @@ export default function FaplessView() {
           style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '16px 20px', minHeight: 52, textAlign: 'left' }}>
           <Icon size={17} color={color} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</div>
+            <div style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--text-primary)' }}>{title}</div>
             {hint && <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 1 }}>{hint}</div>}
           </div>
           {open ? <ChevronUp size={16} color="var(--text-muted)" /> : <ChevronDown size={16} color="var(--text-muted)" />}
@@ -885,27 +885,27 @@ export default function FaplessView() {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Zap size={15} color="var(--brand-warning)" fill="var(--brand-warning)" />
-            <span style={{ fontSize: 17, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--brand-warning)', letterSpacing: '-0.5px' }}>
+            <span style={{ fontSize: 17, fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--brand-warning)', letterSpacing: '-0.5px' }}>
               {auraPoints.toLocaleString()}
             </span>
-            <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.06em' }}>AURA</span>
+            <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.06em' }}>AURA</span>
           </div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--brand-warning)', background: 'color-mix(in srgb, var(--brand-warning) 12%, transparent)', padding: '4px 10px', borderRadius: 20 }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--brand-warning)', background: 'color-mix(in srgb, var(--brand-warning) 12%, transparent)', padding: '4px 10px', borderRadius: 20 }}>
             +{currentLevel.auraPerDay}/DAY
           </div>
         </div>
 
         <div className="fapless-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px 80px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {/* Hero */}
-          <div style={{ background: `linear-gradient(160deg, var(--bg-card), color-mix(in srgb, ${currentLevel.color} 7%, transparent))`, border: `1px solid color-mix(in srgb, ${currentLevel.color} 30%, transparent)`, borderRadius: 'var(--radius-xl)', padding: '18px 16px' }}>
+          <div style={{ background: `var(--bg-card)`, border: `1px solid color-mix(in srgb, ${currentLevel.color} 30%, transparent)`, borderRadius: 'var(--radius-xl)', padding: '18px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ width: 58, height: 58, borderRadius: 14, overflow: 'hidden', border: `2px solid ${currentLevel.color}`, flexShrink: 0, background: 'var(--bg-base)' }}>
                 <img src={currentLevel.image} alt={currentLevel.label} onError={e => { e.currentTarget.style.display = 'none' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 9.5, color: 'var(--text-muted)', letterSpacing: '0.12em', fontWeight: 700 }}>CURRENT STREAK</div>
+                <div style={{ fontSize: 9.5, color: 'var(--text-muted)', letterSpacing: '0.12em', fontWeight: 600 }}>CURRENT STREAK</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                  <span style={{ fontSize: 46, fontWeight: 800, fontFamily: 'var(--font-display)', color: currentLevel.color, lineHeight: 1.05, letterSpacing: '-0.03em', animation: 'auraFloat 5s ease-in-out infinite' }}>{streakDays}</span>
+                  <span style={{ fontSize: 46, fontWeight: 600, fontFamily: 'var(--font-display)', color: currentLevel.color, lineHeight: 1.05, letterSpacing: '-0.022em', animation: 'auraFloat 5s ease-in-out infinite' }}>{streakDays}</span>
                   <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>days</span>
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
@@ -918,10 +918,10 @@ export default function FaplessView() {
               <div style={{ marginTop: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 5 }}>
                   <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Next: {nextLevel.label}</span>
-                  <span style={{ color: currentLevel.color, fontWeight: 700 }}>{nextLevel.minDays - streakDays}d to go</span>
+                  <span style={{ color: currentLevel.color, fontWeight: 600 }}>{nextLevel.minDays - streakDays}d to go</span>
                 </div>
                 <div style={{ height: 6, background: 'var(--border)', borderRadius: 3 }}>
-                  <div style={{ height: '100%', width: `${progressToNext}%`, background: `linear-gradient(90deg, ${currentLevel.color}, ${nextLevel.color})`, borderRadius: 3, transition: 'width 0.8s var(--ease-out-expo)' }} />
+                  <div style={{ height: '100%', width: `${progressToNext}%`, background: `${currentLevel.color}`, borderRadius: 3, transition: 'width 0.8s var(--ease-out-expo)' }} />
                 </div>
               </div>
             )}
@@ -931,18 +931,18 @@ export default function FaplessView() {
           <button onClick={() => setShowSOS(true)}
             style={{
               display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
-              background: 'linear-gradient(120deg, var(--red-dim), color-mix(in srgb, var(--brand-orange) 8%, transparent))',
+              background: 'var(--red-dim)',
               border: '1px solid color-mix(in srgb, var(--brand-error) 35%, transparent)',
               borderRadius: 'var(--radius-xl)', padding: '15px 16px', cursor: 'pointer', minHeight: 72,
               transition: 'transform 0.15s var(--ease-apple)',
             }}
             onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.008)'}
             onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--brand-error)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 18px rgba(255,69,58,0.35)' }}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--brand-error)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Siren size={20} color="#fff" />
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>Urge hitting right now?</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Urge hitting right now?</div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>Open Urge Rescue — surf the wave in 3 minutes</div>
             </div>
             <ChevronUp size={16} color="var(--text-muted)" style={{ transform: 'rotate(90deg)' }} />
@@ -952,7 +952,7 @@ export default function FaplessView() {
 
           {!data?.startDate && (
             <button onClick={handleStart} disabled={saving}
-              style={{ background: 'var(--brand-error)', border: 'none', borderRadius: 14, color: '#fff', padding: '15px', fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 52 }}>
+              style={{ background: 'var(--brand-error)', border: 'none', borderRadius: 14, color: '#fff', padding: '15px', fontSize: 15, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 52 }}>
               <Play size={17} /> Start Journey
             </button>
           )}
@@ -966,8 +966,8 @@ export default function FaplessView() {
 
           {/* Daily reminder */}
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '16px' }}>
-            <div style={{ fontSize: 9.5, color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: 8, fontWeight: 700 }}>TODAY'S REMINDER</div>
-            <div style={{ fontSize: 14.5, fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: 1.65, fontWeight: 500 }}>
+            <div style={{ fontSize: 9.5, color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: 8, fontWeight: 600 }}>TODAY'S REMINDER</div>
+            <div style={{ fontSize: 14.5, fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: 1.65, fontWeight: 600 }}>
               {MOTIVATIONAL[Math.floor((streakDays + new Date().getDate()) % MOTIVATIONAL.length)]}
             </div>
             <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1015,8 +1015,8 @@ export default function FaplessView() {
       <div style={{ padding: '20px 24px 0', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18, gap: 12, flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontSize: 12, color: 'var(--brand-error)', fontWeight: 700, letterSpacing: '0.18em', marginBottom: 4 }}>FAPLESS · DISCIPLINE ENGINE</div>
-            <h1 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>Mastery Journey</h1>
+            <div style={{ fontSize: 12, color: 'var(--brand-error)', fontWeight: 600, letterSpacing: '0.18em', marginBottom: 4 }}>FAPLESS · DISCIPLINE ENGINE</div>
+            <h1 style={{ fontSize: 30, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>Mastery Journey</h1>
           </div>
           {data?.startDate && (
             <div style={{ display: 'flex', gap: 10 }}>
@@ -1041,15 +1041,15 @@ export default function FaplessView() {
         {/* Hero row */}
         <div className="grid-3col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           {/* Streak */}
-          <div style={{ ...card, position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 10, background: `linear-gradient(160deg, var(--bg-card), color-mix(in srgb, ${currentLevel.color} 7%, transparent))`, border: `1px solid color-mix(in srgb, ${currentLevel.color} 28%, transparent)` }}>
+          <div style={{ ...card, position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 10, background: `var(--bg-card)`, border: `1px solid color-mix(in srgb, ${currentLevel.color} 28%, transparent)` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.16em', fontWeight: 700 }}>CURRENT STREAK</span>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.16em', fontWeight: 600 }}>CURRENT STREAK</span>
               <MFRing percent={milestonePct} size={46} stroke={5} color={currentLevel.color} track="var(--border)" label={nextMilestone ? `${nextMilestone.day}d` : 'MAX'} />
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-              <span style={{ fontSize: 68, fontWeight: 800, fontFamily: 'var(--font-display)', color: currentLevel.color, lineHeight: 1, letterSpacing: '-0.04em', animation: 'auraFloat 5s ease-in-out infinite' }}>{streakDays}</span>
+              <span style={{ fontSize: 68, fontWeight: 600, fontFamily: 'var(--font-display)', color: currentLevel.color, lineHeight: 1, letterSpacing: '-0.022em', animation: 'auraFloat 5s ease-in-out infinite' }}>{streakDays}</span>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{streakDays === 1 ? 'day clean' : 'days clean'}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{streakDays === 1 ? 'day clean' : 'days clean'}</div>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{pad(streakHrs)}:{pad(streakMins)}:{pad(streakSecs)}</div>
               </div>
             </div>
@@ -1057,25 +1057,25 @@ export default function FaplessView() {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 5 }}>
                   <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Next: {nextLevel.label}</span>
-                  <span style={{ color: currentLevel.color, fontWeight: 700 }}>{nextLevel.minDays - streakDays}d to go</span>
+                  <span style={{ color: currentLevel.color, fontWeight: 600 }}>{nextLevel.minDays - streakDays}d to go</span>
                 </div>
                 <div style={{ height: 6, background: 'var(--border)', borderRadius: 3 }}>
-                  <div style={{ height: '100%', width: `${progressToNext}%`, background: `linear-gradient(90deg, ${currentLevel.color}, ${nextLevel.color})`, borderRadius: 3, transition: 'width 0.8s var(--ease-out-expo)' }} />
+                  <div style={{ height: '100%', width: `${progressToNext}%`, background: `${currentLevel.color}`, borderRadius: 3, transition: 'width 0.8s var(--ease-out-expo)' }} />
                 </div>
               </div>
             ) : (
-              <div style={{ fontSize: 12, color: 'var(--brand-warning)', fontWeight: 700 }}>🏆 ASCENDED — MAX LEVEL</div>
+              <div style={{ fontSize: 12, color: 'var(--brand-warning)', fontWeight: 600 }}>🏆 ASCENDED — MAX LEVEL</div>
             )}
           </div>
 
           {/* Level / identity */}
-          <div style={{ ...card, display: 'flex', alignItems: 'center', gap: 20, background: `linear-gradient(160deg, var(--bg-card), color-mix(in srgb, ${currentLevel.color} 9%, transparent))`, border: `1px solid color-mix(in srgb, ${currentLevel.color} 30%, transparent)` }}>
-            <div style={{ width: 104, height: 104, borderRadius: 18, overflow: 'hidden', border: `2px solid ${currentLevel.color}`, flexShrink: 0, background: 'var(--bg-base)', boxShadow: `0 8px 28px color-mix(in srgb, ${currentLevel.color} 25%, transparent)` }}>
+          <div style={{ ...card, display: 'flex', alignItems: 'center', gap: 20, background: `var(--bg-card)`, border: `1px solid color-mix(in srgb, ${currentLevel.color} 30%, transparent)` }}>
+            <div style={{ width: 104, height: 104, borderRadius: 18, overflow: 'hidden', border: `2px solid ${currentLevel.color}`, flexShrink: 0, background: 'var(--bg-base)', }}>
               <img src={currentLevel.image} alt={currentLevel.label} onError={e => { e.currentTarget.style.display = 'none' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.16em', fontWeight: 700, marginBottom: 6 }}>CURRENT IDENTITY</div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: currentLevel.color, marginBottom: 6, letterSpacing: '-0.02em' }}>{currentLevel.label}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.16em', fontWeight: 600, marginBottom: 6 }}>CURRENT IDENTITY</div>
+              <div style={{ fontSize: 24, fontWeight: 600, color: currentLevel.color, marginBottom: 6, letterSpacing: '-0.02em' }}>{currentLevel.label}</div>
               <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{currentLevel.desc}</div>
             </div>
           </div>
@@ -1083,10 +1083,10 @@ export default function FaplessView() {
           {/* Strength / aura */}
           <div style={{ ...card, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.16em', fontWeight: 700 }}>DISCIPLINE ENERGY</span>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.16em', fontWeight: 600 }}>DISCIPLINE ENERGY</span>
               <Zap size={14} color="var(--brand-warning)" fill="var(--brand-warning)" />
             </div>
-            <div style={{ fontSize: 46, fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--brand-warning)', lineHeight: 1, letterSpacing: '-0.03em' }}>{auraPoints.toLocaleString()}</div>
+            <div style={{ fontSize: 46, fontWeight: 600, fontFamily: 'var(--font-display)', color: 'var(--brand-warning)', lineHeight: 1, letterSpacing: '-0.022em' }}>{auraPoints.toLocaleString()}</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {[['Streak', streakAura], ['Milestones', milestoneAura], ['Urge wins', urgeAura], ['Challenges', challengeBonus]].map(([l, v]) => (
                 <span key={l} style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-secondary)', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 20, padding: '3px 9px' }}>
@@ -1104,18 +1104,18 @@ export default function FaplessView() {
         <button onClick={() => setShowSOS(true)}
           style={{
             display: 'flex', alignItems: 'center', gap: 16, width: '100%', textAlign: 'left',
-            background: 'linear-gradient(120deg, var(--red-dim), color-mix(in srgb, var(--brand-orange) 7%, transparent))',
+            background: 'var(--red-dim)',
             border: '1px solid color-mix(in srgb, var(--brand-error) 32%, transparent)',
             borderRadius: 'var(--radius-xl)', padding: '16px 20px', cursor: 'pointer', minHeight: 76,
             transition: 'transform 0.15s var(--ease-apple), border-color 0.15s',
           }}
           onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.005)'; e.currentTarget.style.borderColor = 'var(--brand-error)' }}
           onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--brand-error) 32%, transparent)' }}>
-          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--brand-error)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 6px 22px rgba(255,69,58,0.4)' }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--brand-error)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Siren size={22} color="#fff" />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Urge hitting right now?</div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Urge hitting right now?</div>
             <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
               Open Urge Rescue — a guided 3-minute wave: breathe, check your state, change the channel. Surfing one earns +{URGE_AURA} aura.
             </div>
@@ -1125,7 +1125,7 @@ export default function FaplessView() {
 
         {!data?.startDate && (
           <button onClick={handleStart} disabled={saving}
-            style={{ background: 'var(--brand-error)', border: 'none', borderRadius: 14, color: '#fff', padding: '16px', fontSize: 15.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 54 }}>
+            style={{ background: 'var(--brand-error)', border: 'none', borderRadius: 14, color: '#fff', padding: '16px', fontSize: 15.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 54 }}>
             <Play size={18} /> Start Journey
           </button>
         )}
@@ -1153,9 +1153,9 @@ export default function FaplessView() {
         <Section id="history" icon={Calendar} title="History & urge log" hint="Your patterns over time" color="var(--text-muted)">{historySection}</Section>
 
         {/* Daily reminder */}
-        <div style={{ ...card, background: `linear-gradient(140deg, var(--bg-card), color-mix(in srgb, ${currentLevel.color} 6%, transparent))` }}>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.14em', marginBottom: 10, fontWeight: 700 }}>TODAY'S REMINDER</div>
-          <div style={{ fontSize: 16, fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: 1.65, fontWeight: 500 }}>
+        <div style={{ ...card, background: `var(--bg-card)` }}>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.14em', marginBottom: 10, fontWeight: 600 }}>TODAY'S REMINDER</div>
+          <div style={{ fontSize: 16, fontStyle: 'italic', color: 'var(--text-primary)', lineHeight: 1.65, fontWeight: 600 }}>
             {MOTIVATIONAL[Math.floor((streakDays + new Date().getDate()) % MOTIVATIONAL.length)]}
           </div>
           <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1188,14 +1188,14 @@ function RelapsePanel({ isMobile, streakDays, trigger, setTrigger, note, setNote
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 8 }}>
         <HeartPulse size={17} color="var(--brand-error)" />
-        <div style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text-primary)' }}>Reset & refocus</div>
+        <div style={{ fontSize: 15.5, fontWeight: 600, color: 'var(--text-primary)' }}>Reset & refocus</div>
       </div>
       <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 16, maxWidth: 560 }}>
         Happens to almost everyone on this journey — what matters is the data you take from it.
         Your <strong style={{ color: 'var(--text-primary)' }}>{streakDays}-day</strong> streak resets to zero; your aura and history stay.
       </div>
 
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.06em', marginBottom: 8 }}>WHAT TRIGGERED IT?</div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.06em', marginBottom: 8 }}>WHAT TRIGGERED IT?</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
         {TRIGGERS.map(t => {
           const on = trigger === t.id
@@ -1215,7 +1215,7 @@ function RelapsePanel({ isMobile, streakDays, trigger, setTrigger, note, setNote
         })}
       </div>
 
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.06em', marginBottom: 8 }}>ANY CONTEXT? <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(optional)</span></div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.06em', marginBottom: 8 }}>ANY CONTEXT? <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>(optional)</span></div>
       <textarea value={note} onChange={e => setNote(e.target.value)}
         placeholder="Where were you, what time, what happened right before?"
         rows={2}
@@ -1224,7 +1224,7 @@ function RelapsePanel({ isMobile, streakDays, trigger, setTrigger, note, setNote
 
       <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
         <button onClick={onConfirm} disabled={saving}
-          style={{ background: 'var(--brand-error)', border: 'none', borderRadius: 11, color: '#fff', padding: '12px 22px', fontSize: 14, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: 7, minHeight: 46, opacity: saving ? 0.7 : 1 }}>
+          style={{ background: 'var(--brand-error)', border: 'none', borderRadius: 11, color: '#fff', padding: '12px 22px', fontSize: 14, fontWeight: 600, cursor: saving ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: 7, minHeight: 46, opacity: saving ? 0.7 : 1 }}>
           {saving ? <RefreshCw size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={15} />}
           {saving ? 'Logging…' : 'Log it & start fresh'}
         </button>

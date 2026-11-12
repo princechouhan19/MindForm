@@ -37,7 +37,7 @@ export function MFCapsuleTooltip({ active, payload, label, unit = '%', color = '
           <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
             {seriesNames?.[p.dataKey] || p.name || p.dataKey}
           </span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums', marginLeft: 'auto' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums', marginLeft: 'auto' }}>
             {p.value}{unit}
           </span>
         </div>
@@ -77,7 +77,7 @@ export function MFBarChart({
               <stop offset="100%" stopColor={color} stopOpacity={0.45} />
             </linearGradient>
           </defs>
-          <XAxis dataKey="label" tick={showTicks ? { fontSize: 10, fill: 'var(--text-muted)', fontWeight: 500 } : false}
+          <XAxis dataKey="label" tick={showTicks ? { fontSize: 10, fill: 'var(--text-muted)', fontWeight: 600 } : false}
             axisLine={false} tickLine={false} interval={0} />
           <YAxis hide domain={[0, yMax ?? 100]} />
           <Tooltip
@@ -120,7 +120,7 @@ export function MFRing({ percent, size = 80, stroke = 8, color = 'var(--brand-pr
       }}>
         {children ?? (
           <>
-            <span style={{ fontSize: size > 70 ? 17 : 13, fontWeight: 700, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em', lineHeight: 1 }}>
+            <span style={{ fontSize: size > 70 ? 17 : 13, fontWeight: 600, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em', lineHeight: 1 }}>
               {Math.round(pct)}%
             </span>
             {label && <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.04em' }}>{label}</span>}
@@ -147,12 +147,12 @@ export function MFAreaChart({
             </linearGradient>
           ))}
         </defs>
-        <XAxis dataKey="label" tick={showTicks ? { fontSize: 10, fill: 'var(--text-muted)', fontWeight: 500 } : false}
+        <XAxis dataKey="label" tick={showTicks ? { fontSize: 10, fill: 'var(--text-muted)', fontWeight: 600 } : false}
           axisLine={false} tickLine={false} interval="preserveStartEnd" />
         <YAxis
           hide={!showTicks}
           domain={yDomain ?? [0, 'auto']}
-          tick={showTicks ? { fontSize: 10, fill: 'var(--text-muted)', fontWeight: 500 } : false}
+          tick={showTicks ? { fontSize: 10, fill: 'var(--text-muted)', fontWeight: 600 } : false}
           axisLine={false} tickLine={false} width={28} tickCount={yTickCount} />
         <Tooltip content={<MFCapsuleTooltip seriesNames={Object.fromEntries(series.map(s => [s.key, s.name]))} unit="" />} cursor={{ stroke: 'var(--border-bright)', strokeWidth: 1 }} />
         {series.map(s => (

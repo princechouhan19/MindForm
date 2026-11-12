@@ -236,19 +236,19 @@ export default function HabitTracker() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '6px 10px' }}>
               <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1) }} style={{ background: 'none', color: 'var(--text-secondary)', display: 'flex', padding: 2, cursor: 'pointer' }}><ChevronLeft size={16} /></button>
-              <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--amber)', fontWeight: 700 }}>{monthName.slice(0, 3)} {year}</span>
+              <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--amber)', fontWeight: 600 }}>{monthName.slice(0, 3)} {year}</span>
               <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1) }} style={{ background: 'none', color: 'var(--text-secondary)', display: 'flex', padding: 2, cursor: 'pointer' }}><ChevronRight size={16} /></button>
             </div>
             <SyncBadge />
           </div>
 
           {/* Today's overview card */}
-          <div style={{ background: `linear-gradient(135deg, var(--bg-card), ${todayColor}0a)`, border: `1px solid ${todayColor}33`, borderRadius: 14, padding: '14px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: 'var(--bg-card)', border: `1px solid ${todayColor}33`, borderRadius: 'var(--radius-lg)', padding: '14px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 4 }}>
                 {selectedDay === today.getDate() && month === today.getMonth() ? "TODAY'S PROGRESS" : `DAY ${selectedDay} PROGRESS`}
               </div>
-              <div style={{ fontSize: 26, fontWeight: 900, fontFamily: 'var(--font-mono)', color: todayColor, lineHeight: 1 }}>{todayPct}%</div>
+              <div style={{ fontSize: 26, fontWeight: 600, fontFamily: 'var(--font-mono)', color: todayColor, lineHeight: 1 }}>{todayPct}%</div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{todayDone} / {habits.length} habits</div>
               <div style={{ height: 4, background: 'var(--border)', borderRadius: 2, marginTop: 8 }}>
                 <div style={{ height: '100%', width: `${todayPct}%`, background: todayColor, borderRadius: 2, transition: 'width 0.4s ease' }} />
@@ -256,7 +256,7 @@ export default function HabitTracker() {
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>MONTH</div>
-              <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'var(--font-mono)', color: overallPct >= 80 ? 'var(--green)' : overallPct >= 50 ? 'var(--amber)' : 'var(--red)' }}>{overallPct}%</div>
+              <div style={{ fontSize: 20, fontWeight: 600, fontFamily: 'var(--font-mono)', color: overallPct >= 80 ? 'var(--green)' : overallPct >= 50 ? 'var(--amber)' : 'var(--red)' }}>{overallPct}%</div>
               <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{totalDone}/{totalGoal}</div>
             </div>
           </div>
@@ -284,7 +284,7 @@ export default function HabitTracker() {
                     transition: 'all 0.15s', minWidth: 36, opacity: isFuture ? 0.35 : 1
                   }}>
                   <span style={{ fontSize: 8, fontWeight: 600, color: isSel ? 'var(--amber)' : 'var(--text-muted)' }}>D</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-mono)', color: isSel ? 'var(--amber)' : 'var(--text-secondary)' }}>{d}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-mono)', color: isSel ? 'var(--amber)' : 'var(--text-secondary)' }}>{d}</span>
                   {dayPct > 0 && <div style={{ width: 14, height: 3, borderRadius: 2, background: col }} />}
                   {dayPct === 0 && !isFuture && <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--border)' }} />}
                   {isFuture && <span style={{ fontSize: 8 }}>🔒</span>}
@@ -385,8 +385,8 @@ export default function HabitTracker() {
                       <span style={{ fontSize: 18 }}>{h.emoji}</span>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{h.name}</span>
-                          <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700, color: h.pct >= 80 ? 'var(--green)' : h.pct >= 50 ? 'var(--amber)' : 'var(--red)' }}>{h.pct}%</span>
+                          <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 600 }}>{h.name}</span>
+                          <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 600, color: h.pct >= 80 ? 'var(--green)' : h.pct >= 50 ? 'var(--amber)' : 'var(--red)' }}>{h.pct}%</span>
                         </div>
                         <div style={{ height: 5, background: 'var(--border)', borderRadius: 3 }}>
                           <div style={{ height: '100%', width: `${h.pct}%`, background: h.pct >= 80 ? 'var(--green)' : h.pct >= 50 ? 'var(--amber)' : 'var(--red)', borderRadius: 3, transition: 'width 0.4s' }} />
@@ -403,8 +403,8 @@ export default function HabitTracker() {
                 {[['mood', '😊 Mood', 'var(--cyan)'], ['motivation', '🔥 Motivation', 'var(--amber)']].map(([type, label, color]) => (
                   <div key={type} style={{ marginBottom: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>{label}</span>
-                      <span style={{ fontSize: 16, fontWeight: 800, fontFamily: 'var(--font-mono)', color }}>{getMentalVal(selectedDay, type) || '—'}/10</span>
+                      <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</span>
+                      <span style={{ fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-mono)', color }}>{getMentalVal(selectedDay, type) || '—'}/10</span>
                     </div>
                     <input type="range" min={1} max={10} value={getMentalVal(selectedDay, type) || 0}
                       onChange={e => setMentalVal(selectedDay, type, e.target.value)}
@@ -439,7 +439,7 @@ export default function HabitTracker() {
                             <input type="time" value={editTime} onChange={e => setEditTime(e.target.value)} style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 8px', color: 'var(--amber)', fontFamily: 'var(--font-mono)', fontSize: 13 }} />
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                            <button onClick={() => handleSaveRename(habit.name)} style={{ background: 'var(--green-dim)', border: '1px solid var(--green)', color: 'var(--green)', borderRadius: 8, padding: '4px 12px', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><Check size={14} /> Save</button>
+                            <button onClick={() => handleSaveRename(habit.name)} style={{ background: 'var(--green-dim)', border: '1px solid var(--green)', color: 'var(--green)', borderRadius: 8, padding: '4px 12px', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}><Check size={14} /> Save</button>
                             <button onClick={() => setEditingHabit(null)} style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-muted)', borderRadius: 8, padding: '4px 12px', fontSize: 12 }}>Cancel</button>
                           </div>
                         </div>
@@ -470,7 +470,7 @@ export default function HabitTracker() {
                   <input value={newHabit} onChange={e => setNewHabit(e.target.value)} onKeyDown={e => e.key === 'Enter' && addHabit()} placeholder="Add a habit..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }} />
                   <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 8px', color: 'var(--amber)', fontFamily: 'var(--font-mono)', fontSize: 13 }} />
                 </div>
-                <button onClick={addHabit} style={{ background: 'var(--amber-dim)', border: '1px solid var(--amber-glow)', borderRadius: 10, color: 'var(--amber)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', fontWeight: 600 }}><Plus size={20} /> Add Habit</button>
+                <button onClick={addHabit} style={{ background: 'var(--btn-primary-bg)', border: 'none', borderRadius: 980, color: '#fff', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', fontWeight: 400, letterSpacing: '-0.022em', transition: 'transform 0.15s ease' }}><Plus size={20} /> Add Habit</button>
               </div>
             </div>
           )}
@@ -488,7 +488,7 @@ export default function HabitTracker() {
           <div>
             <div style={{ fontSize: 13, color: 'var(--amber)', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 6 }}>HABIT TRACKER</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <h1 style={{ fontSize: 28, fontWeight: 800 }}>{monthName} {year}</h1>
+              <h1 style={{ fontSize: 28, fontWeight: 600 }}>{monthName} {year}</h1>
               <SyncBadge />
             </div>
           </div>
@@ -519,7 +519,7 @@ export default function HabitTracker() {
             <div key={l} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
               <div style={{ fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>{l}</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <div style={{ fontSize: 30, fontWeight: 800, fontFamily: 'var(--font-display)', color: c, letterSpacing: '-0.03em' }}>{v}</div>
+                <div style={{ fontSize: 30, fontWeight: 600, fontFamily: 'var(--font-display)', color: c, letterSpacing: '-0.022em' }}>{v}</div>
                 {l === 'DONE' && <MFRing percent={overallPct} size={40} stroke={5} color={c} />}
                 {l === 'LEFT' && <MFRing percent={100 - overallPct} size={40} stroke={5} color={c} />}
                 {l === 'GOAL' && <Target size={22} color="var(--text-muted)" />}
@@ -636,7 +636,7 @@ export default function HabitTracker() {
                               </td>
                             )))}
                             <td style={{ textAlign: 'center', borderBottom: '1px solid var(--border)', borderLeft: '1px solid var(--border)', padding: '10px 6px' }}>
-                              <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700, color: stats.pct >= 80 ? 'var(--green)' : stats.pct >= 50 ? 'var(--amber)' : 'var(--red)' }}>{stats.pct}%</span>
+                              <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 600, color: stats.pct >= 80 ? 'var(--green)' : stats.pct >= 50 ? 'var(--amber)' : 'var(--red)' }}>{stats.pct}%</span>
                             </td>
                           </tr>
                         )
@@ -648,7 +648,7 @@ export default function HabitTracker() {
                   <input value={newEmoji} onChange={e => setNewEmoji(e.target.value)} style={{ width: 44, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px', fontSize: 16, color: 'var(--text-primary)', textAlign: 'center' }} placeholder="✨" />
                   <input value={newHabit} onChange={e => setNewHabit(e.target.value)} onKeyDown={e => e.key === 'Enter' && addHabit()} placeholder="Add new habit..." style={{ flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 14px', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }} />
                   <input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px', color: 'var(--amber)', fontFamily: 'var(--font-mono)', fontSize: 13 }} />
-                  <button onClick={addHabit} style={{ background: 'var(--amber-dim)', border: '1px solid var(--amber-glow)', borderRadius: 8, color: 'var(--amber)', padding: '8px 18px', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display)', fontWeight: 600, cursor: 'pointer' }}>
+                  <button onClick={addHabit} style={{ background: 'var(--btn-primary-bg)', border: 'none', borderRadius: 980, color: '#fff', padding: '8px 18px', fontSize: 14, letterSpacing: '-0.022em', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display)', fontWeight: 400, cursor: 'pointer', transition: 'transform 0.15s ease' }}>
                     <Plus size={16} /> Add
                   </button>
                 </div>
