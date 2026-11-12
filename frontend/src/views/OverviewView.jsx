@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import { ArrowUpRight, Flame, CheckSquare, Activity, Target, ChevronRight, Loader, Sparkles, Users2 } from 'lucide-react'
+import { ArrowUpRight, Flame, CheckSquare, Activity, Target, ChevronRight, Loader, Sparkles, Users2, Mic } from 'lucide-react'
 import { tasksAPI, habitsAPI, goalsAPI, faplessAPI } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { MFBarChart, MFRing } from '../components/MFCharts'
@@ -344,6 +344,7 @@ export default function OverviewView({ onNavigate }) {
                 { id: 'habits', icon: Activity, color: 'var(--amber)', label: 'Habit Tracker', desc: 'Your 30-day consistency grid' },
                 { id: 'goals', icon: Target, color: 'var(--brand-secondary)', label: 'Goals', desc: 'Long-term targets with linked progress' },
                 { id: 'fapless', icon: Flame, color: 'var(--red)', label: 'Fapless', desc: 'Discipline streaks, levels and aura' },
+                { id: 'voice', icon: Mic, color: 'var(--brand-teal)', label: 'Speak', desc: 'Voice & communication gym — breath to impromptu' },
                 { id: 'social', icon: Users2, color: 'var(--pink)', label: 'Social', desc: 'Leaderboard, forum and your profile' },
                 { id: 'ai', icon: Sparkles, color: 'var(--purple)', label: 'AI Coach', desc: 'Advice grounded in your data' },
               ].map(({ id, icon: Icon, color, label, desc }, i) => (
@@ -353,7 +354,7 @@ export default function OverviewView({ onNavigate }) {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 14, width: '100%',
                     padding: '14px 18px', background: 'none', border: 'none',
-                    borderBottom: i < 5 ? '1px solid var(--border)' : 'none',
+                    borderBottom: i < 6 ? '1px solid var(--border)' : 'none',
                     color: 'var(--text-primary)', textAlign: 'left', cursor: 'pointer',
                     fontFamily: 'var(--font-body)', transition: 'background 0.18s', minHeight: 56,
                   }}

@@ -9,6 +9,7 @@ import TaskTracker from './views/TaskTracker'
 import HabitTracker from './views/HabitTracker'
 import GoalsView from './views/GoalsView'
 import FaplessView from './views/FaplessView'
+import VoiceCoachView from './views/VoiceCoachView'
 import SettingsView from './views/SettingsView'
 import AIChatView from './views/AIChatView'
 import SocialView from './views/SocialView'
@@ -17,7 +18,7 @@ import LandingPage from './views/LandingPage'
 import ErrorPage from './views/ErrorPage'
 import ErrorBoundary from './components/ErrorBoundary'
 import {
-  Loader, CheckSquare, Activity, Target, Flame, Settings, Sparkles, Users2, Home, MoreHorizontal, LayoutGrid,
+  Loader, CheckSquare, Activity, Target, Flame, Settings, Sparkles, Users2, Home, MoreHorizontal, LayoutGrid, Mic,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -26,6 +27,7 @@ const NAV_ITEMS = [
   { id: 'habits',   label: 'Habits',   icon: Activity,    color: 'var(--amber)' },
   { id: 'goals',    label: 'Goals',    icon: Target,      color: 'var(--brand-secondary)' },
   { id: 'fapless',  label: 'Fapless',  icon: Flame,       color: 'var(--red)' },
+  { id: 'voice',    label: 'Speak',    icon: Mic,         color: 'var(--brand-teal)', badge: 'NEW' },
   { id: 'social',   label: 'Social',   icon: Users2,      color: 'var(--pink)' },
   { id: 'ai',       label: 'AI Coach', icon: Sparkles,    color: 'var(--purple)' },
   { id: 'settings', label: 'Settings', icon: Settings,    color: 'var(--text-secondary)' },
@@ -33,7 +35,7 @@ const NAV_ITEMS = [
 
 /* Mobile bottom nav — max 5 tabs (HIG). Overflow lives in a "More" sheet. */
 const MOBILE_TABS = ['overview', 'tasks', 'habits', 'goals', 'more']
-const MORE_SHEET_ITEMS = ['fapless', 'social', 'ai', 'settings']
+const MORE_SHEET_ITEMS = ['fapless', 'voice', 'social', 'ai', 'settings']
 
 function Dashboard() {
   const { user, loading } = useAuth()
@@ -124,16 +126,22 @@ function Dashboard() {
   }
 
   const finishOnboarding = () => {
-    localStorage.setItem('mf_onboarded_' + user?.id, '1')
+    localStorage.setItem('mf_onboarded_' + user?.id, 'true')
     setShowOnboarding(false)
   }
 
   if (loading) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', gap: 10, color: 'var(--text-secondary)' }}>
-        <Loader size={18} style={{ animation: 'spin 1s linear infinite' }} />
-        <span style={{ fontSize: 14 }}>Loading…</span>
-        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+        <div style={{
+          width: 54, height: 54, borderRadius: 16,
+          background: 'linear-gradient(135deg, rgba(79, 142, 247, 0.2), rgba(167, 139, 250, 0.2))',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          border: '1px solid var(--border)',
+        }}>
+          <img src="/logo.png" alt="MindForm" style={{ width: 34, height: 34, borderRadius: 10, objectFit: 'contain' }} />
+        </div>
+        <Loader size={20} style={{ animation: 'spin 1s linear infinite', color: 'var(--brand-primary)' }} />
       </div>
     )
   }
@@ -160,65 +168,59 @@ function Dashboard() {
   // ── Dashboard ─────────────────────────────────────
   const renderView = () => {
     if (view === 'overview') return <OverviewView onNavigate={handleNavChange} />
+    if (view === 'tasks')    return <TaskTracker />
     if (view === 'habits')   return <HabitTracker />
     if (view === 'goals')    return <GoalsView />
     if (view === 'fapless')  return <FaplessView />
+    if (view === 'voice')    return <VoiceCoachView />
     if (view === 'social')   return <SocialView />
     if (view === 'ai')       return <AIChatView />
     if (view === 'settings') return <SettingsView theme={theme} setTheme={setTheme} />
-    return <TaskTracker />
+    return <OverviewView onNavigate={handleNavChange} />
   }
 
   const activeMeta = NAV_ITEMS.find(n => n.id === view)
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', position: 'relative' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-app)', position: 'relative' }}>
+      {/* Ambient aura glow */}
+      <div className="mf-ambient-glow" />
 
-      {/* Mobile overlay backdrop */}
-      <div
-        className={`sidebar-overlay ${isMobile && sidebarOpen ? 'overlay-active' : ''}`}
-        onClick={() => setSidebarOpen(false)}
+      {/* Desktop sidebar */}
+      <Sidebar
+        activeTab={view}
+        setActiveTab={handleNavChange}
+        isOpen={sidebarOpen}
+        setIsOpen={setSidebarOpen}
+        theme={theme}
+        setTheme={setTheme}
       />
 
-      {/* Sidebar */}
-      <div className={`sidebar-desktop ${sidebarOpen ? 'sidebar-open' : ''}`}
-        style={{ flexShrink: 0, height: '100vh' }}>
-        <Sidebar
-          active={view}
-          onChange={handleNavChange}
-          isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen(o => !o)}
-          isMobile={isMobile}
-          theme={theme}
-          setTheme={setTheme}
-        />
-      </div>
-
-      {/* Main content */}
+      {/* Main view container */}
       <main
-        className="main-content"
         style={{
           flex: 1,
-          overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          background: 'var(--bg-base)',
-          transition: 'background 0.35s var(--ease-in-out)',
           minWidth: 0,
+          position: 'relative',
+          paddingBottom: isMobile ? 88 : 0,
         }}
       >
-        {/* Mobile top bar with hamburger */}
+        {/* Mobile top bar */}
         {isMobile && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            padding: '10px 16px', borderBottom: '1px solid var(--border)',
-            background: 'var(--bg-overlay)',
-            backdropFilter: 'saturate(180%) blur(20px)',
-            WebkitBackdropFilter: 'saturate(180%) blur(20px)',
-            flexShrink: 0, minHeight: 52,
-          }}>
+          <div
+            style={{
+              position: 'sticky', top: 0, zIndex: 40,
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '12px 16px',
+              background: 'var(--bg-card)',
+              backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+              borderBottom: '1px solid var(--border)',
+            }}
+          >
             <button
-              aria-label="Open menu"
+              aria-label="Open navigation menu"
               onClick={() => setSidebarOpen(o => !o)}
               style={{ background: 'var(--bg-glass)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: 10, border: '1px solid var(--border)', minHeight: 36, minWidth: 36 }}
             >

@@ -106,6 +106,12 @@ export const faplessAPI = {
   addAura: (points) => request('PUT', '/fapless/aura', { points }),
 }
 
+// Speak — communication & voice practice log
+export const voiceAPI = {
+  get: () => request('GET', '/voice'),
+  update: (payload) => request('PUT', '/voice', payload),
+}
+
 // Social
 export const socialAPI = {
   leaderboard: () => request('GET', '/social/leaderboard'),
