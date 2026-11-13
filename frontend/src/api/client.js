@@ -53,8 +53,10 @@ async function request(method, path, body = null, { timeout = 15000 } = {}) {
   try { data = await res.json() } catch { data = null }
 
   if (!res.ok) {
-    // Session expired → clean logout so the user sees the auth screen
-    if (res.status === 401 && getToken()) {
+    // Session expired on authenticated route → clean logout so the user sees the auth screen.
+    // Must NEVER reload on /auth/login or /auth/register where 401 simply means invalid credentials.
+    const isAuthRoute = path.startsWith('/auth/login') || path.startsWith('/auth/register')
+    if (res.status === 401 && getToken() && !isAuthRoute) {
       clearToken()
       // Soft reload so AuthContext re-evaluates from a clean state
       if (typeof window !== 'undefined' && !window.__mfLoggingOut) {
@@ -63,8 +65,8 @@ async function request(method, path, body = null, { timeout = 15000 } = {}) {
       }
     }
     const message = data?.message
-      || (res.status === 401 ? 'Session expired. Please sign in again.'
-        : res.status === 429 ? 'Too many requests — slow down and try again.'
+      || (res.status === 401 ? (isAuthRoute ? 'Invalid email or password.' : 'Session expired. Please sign in again.')
+        : res.status === 429 ? 'Too many attempts — please wait a moment and try again.'
         : res.status >= 500 ? 'Server error. Please try again shortly.'
         : 'Request failed.')
     const error = new Error(message)

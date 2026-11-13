@@ -6,8 +6,14 @@ const handleCastErrorDB = err => {
 };
 
 const handleDuplicateFieldsDB = err => {
-  const value = err.errmsg ? err.errmsg.match(/(["'])(\\?.)*?\1/)[0] : 'field';
-  const message = `Duplicate field value: ${value}. Please use another value!`;
+  let field = 'field';
+  if (err.keyValue) {
+    const keys = Object.keys(err.keyValue);
+    if (keys.length > 0) field = keys[0];
+  }
+  const message = field.toLowerCase() === 'email'
+    ? 'This email address is already registered. Please sign in instead.'
+    : 'An account with these details already exists. Please sign in instead.';
   return new AppError(message, 400);
 };
 

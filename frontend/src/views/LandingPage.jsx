@@ -444,22 +444,22 @@ export default function LandingPage({ onGetStarted, theme, setTheme, onSubPage }
             {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
           </button>
           <button
-            onClick={onGetStarted}
+            onClick={() => onGetStarted('login')}
             className="hide-xs lp-nav-signin"
-            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: 400, fontFamily: 'var(--font-body)', transition: 'color 0.2s' }}
+            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: 400, fontFamily: 'var(--font-body)', transition: 'color 0.2s', cursor: 'pointer' }}
             onMouseEnter={e => e.currentTarget.style.color = '#ffffff'}
             onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.8)'}
           >Sign in</button>
           <button
             className="lp-btn-primary"
-            onClick={onGetStarted}
-            style={{ padding: '5px 14px', fontSize: 12, letterSpacing: '-0.01em' }}
+            onClick={() => onGetStarted('register')}
+            style={{ padding: '5px 14px', fontSize: 12, letterSpacing: '-0.01em', cursor: 'pointer' }}
           >Get started</button>
           <button
             className="lp-mobile-only"
             aria-label="Menu"
             onClick={() => setMobileMenu(v => !v)}
-            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', display: 'flex', padding: 4 }}
+            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', display: 'flex', padding: 4, cursor: 'pointer' }}
           >
             {mobileMenu ? <X size={17} /> : <Menu size={17} />}
           </button>
@@ -476,13 +476,17 @@ export default function LandingPage({ onGetStarted, theme, setTheme, onSubPage }
           }}>
             {NAV_LINKS.map(({ label, id }) => (
               <button key={id} onClick={() => goTo(id)}
-                style={{ background: 'none', textAlign: 'left', padding: '12px 8px', fontSize: 17, fontWeight: 400, color: '#f5f5f7', borderRadius: 8, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                style={{ background: 'none', textAlign: 'left', padding: '12px 8px', fontSize: 17, fontWeight: 400, color: '#f5f5f7', borderRadius: 8, borderBottom: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer' }}>
                 {label}
               </button>
             ))}
-            <button onClick={() => { setMobileMenu(false); onGetStarted() }}
-              style={{ background: 'none', textAlign: 'left', padding: '14px 8px', fontSize: 17, color: 'var(--lp-accent-ondark)' }}>
+            <button onClick={() => { setMobileMenu(false); onGetStarted('login') }}
+              style={{ background: 'none', border: 'none', textAlign: 'left', padding: '14px 8px', fontSize: 17, color: 'var(--lp-accent-ondark)', cursor: 'pointer' }}>
               Sign in
+            </button>
+            <button onClick={() => { setMobileMenu(false); onGetStarted('register') }}
+              style={{ background: 'none', border: 'none', textAlign: 'left', padding: '14px 8px', fontSize: 17, color: '#ffffff', fontWeight: 600, cursor: 'pointer' }}>
+              Create account →
             </button>
           </div>
         )}
@@ -514,7 +518,7 @@ export default function LandingPage({ onGetStarted, theme, setTheme, onSubPage }
           </p>
 
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
-            <button className="lp-btn-primary" onClick={onGetStarted}>
+            <button className="lp-btn-primary" onClick={() => onGetStarted('register')} style={{ cursor: 'pointer' }}>
               Get started free
             </button>
             <button className="lp-link" onClick={() => goTo('lp-scenes')}>
@@ -571,7 +575,7 @@ export default function LandingPage({ onGetStarted, theme, setTheme, onSubPage }
 
       {/* ── Scenes — full-bleed product tiles ──────────────── */}
       <div id="lp-scenes">
-        {SCENES.map((s, i) => <Scene key={s.id} scene={s} index={i} onCTA={onGetStarted} />)}
+        {SCENES.map((s, i) => <Scene key={s.id} scene={s} index={i} onCTA={() => onGetStarted('register')} />)}
       </div>
 
       {/* ── How it works — the 15-minute Speak session (AEO) ─ */}
@@ -603,7 +607,7 @@ export default function LandingPage({ onGetStarted, theme, setTheme, onSubPage }
             ))}
           </div>
           <div style={{ textAlign: 'center', marginTop: 36 }}>
-            <button className="lp-btn-primary" onClick={onGetStarted}>
+            <button className="lp-btn-primary" onClick={() => onGetStarted('register')} style={{ cursor: 'pointer' }}>
               Open Speak <ArrowRight size={16} />
             </button>
             <div className="lp-fine" style={{ color: 'var(--lp-ink-3)', marginTop: 14 }}>
@@ -667,7 +671,7 @@ export default function LandingPage({ onGetStarted, theme, setTheme, onSubPage }
           The best time to start<br />was today. The second best is now.
         </h2>
         <p className="lp-body" style={{ marginBottom: 32, color: 'var(--lp-ink-3)' }}>Free forever. No credit card. No noise.</p>
-        <button className="lp-btn-primary" onClick={onGetStarted} style={{ padding: '14px 28px', fontSize: 18, fontWeight: 300 }}>
+        <button className="lp-btn-primary" onClick={() => onGetStarted('register')} style={{ padding: '14px 28px', fontSize: 18, fontWeight: 300, cursor: 'pointer' }}>
           Start now — it’s free <ArrowRight size={17} />
         </button>
       </section>
@@ -686,7 +690,7 @@ export default function LandingPage({ onGetStarted, theme, setTheme, onSubPage }
                   <div key={l} className="lp-fine" style={{ color: 'var(--lp-ink-2)', padding: '5px 0', cursor: 'pointer', lineHeight: 1.9 }}
                     onMouseEnter={e => { e.currentTarget.style.color = 'var(--lp-accent)'; e.currentTarget.style.textDecoration = 'underline' }}
                     onMouseLeave={e => { e.currentTarget.style.color = 'var(--lp-ink-2)'; e.currentTarget.style.textDecoration = 'none' }}
-                    onClick={FOOTER_TARGETS[l] ? () => goTo(FOOTER_TARGETS[l]) : onGetStarted}
+                    onClick={FOOTER_TARGETS[l] ? () => goTo(FOOTER_TARGETS[l]) : () => onGetStarted('register')}
                   >{l}</div>
                 ))}
               </div>
@@ -694,9 +698,14 @@ export default function LandingPage({ onGetStarted, theme, setTheme, onSubPage }
             <div>
               <div className="lp-caption-strong" style={{ fontSize: 12, color: 'var(--lp-ink)', marginBottom: 10 }}>Get started</div>
               <div className="lp-fine" style={{ color: 'var(--lp-ink-2)', padding: '5px 0' }}>Free forever</div>
-              <button className="lp-btn-primary" onClick={onGetStarted} style={{ marginTop: 12, padding: '6px 16px', fontSize: 12 }}>
-                Sign in <ArrowRight size={12} />
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                <button className="lp-btn-primary" onClick={() => onGetStarted('register')} style={{ padding: '6px 16px', fontSize: 12, cursor: 'pointer' }}>
+                  Sign up free <ArrowRight size={12} />
+                </button>
+                <button onClick={() => onGetStarted('login')} className="lp-link" style={{ fontSize: 12, textAlign: 'left', cursor: 'pointer', background: 'none', border: 'none', padding: '2px 0' }}>
+                  Sign in
+                </button>
+              </div>
             </div>
           </div>
 
@@ -713,7 +722,7 @@ export default function LandingPage({ onGetStarted, theme, setTheme, onSubPage }
                   onMouseLeave={e => e.currentTarget.style.color = 'var(--lp-ink-3)'}
                 >{l}</span>
               ))}
-              <button onClick={onGetStarted} className="lp-link" style={{ fontSize: 12 }}>
+              <button onClick={() => onGetStarted('login')} className="lp-link" style={{ fontSize: 12, cursor: 'pointer', background: 'none', border: 'none' }}>
                 Sign in <ArrowRight size={12} />
               </button>
             </div>

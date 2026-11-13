@@ -107,8 +107,6 @@ const BANNED_LOCAL_PATTERNS = [
   /^aaa+/i,
   /^zzz+/i,
   /^xxx+/i,
-  /^[a-z]{1,3}[0-9]{4,}$/i,  // e.g. ab12345 — looks bot-generated
-  /^[0-9]{6,}$/,              // all-numeric local part
   /^(.)\1{4,}$/,              // repeated char: aaaaaaa@...
 ]
 

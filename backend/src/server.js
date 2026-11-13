@@ -71,16 +71,16 @@ const limiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 50,
   message: { success: false, message: 'Too many auth attempts, please slow down.' },
 })
 
-// Strict per-IP registration limiter: max 3 new accounts per hour per IP
+// Per-IP registration limiter
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3,
+  max: 20,
   message: { success: false, message: 'Too many registration attempts from this device. Please try again later.' },
-  skipSuccessfulRequests: false,
+  skipSuccessfulRequests: true,
 })
 
 app.use('/api/', limiter)

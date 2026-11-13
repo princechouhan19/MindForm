@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Eye, EyeOff, Loader, ArrowLeft, ShieldAlert, ShieldCheck } from 'lucide-react'
 
@@ -46,13 +46,19 @@ const styles = {
   },
 }
 
-export default function AuthPage({ onBack }) {
+export default function AuthPage({ initialMode = 'login', onBack }) {
   const { login, register, error, setError } = useAuth()
-  const [mode, setMode] = useState('login')
-  const [form, setForm] = useState({ name: '', email: '', password: '', honeypot: '' })
+  const [mode, setMode] = useState(initialMode)
+  const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [showPwd, setShowPwd] = useState(false)
   const [loading, setLoading] = useState(false)
   const [localError, setLocalError] = useState('')
+
+  useEffect(() => {
+    setMode(initialMode)
+    setError('')
+    setLocalError('')
+  }, [initialMode, setError])
 
   const set = (field) => (e) => {
     setError('')
@@ -60,16 +66,37 @@ export default function AuthPage({ onBack }) {
     setForm(prev => ({ ...prev, [field]: e.target.value }))
   }
 
+  const switchMode = (newMode) => {
+    setMode(newMode)
+    setError('')
+    setLocalError('')
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.email || !form.password) return
-    if (mode === 'register' && !form.name) return
-    if (form.honeypot) return
+    setError('')
+    setLocalError('')
+
+    const email = (form.email || '').trim()
+    const password = form.password || ''
+    const name = (form.name || '').trim()
+
+    if (!email || !password) {
+      setLocalError('Please enter both email and password.')
+      return
+    }
 
     if (mode === 'register') {
-      const emailErr = quickEmailCheck(form.email)
-      if (emailErr) { setLocalError(emailErr); return }
-      const strength = getPasswordStrength(form.password)
+      if (!name) {
+        setLocalError('Please enter your full name.')
+        return
+      }
+      const emailErr = quickEmailCheck(email)
+      if (emailErr) {
+        setLocalError(emailErr)
+        return
+      }
+      const strength = getPasswordStrength(password)
       if (strength.score < 2) {
         setLocalError('Password is too weak. Use at least 8 characters with letters and numbers.')
         return
@@ -77,9 +104,23 @@ export default function AuthPage({ onBack }) {
     }
 
     setLoading(true)
-    if (mode === 'login') await login(form.email, form.password)
-    else await register(form.name, form.email, form.password)
-    setLoading(false)
+    try {
+      if (mode === 'login') {
+        const ok = await login(email, password)
+        if (!ok && !error) {
+          setLocalError('Could not sign in. Please verify your credentials.')
+        }
+      } else {
+        const ok = await register(name, email, password)
+        if (!ok && !error) {
+          setLocalError('Could not create account. Please check your details.')
+        }
+      }
+    } catch (err) {
+      setLocalError(err.message || 'An unexpected error occurred.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -172,6 +213,7 @@ export default function AuthPage({ onBack }) {
                 <label htmlFor="mf-name" style={styles.label}>Name</label>
                 <input
                   id="mf-name"
+                  name="name"
                   value={form.name} onChange={set('name')}
                   placeholder="Alex Carter"
                   autoComplete="name"
@@ -183,21 +225,13 @@ export default function AuthPage({ onBack }) {
               <label htmlFor="mf-email" style={styles.label}>Email</label>
               <input
                 id="mf-email"
+                name="email"
                 type="email" value={form.email} onChange={set('email')}
                 placeholder="you@example.com"
                 autoComplete="email"
                 style={styles.field}
               />
             </div>
-            {/* Honeypot */}
-            <input
-              value={form.honeypot}
-              onChange={set('honeypot')}
-              tabIndex={-1}
-              aria-hidden="true"
-              style={{ position: 'absolute', left: -9999, top: -9999, opacity: 0, height: 0, width: 0 }}
-              autoComplete="off"
-            />
             <div>
               <label htmlFor="mf-password" style={styles.label}>
                 Password
@@ -206,6 +240,7 @@ export default function AuthPage({ onBack }) {
               <div style={{ position: 'relative' }}>
                 <input
                   id="mf-password"
+                  name="password"
                   type={showPwd ? 'text' : 'password'} value={form.password} onChange={set('password')}
                   placeholder="••••••••"
                   autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
@@ -243,7 +278,7 @@ export default function AuthPage({ onBack }) {
           <button type="submit" disabled={loading} className="lp-btn-primary" style={{
             width: '100%', marginTop: 28, justifyContent: 'center', minHeight: 50,
             opacity: loading ? 0.7 : 1,
-            pointerEvents: loading ? 'none' : 'auto',
+            cursor: loading ? 'not-allowed' : 'pointer',
           }}>
             {loading
               ? <><Loader size={17} style={{ animation: 'spin 1s linear infinite' }} /> {mode === 'login' ? 'Signing in…' : 'Creating account…'}</>
@@ -253,8 +288,8 @@ export default function AuthPage({ onBack }) {
           {/* Toggle mode */}
           <div style={{ textAlign: 'center', marginTop: 26, fontSize: 14, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>
             {mode === 'login' ? 'New to MindForm? ' : 'Already have an account? '}
-            <button type="button" onClick={() => { setMode(m => m === 'login' ? 'register' : 'login'); setError(''); setLocalError('') }} style={{
-              background: 'none', color: 'var(--brand-primary)', fontWeight: 600, fontSize: 14,
+            <button type="button" onClick={() => switchMode(mode === 'login' ? 'register' : 'login')} style={{
+              background: 'none', border: 'none', color: 'var(--brand-primary)', fontWeight: 600, fontSize: 14,
               cursor: 'pointer', fontFamily: 'var(--font-body)', padding: '4px 2px',
             }}>
               {mode === 'login' ? 'Create an account' : 'Sign in'}

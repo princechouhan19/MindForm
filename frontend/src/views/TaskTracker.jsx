@@ -704,8 +704,7 @@ export default function TaskTracker() {
         <div style={{ position: 'fixed', top: 16, right: 16, left: 16, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
           {toasts.map(t => (
             <div key={t.id} style={{
-              background: 'var(--bg-overlay)', backdropFilter: 'blur(12px)', border: '1px solid var(--cyan-glow)',
-              border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px',
+              background: 'var(--bg-overlay)', backdropFilter: 'blur(12px)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px',
               pointerEvents: 'auto', animation: 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards', display: 'flex', alignItems: 'center', gap: 12
             }}>
               <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--cyan-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -984,8 +983,7 @@ export default function TaskTracker() {
       <div style={{ position: 'fixed', top: 24, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
         {toasts.map(t => (
           <div key={t.id} style={{
-            background: 'var(--bg-overlay)', backdropFilter: 'blur(12px)', border: '1px solid var(--cyan-glow)',
-            border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px',
+            background: 'var(--bg-overlay)', backdropFilter: 'blur(12px)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px',
             width: '320px', pointerEvents: 'auto', animation: 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards', display: 'flex', alignItems: 'center', gap: 12
           }}>
             <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--cyan-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

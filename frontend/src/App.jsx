@@ -75,11 +75,17 @@ function ViewLoader() {
 function Dashboard() {
   const { user, loading } = useAuth()
   const [page, setPage] = useState('landing') // 'landing' | 'auth' | 'dashboard'
+  const [authMode, setAuthMode] = useState('login') // 'login' | 'register'
   const [view, setView] = useState('overview')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
   const [showOnboarding, setShowOnboarding] = useState(false)
+
+  const handleOpenAuth = (mode = 'login') => {
+    setAuthMode(mode)
+    setPage('auth')
+  }
 
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('mindform-theme') || 'dark'
@@ -90,10 +96,24 @@ function Dashboard() {
   const readPath = () => window.location.pathname.replace(/\/+$/, '') || '/'
   const [path, setPath] = useState(readPath)
   useEffect(() => {
-    const onPop = () => setPath(readPath())
+    const onPop = () => {
+      const p = readPath()
+      setPath(p)
+      if (p === '/login') { setAuthMode('login'); setPage('auth') }
+      else if (p === '/register') { setAuthMode('register'); setPage('auth') }
+      else if (p === '/auth') { setPage('auth') }
+    }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
   }, [])
+
+  useEffect(() => {
+    const p = readPath()
+    if (p === '/login') { setAuthMode('login'); setPage('auth') }
+    else if (p === '/register') { setAuthMode('register'); setPage('auth') }
+    else if (p === '/auth') { setPage('auth') }
+  }, [])
+
   const goHome = () => {
     window.history.pushState({}, '', '/')
     setPath('/')
@@ -164,14 +184,14 @@ function Dashboard() {
 
   // ── Landing Page ──────────────────────────────────
   if (page === 'landing') {
-    return <LandingPage onGetStarted={() => setPage('auth')} theme={theme} setTheme={setTheme} onSubPage={(p) => { window.history.pushState({}, '', p); setPath(p) }} />
+    return <LandingPage onGetStarted={handleOpenAuth} theme={theme} setTheme={setTheme} onSubPage={(p) => { window.history.pushState({}, '', p); setPath(p) }} />
   }
 
   // ── Auth Page (not logged in) ─────────────────────
   if (!user) {
     return (
       <Suspense fallback={<ViewLoader />}>
-        <AuthPage onBack={() => setPage('landing')} />
+        <AuthPage initialMode={authMode} onBack={() => setPage('landing')} />
       </Suspense>
     )
   }
