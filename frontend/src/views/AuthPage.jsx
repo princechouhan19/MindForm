@@ -84,7 +84,10 @@ export default function AuthPage({ onBack }) {
 
   return (
     <div style={{
-      minHeight: '100vh', width: '100vw',
+      /* Fixed height (not min-height) so the card wrapper below is the
+         scroll container: the register card centers when it fits and
+         scrolls instead of overflowing off-screen when it doesn't. */
+      height: '100dvh', width: '100vw',
       display: 'flex', flexDirection: 'column',
       background: 'var(--bg-base)',
       position: 'relative', overflow: 'hidden',
@@ -117,8 +120,10 @@ export default function AuthPage({ onBack }) {
         )}
       </div>
 
-      {/* Card */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '5vh 20px 40px' }}>
+      {/* Card — scrollable when the register form is taller than the window.
+          `margin: auto` centers the card when there is room and collapses to
+          zero (enabling scroll) when it overflows — no more clipped card. */}
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '4vh 20px 40px', overflowY: 'auto' }}>
         <form
           onSubmit={handleSubmit}
           className="mf-sheet"
@@ -126,6 +131,7 @@ export default function AuthPage({ onBack }) {
             width: '100%', maxWidth: 400,
             padding: '40px 36px 34px',
             position: 'relative', zIndex: 5,
+            margin: 'auto',
           }}
         >
           {/* Logo */}

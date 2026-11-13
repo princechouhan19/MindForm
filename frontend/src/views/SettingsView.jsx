@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import {
   LogOut, Mail, AtSign, Bell, MapPin, Volume2, ShieldCheck, Sun, Moon,
-  ChevronRight, Palette, User, Info
+  ChevronRight, Palette, User, Info, Brain, Cable,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { IOSToggle } from './SocialView'
+import MCPModal from '../components/MCPModal'
 
 /* ═══════════════════════════════════════════════════════════════
    Settings — iOS Settings app design language (v2.1)
@@ -134,10 +135,11 @@ function ThemeCard({ mode, active, onSelect, icon: Icon, name, hint }) {
   )
 }
 
-export default function SettingsView({ theme, setTheme }) {
+export default function SettingsView({ theme, setTheme, onNavigate }) {
   const { user, logout } = useAuth()
   const toast = useToast()
   const isMobile = useIsMobile()
+  const [showMCP, setShowMCP] = useState(false)
 
   const [notifPermission, setNotifPermission] = useState(
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default'
@@ -320,6 +322,27 @@ export default function SettingsView({ theme, setTheme }) {
           last />
       </Group>
 
+      {/* AI & integrations */}
+      <Group
+        title="AI & integrations"
+        footer="Coach reads your plan and proposes edits; MCP lets external AI tools do the same with plain tool calls. Both always ask before writing.">
+        <Row icon={Brain} iconBg="var(--purple)"
+          title="Coach"
+          subtitle="Your AI copilot — plans weeks, replans habits, sets goals"
+          onClick={() => onNavigate?.('ai')}
+          accessory={
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--brand-primary)', fontSize: 13.5, fontWeight: 600 }}>
+              Open <ChevronRight size={14} />
+            </span>
+          } />
+        <Row icon={Cable} iconBg="var(--purple)"
+          title="MCP Server"
+          subtitle="Connect Claude Desktop, Cursor & friends — 12 quick-edit tools"
+          onClick={() => setShowMCP(true)}
+          accessory={<ChevronRight size={15} color="var(--text-muted)" />}
+          last />
+      </Group>
+
       {/* About */}
       <Group title="About">
         <Row icon={ShieldCheck} iconBg="var(--brand-teal)"
@@ -327,8 +350,8 @@ export default function SettingsView({ theme, setTheme }) {
           subtitle="Your streaks, tasks and logs stay in your account."
           accessory={<ChevronRight size={15} color="var(--text-muted)" style={{ opacity: 0.5 }} />} />
         <Row icon={Info} iconBg="var(--brand-secondary)"
-          title="MindForm 2.1"
-          subtitle="Apple-grade productivity suite"
+          title="MindForm 3.1"
+          subtitle="Apple-grade productivity suite · Coach · Speak · MCP"
           last />
       </Group>
 
@@ -345,6 +368,9 @@ export default function SettingsView({ theme, setTheme }) {
           }
           last />
       </Group>
+
+      {/* MCP setup modal */}
+      {showMCP && <MCPModal onClose={() => setShowMCP(false)} />}
     </div>
   )
 

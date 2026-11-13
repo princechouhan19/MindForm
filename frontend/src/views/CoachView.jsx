@@ -4,17 +4,68 @@ import {
   Sparkles, User, AlertCircle, CheckCircle, Loader,
   MessageSquare, X, Eye, EyeOff, Zap, Check,
   Brain, CalendarPlus, Repeat, ListChecks, Target as TargetIcon, Pencil,
+  ShieldCheck, Cable, Server,
 } from 'lucide-react'
-import { tasksAPI, habitsAPI, goalsAPI } from '../api/client'
+import { tasksAPI, habitsAPI, goalsAPI, BASE_URL } from '../api/client'
 import { useToast } from '../components/Toast'
+import MCPModal from '../components/MCPModal'
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+// ── Provider logos (inline SVG — offline, CSP-safe, no external requests) ──
+function ProviderLogo({ id, size = 18 }) {
+  const s = { width: size, height: size, display: 'block', flexShrink: 0 }
+  if (id === 'openai') return (
+    <svg viewBox="0 0 24 24" style={{ ...s, color: '#10a37f' }} fill="currentColor" aria-hidden="true">
+      <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558-5.833-3.387L15.871 7.1971a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.405-.667zm2.0107-3.0231-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654 2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/>
+    </svg>
+  )
+  if (id === 'gemini') return (
+    <svg viewBox="0 0 24 24" style={s} aria-hidden="true">
+      <defs>
+        <linearGradient id="mf-gemini-g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#4285F4" /><stop offset="1" stopColor="#9B72CB" />
+        </linearGradient>
+      </defs>
+      <path fill="url(#mf-gemini-g)" d="M12 0Q12 12 24 12Q12 12 12 24Q12 12 0 12Q12 12 12 0Z" />
+    </svg>
+  )
+  if (id === 'anthropic') return (
+    <svg viewBox="0 0 24 24" style={s} aria-hidden="true">
+      <g stroke="#D97757" strokeWidth="2.5" strokeLinecap="round">
+        <line x1="12" y1="2.4" x2="12" y2="7.8" />
+        <line x1="12" y1="16.2" x2="12" y2="21.6" />
+        <line x1="2.4" y1="12" x2="7.8" y2="12" />
+        <line x1="16.2" y1="12" x2="21.6" y2="12" />
+        <line x1="5.4" y1="5.4" x2="9" y2="9" />
+        <line x1="15" y1="15" x2="18.6" y2="18.6" />
+        <line x1="5.4" y1="18.6" x2="9" y2="15" />
+        <line x1="15" y1="9" x2="18.6" y2="5.4" />
+      </g>
+    </svg>
+  )
+  if (id === 'mistral') {
+    const rows = ['#FFD800', '#FFAF00', '#FF8205', '#FA500F', '#E10500']
+    const cells = [
+      [0, 0], [5, 0],
+      [0, 1], [1, 1], [4, 1], [5, 1],
+      [0, 2], [2, 2], [3, 2], [5, 2],
+      [0, 3], [5, 3],
+      [0, 4], [5, 4],
+    ]
+    return (
+      <svg viewBox="0 0 24 20" style={{ ...s, borderRadius: 2 }} aria-hidden="true">
+        {cells.map(([x, y], i) => (
+          <rect key={i} x={x * 4} y={y * 4} width="4" height="4" fill={rows[y]} />
+        ))}
+      </svg>
+    )
+  }
+  return <Sparkles size={size} style={s} />
+}
 
 // ── Provider / Model catalog ────────────────────────────────────
 const PROVIDERS = [
   {
     id: 'openai', name: 'OpenAI', color: '#10a37f',
-    logo: 'https://api.iconify.design/logos:openai-icon.svg',
     placeholder: 'sk-...',
     models: [
       { id: 'gpt-4o',             label: 'GPT-4o' },
@@ -26,7 +77,6 @@ const PROVIDERS = [
   },
   {
     id: 'gemini', name: 'Google Gemini', color: '#4285f4',
-    logo: 'https://api.iconify.design/logos:google-gemini.svg',
     placeholder: 'AIza...',
     models: [
       { id: 'gemini-2.0-flash',        label: 'Gemini 2.0 Flash (Fast & Free)' },
@@ -38,7 +88,6 @@ const PROVIDERS = [
   },
   {
     id: 'anthropic', name: 'Anthropic Claude', color: '#d97706',
-    logo: 'https://api.iconify.design/logos:anthropic-icon.svg',
     placeholder: 'sk-ant-...',
     models: [
       { id: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet' },
@@ -48,7 +97,6 @@ const PROVIDERS = [
   },
   {
     id: 'mistral', name: 'Mistral AI', color: '#ff7000',
-    logo: 'https://api.iconify.design/logos:mistral-ai-icon.svg',
     placeholder: '...',
     models: [
       { id: 'mistral-large-latest',   label: 'Mistral Large' },
@@ -423,13 +471,14 @@ function CustomSelect({ value, options, onChange, placeholder }) {
   )
 }
 
-// ── Settings panel ──────────────────────────────────────────────
-function AISettings({ config, onSave, onClose }) {
+// ── Settings panel ──────────────────────────────────────────
+function AISettings({ config, onSave, onClose, serverProviders = {} }) {
   const [provider, setProvider] = useState(config.provider || 'openai')
   const [model,    setModel]    = useState(config.model    || '')
   // Per-provider keys: load saved keys and pre-fill for the current provider
   const [allKeys,  setAllKeys]  = useState(loadKeys)
   const [showKey,  setShowKey]  = useState(false)
+  const [showMCP,  setShowMCP]  = useState(false)
 
   // ESC closes the settings sheet (accessibility)
   useEffect(() => {
@@ -440,6 +489,8 @@ function AISettings({ config, onSave, onClose }) {
 
   const prov   = PROVIDERS.find(p => p.id === provider)
   const apiKey = allKeys[provider] || ''
+  const serverHas = Boolean(serverProviders[provider])
+  const canSave = Boolean(model) && (Boolean(apiKey.trim()) || serverHas)
 
   // When switching providers, model resets and key pre-fills from saved keys
   const handleProviderSwitch = (id) => {
@@ -450,9 +501,14 @@ function AISettings({ config, onSave, onClose }) {
   const setApiKey = (val) => setAllKeys(prev => ({ ...prev, [provider]: val }))
 
   const handleSave = () => {
-    if (!model || !apiKey.trim()) return
+    if (!canSave) return
     saveKeys(allKeys)              // persist all provider keys
-    onSave({ provider, model, apiKey: apiKey.trim() })
+    onSave({
+      provider,
+      model,
+      apiKey: apiKey.trim(),
+      useServerKey: !apiKey.trim() && serverHas, // host-enabled shared key
+    })
     onClose()
   }
 
@@ -464,25 +520,35 @@ function AISettings({ config, onSave, onClose }) {
       padding: 24,
     }}>
       <div style={{
-        width: '100%', maxWidth: 480,
+        width: '100%', maxWidth: 480, maxHeight: 'calc(100dvh - 48px)', overflowY: 'auto',
         background: 'var(--bg-card)', border: '1px solid var(--border)',
         borderRadius: 20, padding: '28px 28px 24px',
         animation: 'fadeIn 0.2s ease',
       }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--cyan-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Settings2 size={18} color="var(--cyan)" />
             </div>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>AI Configuration</div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>Coach settings</div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Your key stays on your device</div>
             </div>
           </div>
           <button onClick={onClose} style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 6, borderRadius: 8, border: '1px solid var(--border)' }}>
             <X size={14} />
           </button>
+        </div>
+
+        {/* Provider logo strip */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 18, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 10px', marginBottom: 20 }}>
+          {PROVIDERS.map(p => (
+            <div key={p.id} title={p.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, opacity: provider === p.id ? 1 : 0.55, transition: 'opacity 0.15s' }}>
+              <ProviderLogo id={p.id} size={22} />
+              <span style={{ fontSize: 9.5, fontWeight: 600, color: provider === p.id ? p.color : 'var(--text-muted)', letterSpacing: '0.02em' }}>{p.name.split(' ')[0]}</span>
+            </div>
+          ))}
         </div>
 
         <div style={{ marginBottom: 20 }}>
@@ -495,10 +561,12 @@ function AISettings({ config, onSave, onClose }) {
                 border: `1px solid ${provider === p.id ? p.color + '60' : 'var(--border)'}`,
                 transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 10,
               }}>
-                <img src={p.logo} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
+                <ProviderLogo id={p.id} size={18} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: provider === p.id ? p.color : 'var(--text-secondary)' }}>{p.name}</div>
-                  {allKeys[p.id] && <div style={{ fontSize: 9, color: 'var(--green)', marginTop: 2 }}>● Key saved</div>}
+                  <div style={{ fontSize: 9, marginTop: 2, color: allKeys[p.id] ? 'var(--green)' : serverProviders[p.id] ? 'var(--cyan)' : 'transparent' }}>
+                    {allKeys[p.id] ? '● Your key saved' : serverProviders[p.id] ? '● Shared key available' : '·'}
+                  </div>
                 </div>
               </button>
             ))}
@@ -516,10 +584,19 @@ function AISettings({ config, onSave, onClose }) {
           />
         </div>
 
-        {/* API Key */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 8 }}>
-            API KEY
+        {/* API Key (BYOK) */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)' }}>API KEY (BYOK)</div>
+            {serverHas && (
+              <button onClick={() => setApiKey('')} style={{
+                background: apiKey.trim() ? 'none' : 'var(--cyan-dim)', border: `1px solid ${apiKey.trim() ? 'var(--border)' : 'var(--brand-primary-glow)'}`,
+                color: apiKey.trim() ? 'var(--text-muted)' : 'var(--cyan)', borderRadius: 980,
+                padding: '4px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-display)',
+              }}>
+                {apiKey.trim() ? 'Use shared key instead' : '✓ Using MindForm shared key'}
+              </button>
+            )}
           </div>
           <div style={{ position: 'relative' }}>
             <Key size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -527,7 +604,7 @@ function AISettings({ config, onSave, onClose }) {
               type={showKey ? 'text' : 'password'}
               value={apiKey}
               onChange={e => setApiKey(e.target.value)}
-              placeholder={prov?.placeholder || 'Your API key...'}
+              placeholder={serverHas && !apiKey ? 'Optional — shared key active' : (prov?.placeholder || 'Your API key...')}
               style={{
                 width: '100%', background: 'var(--bg-glass)', border: '1px solid var(--border)',
                 borderRadius: 10, padding: '12px 44px 12px 36px',
@@ -541,19 +618,62 @@ function AISettings({ config, onSave, onClose }) {
             </button>
           </div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
-            <AlertCircle size={10} /> API key is stored only in your browser — never sent to our servers.
+            <AlertCircle size={10} /> {serverHas ? 'Leave empty to use the host’s shared key, or bring your own.' : 'Stored only in your browser — never sent to MindForm servers.'}
           </div>
         </div>
 
+        {/* Coach permissions — what a configured key unlocks */}
+        <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <ShieldCheck size={14} color="var(--brand-success)" />
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>COACH PERMISSIONS</span>
+          </div>
+          {[
+            ['Read your tasks, habits, goals and streak', true],
+            ['Propose create · update · delete (CRUD) edits', canSave],
+            ['Write to your account — only after you tap Apply', canSave],
+          ].map(([label, on]) => (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0' }}>
+              {on
+                ? <Check size={12} color="var(--brand-success)" style={{ flexShrink: 0 }} />
+                : <span style={{ width: 12, height: 12, borderRadius: '50%', border: '1.5px solid var(--border)', flexShrink: 0 }} />}
+              <span style={{ fontSize: 12, color: on ? 'var(--text-secondary)' : 'var(--text-muted)' }}>{label}</span>
+            </div>
+          ))}
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, lineHeight: 1.5 }}>
+            {canSave
+              ? 'Your own API key (BYOK) unlocks full read + edit proposals. Nothing changes until you approve it.'
+              : 'Add a key (or pick a provider with a shared key) to unlock Coach’s edit powers.'}
+          </div>
+        </div>
+
+        {/* MCP quick-edit entry */}
+        <button onClick={() => setShowMCP(true)} style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
+          background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 14,
+          padding: '12px 16px', marginBottom: 20, cursor: 'pointer', transition: 'border-color 0.15s',
+        }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--purple, var(--brand-primary))' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)' }}>
+          <div style={{ width: 32, height: 32, borderRadius: 10, background: 'color-mix(in srgb, var(--purple) 15%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Cable size={15} color="var(--purple, var(--brand-primary))" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>MCP server</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>Quick-edit your data from Claude Desktop, Cursor & friends</div>
+          </div>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--cyan)', display: 'flex', alignItems: 'center', gap: 4 }}><Server size={12} /> Setup</span>
+        </button>
+
         <button
           onClick={handleSave}
-          disabled={!model || !apiKey.trim()}
+          disabled={!canSave}
           style={{
             width: '100%', padding: '13px',
-            background: !model || !apiKey.trim() ? 'var(--bg-glass)' : 'var(--btn-primary-bg)',
+            background: canSave ? 'var(--btn-primary-bg)' : 'var(--bg-glass)',
             border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600,
-            color: !model || !apiKey.trim() ? 'var(--text-muted)' : '#000',
-            cursor: !model || !apiKey.trim() ? 'not-allowed' : 'pointer',
+            color: canSave ? '#000' : 'var(--text-muted)',
+            cursor: canSave ? 'pointer' : 'not-allowed',
             fontFamily: 'var(--font-display)',
             transition: 'all 0.15s',
           }}
@@ -561,6 +681,7 @@ function AISettings({ config, onSave, onClose }) {
           Save Configuration
         </button>
       </div>
+      {showMCP && <MCPModal onClose={() => setShowMCP(false)} />}
     </div>
   )
 }
@@ -636,13 +757,28 @@ export default function CoachView() {
   const [loading, setLoading]     = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [error, setError]         = useState('')
+  // Which providers have a host-configured shared key (booleans; never keys)
+  const [serverProviders, setServerProviders] = useState({})
   // actionStatuses: { [msgIndex]: { [actionIdx]: 'applied'|'exists'|'error' } }
   const [actionStatuses, setActionStatuses] = useState({})
   const toast = useToast()
   const bottomRef = useRef(null)
   const inputRef  = useRef(null)
 
-  const isReady = config.provider && config.model && config.apiKey
+  // Ask the backend which providers it can serve with a shared key.
+  // A BYOK key still wins — this only enables keyless setups.
+  useEffect(() => {
+    const token = localStorage.getItem('mf_token') || localStorage.getItem('prince_token')
+    if (!token) return
+    fetch(`${BASE_URL}/ai/providers`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => { if (d?.success && d.data) setServerProviders(d.data) })
+      .catch(() => {})
+  }, [])
+
+  const hasOwnKey = Boolean(config.apiKey)
+  const hasServerKey = Boolean(config.useServerKey && serverProviders[config.provider])
+  const isReady = Boolean(config.provider && config.model && (hasOwnKey || hasServerKey))
   const prov = PROVIDERS.find(p => p.id === config.provider)
 
   useEffect(() => {
@@ -700,7 +836,7 @@ export default function CoachView() {
         body: JSON.stringify({
           provider: config.provider,
           model: config.model,
-          apiKey: config.apiKey,
+          apiKey: config.apiKey || undefined,
           messages: updated.map(({ role, content }) => ({ role, content })),
         }),
       })
@@ -742,7 +878,7 @@ export default function CoachView() {
       <style>{`@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} } @keyframes lp-blink { 0%,100%{opacity:1} 50%{opacity:0} } .ai-input:focus { border-color: var(--cyan) !important; outline: none; } .ai-suggest:hover { background: var(--bg-card-hover) !important; border-color: var(--cyan) !important; color: var(--cyan) !important; }`}</style>
 
       {/* ── Settings Panel ── */}
-      {showSettings && <AISettings config={config} onSave={handleConfig} onClose={() => setShowSettings(false)} />}
+      {showSettings && <AISettings config={config} onSave={handleConfig} onClose={() => setShowSettings(false)} serverProviders={serverProviders} />}
 
       {/* ── Header ── */}
       <div style={{ padding: '16px 20px 12px', flexShrink: 0, borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -754,8 +890,8 @@ export default function CoachView() {
             <div style={{ fontWeight: 600, fontSize: 16 }}>Coach</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
               {isReady
-                ? <span style={{ color: 'var(--green)' }}>● {prov?.name} · {prov?.models.find(m => m.id === config.model)?.label} · can edit your plan</span>
-                : <span style={{ color: 'var(--amber)' }}>● Configure API key to start</span>
+                ? <span style={{ color: 'var(--green)' }}>● {prov?.name} · {prov?.models.find(m => m.id === config.model)?.label}{hasServerKey && !hasOwnKey ? ' · shared key' : ''} · can edit your plan</span>
+                : <span style={{ color: 'var(--amber)' }}>● Pick a provider & add your API key to start</span>
               }
             </div>
           </div>

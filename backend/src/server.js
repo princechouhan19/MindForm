@@ -23,6 +23,9 @@ const app = express()
 // Trust proxy for Render/Cloud platforms
 app.set('trust proxy', 1)
 
+// Public origin of this deployment (Render injects RENDER_EXTERNAL_URL)
+const PUBLIC_URL = process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_URL || ''
+
 // Connect to DB
 connectDB()
 
@@ -35,7 +38,9 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https://api.iconify.design'],
-      connectSrc: ["'self'", 'http://localhost:5000', 'https://api.iconify.design'],
+      connectSrc: ["'self'", 'http://localhost:5000', 'https://api.iconify.design',
+        ...(PUBLIC_URL ? [PUBLIC_URL] : []),
+        ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])],
       workerSrc: ["'self'", 'blob:'],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
@@ -44,12 +49,14 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }))
 
-// CORS
+// CORS — same-origin requests never trigger CORS, but allow the deployed
+// frontend origin(s) too so a split deployment (static frontend + API) works.
 app.use(cors({
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:5173',
     'http://localhost:4173', // vite preview
-  ],
+    ...(PUBLIC_URL ? [PUBLIC_URL] : []),
+  ].filter(Boolean),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],

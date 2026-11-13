@@ -6,15 +6,41 @@ const HabitMonth = require('../models/HabitMonth')
 const Goal = require('../models/Goal')
 const Fapless = require('../models/Fapless')
 
+// ─── Server-side provider keys (optional) ───────────────────────
+// The host can enable a shared key via env vars. A user's own key
+// (BYOK) always takes priority; the shared key is only a fallback so
+// Coach works out of the box on self-hosted deployments.
+const SERVER_KEYS = {
+  openai:    process.env.OPENAI_API_KEY,
+  gemini:    process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY,
+  anthropic: process.env.ANTHROPIC_API_KEY,
+  mistral:   process.env.MISTRAL_API_KEY,
+}
+
+// ─── GET /api/ai/providers ──────────────────────────────────────
+// Which providers have a server-side key (booleans only — never the keys).
+router.get('/providers', protect, (req, res) => {
+  res.json({ success: true, data: {
+    openai: Boolean(SERVER_KEYS.openai),
+    gemini: Boolean(SERVER_KEYS.gemini),
+    anthropic: Boolean(SERVER_KEYS.anthropic),
+    mistral: Boolean(SERVER_KEYS.mistral),
+  } })
+})
+
 // ─── POST /api/ai/chat ──────────────────────────────────────────
-// Body: { provider, model, apiKey, messages: [{role,content}] }
-// Returns: { reply: string }
+// Body: { provider, model, apiKey?, messages: [{role,content}] }
+// apiKey (BYOK) is optional when the host configured a shared key.
+// Returns: { reply: string, usedServerKey?: boolean }
 router.post('/chat', protect, async (req, res) => {
   try {
     const { provider, model, apiKey, messages } = req.body
-    if (!provider || !model || !apiKey || !messages?.length) {
-      return res.status(400).json({ success: false, message: 'provider, model, apiKey and messages are required.' })
+    const serverKey = SERVER_KEYS[provider]
+    if (!provider || !model || (!apiKey && !serverKey) || !messages?.length) {
+      return res.status(400).json({ success: false, message: 'model and messages are required — add your own API key (BYOK) or ask the host to enable a shared key.' })
     }
+    const effectiveKey = apiKey || serverKey
+    const usedServerKey = !apiKey
 
     const userId = req.user._id
     const now = new Date()
@@ -126,17 +152,17 @@ router.post('/chat', protect, async (req, res) => {
     let reply = ''
     try {
       if (provider === 'openai') {
-        reply = await callOpenAI(apiKey, model, systemPrompt, sanitizedMessages)
+        reply = await callOpenAI(effectiveKey, model, systemPrompt, sanitizedMessages)
       } else if (provider === 'gemini') {
-        reply = await callGemini(apiKey, model, systemPrompt, sanitizedMessages)
+        reply = await callGemini(effectiveKey, model, systemPrompt, sanitizedMessages)
       } else if (provider === 'anthropic') {
-        reply = await callClaude(apiKey, model, systemPrompt, sanitizedMessages)
+        reply = await callClaude(effectiveKey, model, systemPrompt, sanitizedMessages)
       } else if (provider === 'mistral') {
-        reply = await callMistral(apiKey, model, systemPrompt, sanitizedMessages)
+        reply = await callMistral(effectiveKey, model, systemPrompt, sanitizedMessages)
       } else {
         return res.status(400).json({ success: false, message: `Unknown provider: ${provider}` })
       }
-      res.json({ success: true, reply })
+      res.json({ success: true, reply, usedServerKey })
     } catch (apiErr) {
       // Extract specific error messages for better UX
       const msg = apiErr.message || ''

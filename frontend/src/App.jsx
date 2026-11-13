@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react'
+import React, { useState, useEffect, lazy, Suspense, Component } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ToastProvider } from './components/Toast'
 import { ConfirmProvider } from './components/ConfirmDialog'
@@ -40,6 +40,28 @@ const NAV_ITEMS = [
 const MOBILE_TABS = ['overview', 'tasks', 'habits', 'goals', 'more']
 const MORE_SHEET_ITEMS = ['fapless', 'voice', 'social', 'ai', 'settings']
 
+/* Last-resort crash guard: a render error must never leave a blank page. */
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null } }
+  static getDerivedStateFromError(error) { return { error } }
+  componentDidCatch(error, info) { console.error('MindForm crash:', error, info) }
+  render() {
+    if (this.state.error) {
+      return (
+        <div role="alert" style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: 'var(--bg-base)', color: 'var(--text-secondary)', padding: 24, textAlign: 'center', fontFamily: 'var(--font-body)' }}>
+          <div style={{ fontSize: 40 }}>🛠️</div>
+          <div style={{ fontSize: 19, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>Something went wrong.</div>
+          <div style={{ fontSize: 13.5, maxWidth: 380, lineHeight: 1.55 }}>An unexpected error interrupted this view. Reloading usually fixes it — your data is safe on the server.</div>
+          <button onClick={() => window.location.reload()} style={{ background: 'var(--btn-primary-bg)', color: '#fff', border: 'none', borderRadius: 980, padding: '11px 26px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-display)' }}>
+            Reload MindForm
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 /* Shared chunk-loading fallback (Suspense) */
 function ViewLoader() {
   return (
@@ -76,10 +98,6 @@ function Dashboard() {
     window.history.pushState({}, '', '/')
     setPath('/')
     setPage('landing')
-  }
-  const subPage = SUB_PAGES.find(p => p.path === path)
-  if (subPage) {
-    return <SubPage page={subPage} theme={theme} setTheme={setTheme} onHome={goHome} />
   }
 
   // Once user logs in, jump to dashboard
@@ -126,6 +144,14 @@ function Dashboard() {
     setShowOnboarding(false)
   }
 
+  // Sub-page routing must happen AFTER every hook above — an early return
+  // before a hook is a Rules-of-Hooks violation (production React error #300,
+  // "Rendered fewer hooks than expected" → blank sub-pages).
+  const subPage = SUB_PAGES.find(p => p.path === path)
+  if (subPage) {
+    return <SubPage page={subPage} theme={theme} setTheme={setTheme} onHome={goHome} />
+  }
+
   if (loading) {
     return (
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', gap: 10, color: 'var(--text-secondary)' }}>
@@ -159,7 +185,7 @@ function Dashboard() {
     if (view === 'voice')    return <VoiceCoachView />
     if (view === 'social')   return <SocialView />
     if (view === 'ai')       return <CoachView />
-    if (view === 'settings') return <SettingsView theme={theme} setTheme={setTheme} />
+    if (view === 'settings') return <SettingsView theme={theme} setTheme={setTheme} onNavigate={handleNavChange} />
     return <TaskTracker />
   }
 
@@ -329,12 +355,14 @@ function Dashboard() {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <ConfirmProvider>
-        <AuthProvider>
-          <Dashboard />
-        </AuthProvider>
-      </ConfirmProvider>
-    </ToastProvider>
+    <ErrorBoundary>
+      <ToastProvider>
+        <ConfirmProvider>
+          <AuthProvider>
+            <Dashboard />
+          </AuthProvider>
+        </ConfirmProvider>
+      </ToastProvider>
+    </ErrorBoundary>
   )
 }

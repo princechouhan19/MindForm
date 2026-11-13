@@ -124,8 +124,54 @@ function Segmented({ options, value, onChange }) {
   )
 }
 
+/* ── Mobile bottom sheet — the create/edit form opens as a proper sheet on
+   phones. A fixed-position sheet with its own scroll (dvh units) is the
+   reliable fix for "can't scroll when adding a goal" — inline forms inside
+   a flex page fight the on-screen keyboard and the fixed header. */
+function MobileSheet({ title, onClose, children }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, zIndex: 80,
+      background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+    }}>
+      <div role="dialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()} className="mf-sheet"
+        style={{
+          width: '100%', maxWidth: 560, height: '92dvh',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          borderRadius: '22px 22px 0 0', animation: 'mf-sheet-up 0.32s ease',
+        }}>
+        {/* Sticky sheet header with drag handle */}
+        <div style={{ flexShrink: 0, paddingTop: 8, background: 'var(--bg-card)', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+            <div style={{ width: 40, height: 4.5, borderRadius: 3, background: 'var(--border)' }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 10px' }}>
+            <span style={{ width: 32 }} />
+            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>{title}</div>
+            <button onClick={onClose} aria-label="Close" style={{
+              width: 32, height: 32, borderRadius: '50%', background: 'var(--bg-glass)', border: 'none',
+              color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            }}><X size={15} /></button>
+          </div>
+        </div>
+        {/* Scrollable body — scrolls even with the keyboard open */}
+        <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '10px 12px 12px', background: 'var(--bg-card)' }}>
+          {children}
+        </div>
+      </div>
+      <style>{`@keyframes mf-sheet-up { from { transform: translateY(64px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }`}</style>
+    </div>
+  )
+}
+
 /* ── Create / Edit form ──────────────────────────────────────── */
-function GoalForm({ onSave, onCancel, initial, availableTasks, availableHabits, isEdit }) {
+function GoalForm({ onSave, onCancel, initial, availableTasks, availableHabits, isEdit, embedded }) {
   const [form, setForm] = useState({
     title: initial?.title || '',
     description: initial?.description || '',
@@ -183,7 +229,8 @@ function GoalForm({ onSave, onCancel, initial, availableTasks, availableHabits, 
   const label = { fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6, fontWeight: 600 }
 
   return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 24, marginBottom: 20 }}>
+    <div style={{ background: 'var(--bg-card)', border: embedded ? 'none' : '1px solid var(--border)', borderRadius: embedded ? 0 : 'var(--radius-xl)', padding: embedded ? '4px 4px 16px' : 24, marginBottom: embedded ? 0 : 20 }}>
+      {!embedded && (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
         <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>
           {isEdit ? 'Edit Goal' : 'New Goal'}
@@ -193,6 +240,7 @@ function GoalForm({ onSave, onCancel, initial, availableTasks, availableHabits, 
           <X size={15} />
         </button>
       </div>
+      )}
 
       {/* Templates — only on create, only until user types */}
       {!isEdit && !form.title && (
@@ -770,14 +818,24 @@ export default function GoalsView() {
       <div style={{ flex: 1, overflow: 'auto', padding: isMobile ? '0 16px 80px' : '0 24px 24px' }}>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
 
-        {showForm && !editGoal && (
+        {showForm && !editGoal && (isMobile ? (
+          <MobileSheet title="New Goal" onClose={() => setShowForm(false)}>
+            <GoalForm embedded onSave={handleCreate} onCancel={() => setShowForm(false)}
+              availableTasks={availableTasks} availableHabits={availableHabits} isEdit={false} />
+          </MobileSheet>
+        ) : (
           <GoalForm onSave={handleCreate} onCancel={() => setShowForm(false)}
             availableTasks={availableTasks} availableHabits={availableHabits} isEdit={false} />
-        )}
-        {editGoal && (
+        ))}
+        {editGoal && (isMobile ? (
+          <MobileSheet title="Edit Goal" onClose={() => setEditGoal(null)}>
+            <GoalForm embedded initial={editGoal} onSave={(form) => handleUpdate(form, editGoal._id)} onCancel={() => setEditGoal(null)}
+              availableTasks={availableTasks} availableHabits={availableHabits} isEdit={true} />
+          </MobileSheet>
+        ) : (
           <GoalForm initial={editGoal} onSave={(form) => handleUpdate(form, editGoal._id)} onCancel={() => setEditGoal(null)}
             availableTasks={availableTasks} availableHabits={availableHabits} isEdit={true} />
-        )}
+        ))}
 
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-secondary)', gap: 10 }}>

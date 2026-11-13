@@ -1,4 +1,11 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+// API base:
+//  • VITE_API_URL wins if provided at build time (split deployments).
+//  • Otherwise same-origin /api — the Express backend serves the built
+//    frontend and its API from one origin, and `vite dev` proxies /api.
+//  The old default (http://localhost:5000/api) leaked into production
+//  builds and broke Sign in / Sign up on Render (calls went to the
+//  visitor's own machine), so it must never be a fallback again.
+export const BASE_URL = import.meta.env.VITE_API_URL || '/api'
 
 export const TOKEN_KEY = 'mf_token'
 
@@ -33,7 +40,11 @@ async function request(method, path, body = null, { timeout = 15000 } = {}) {
   } catch (err) {
     clearTimeout(timer)
     if (err.name === 'AbortError') throw new Error('Request timed out. Check your connection and try again.')
-    throw new Error('Failed to fetch — is the server running?')
+    throw new Error(
+      import.meta.env.DEV
+        ? 'Failed to fetch — is the backend running on port 5000?'
+        : 'Cannot reach the MindForm API. If you self-host, serve this app from the backend or set VITE_API_URL when building.'
+    )
   }
   clearTimeout(timer)
 
