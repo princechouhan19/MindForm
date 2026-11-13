@@ -1,11 +1,12 @@
 {
   "name": "prince-dashboard-backend",
   "version": "1.0.0",
-  "description": "Prince OS Dashboard API",
+  "description": "MindForm backend API",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "mcp": "node src/mcp/server.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

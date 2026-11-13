@@ -4,107 +4,17 @@ import {
   Sparkles, User, AlertCircle, CheckCircle, Loader,
   MessageSquare, X, Eye, EyeOff, Zap, Check,
   Brain, CalendarPlus, Repeat, ListChecks, Target as TargetIcon, Pencil,
-  ShieldCheck, Cable, Server,
+  ShieldCheck, Cable, Server, Plus, Globe, ArrowUpRight,
 } from 'lucide-react'
-import { tasksAPI, habitsAPI, goalsAPI, BASE_URL } from '../api/client'
+import { tasksAPI, habitsAPI, goalsAPI, BASE_URL, aiAPI } from '../api/client'
+import { getAllProviders, ProviderLogo, fetchModelCatalog, validateBaseUrl, addCustomProvider, updateCustomProvider, removeCustomProvider } from '../lib/ai-providers.jsx'
 import { useToast } from '../components/Toast'
+import { useConfirm } from '../components/ConfirmDialog'
 import MCPModal from '../components/MCPModal'
 
-// ── Provider logos (inline SVG — offline, CSP-safe, no external requests) ──
-function ProviderLogo({ id, size = 18 }) {
-  const s = { width: size, height: size, display: 'block', flexShrink: 0 }
-  if (id === 'openai') return (
-    <svg viewBox="0 0 24 24" style={{ ...s, color: '#10a37f' }} fill="currentColor" aria-hidden="true">
-      <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558-5.833-3.387L15.871 7.1971a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.405-.667zm2.0107-3.0231-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654 2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/>
-    </svg>
-  )
-  if (id === 'gemini') return (
-    <svg viewBox="0 0 24 24" style={s} aria-hidden="true">
-      <defs>
-        <linearGradient id="mf-gemini-g" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#4285F4" /><stop offset="1" stopColor="#9B72CB" />
-        </linearGradient>
-      </defs>
-      <path fill="url(#mf-gemini-g)" d="M12 0Q12 12 24 12Q12 12 12 24Q12 12 0 12Q12 12 12 0Z" />
-    </svg>
-  )
-  if (id === 'anthropic') return (
-    <svg viewBox="0 0 24 24" style={s} aria-hidden="true">
-      <g stroke="#D97757" strokeWidth="2.5" strokeLinecap="round">
-        <line x1="12" y1="2.4" x2="12" y2="7.8" />
-        <line x1="12" y1="16.2" x2="12" y2="21.6" />
-        <line x1="2.4" y1="12" x2="7.8" y2="12" />
-        <line x1="16.2" y1="12" x2="21.6" y2="12" />
-        <line x1="5.4" y1="5.4" x2="9" y2="9" />
-        <line x1="15" y1="15" x2="18.6" y2="18.6" />
-        <line x1="5.4" y1="18.6" x2="9" y2="15" />
-        <line x1="15" y1="9" x2="18.6" y2="5.4" />
-      </g>
-    </svg>
-  )
-  if (id === 'mistral') {
-    const rows = ['#FFD800', '#FFAF00', '#FF8205', '#FA500F', '#E10500']
-    const cells = [
-      [0, 0], [5, 0],
-      [0, 1], [1, 1], [4, 1], [5, 1],
-      [0, 2], [2, 2], [3, 2], [5, 2],
-      [0, 3], [5, 3],
-      [0, 4], [5, 4],
-    ]
-    return (
-      <svg viewBox="0 0 24 20" style={{ ...s, borderRadius: 2 }} aria-hidden="true">
-        {cells.map(([x, y], i) => (
-          <rect key={i} x={x * 4} y={y * 4} width="4" height="4" fill={rows[y]} />
-        ))}
-      </svg>
-    )
-  }
-  return <Sparkles size={size} style={s} />
-}
-
-// ── Provider / Model catalog ────────────────────────────────────
-const PROVIDERS = [
-  {
-    id: 'openai', name: 'OpenAI', color: '#10a37f',
-    placeholder: 'sk-...',
-    models: [
-      { id: 'gpt-4o',             label: 'GPT-4o' },
-      { id: 'gpt-4o-mini',        label: 'GPT-4o Mini' },
-      { id: 'gpt-4-turbo',        label: 'GPT-4 Turbo' },
-      { id: 'o1-mini',            label: 'OpenAI o1 Mini' },
-      { id: 'gpt-3.5-turbo',      label: 'GPT-3.5 Turbo' },
-    ],
-  },
-  {
-    id: 'gemini', name: 'Google Gemini', color: '#4285f4',
-    placeholder: 'AIza...',
-    models: [
-      { id: 'gemini-2.0-flash',        label: 'Gemini 2.0 Flash (Fast & Free)' },
-      { id: 'gemini-1.5-pro',          label: 'Gemini 1.5 Pro' },
-      { id: 'gemini-1.5-flash',        label: 'Gemini 1.5 Flash' },
-      { id: 'gemini-1.5-flash-8b',     label: 'Gemini 1.5 Flash 8B (Lite)' },
-      { id: 'gemini-1.0-pro',          label: 'Gemini 1.0 Pro (Legacy)' },
-    ],
-  },
-  {
-    id: 'anthropic', name: 'Anthropic Claude', color: '#d97706',
-    placeholder: 'sk-ant-...',
-    models: [
-      { id: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet' },
-      { id: 'claude-3-5-haiku-20241022',  label: 'Claude 3.5 Haiku' },
-      { id: 'claude-3-opus-20240229',     label: 'Claude 3 Opus' },
-    ],
-  },
-  {
-    id: 'mistral', name: 'Mistral AI', color: '#ff7000',
-    placeholder: '...',
-    models: [
-      { id: 'mistral-large-latest',   label: 'Mistral Large' },
-      { id: 'mistral-small-latest',   label: 'Mistral Small' },
-      { id: 'open-mixtral-8x7b',      label: 'Mixtral 8×7B' },
-    ],
-  },
-]
+// Provider logos, catalogue, custom-provider store and the live
+// model-catalogue fetcher now live in src/lib/ai-providers.js — one
+// source of truth for Coach and the docs pages.
 
 const STORAGE_KEY = 'mf_ai_config'
 const KEYS_KEY    = 'mf_ai_keys'   // stores { openai: 'sk-...', gemini: 'AIza...', ... }
@@ -471,14 +381,137 @@ function CustomSelect({ value, options, onChange, placeholder }) {
   )
 }
 
+// ── Searchable model picker (aggregators + custom providers) ──
+// OpenRouter and NVIDIA NIM expose hundreds of models, so this
+// picker searches the catalogue live (12 h cache, graceful fallback
+// to the built-in list) and accepts an exact model ID as a last
+// resort.
+function ModelSearchSelect({ value, onChange, provider, baseUrl, apiKey }) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const [catalog, setCatalog] = useState(null) // { models, source, error }
+  const [loading, setLoading] = useState(false)
+  const ref = useRef()
+
+  useEffect(() => {
+    const click = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', click)
+    return () => document.removeEventListener('mousedown', click)
+  }, [])
+
+  const load = async (force = false) => {
+    if (!force && catalog) return
+    setLoading(true)
+    const res = await fetchModelCatalog(provider, { baseUrl, apiKey })
+    setCatalog(res)
+    setLoading(false)
+  }
+
+  useEffect(() => { if (open && !catalog) load() }, [open]) // eslint-disable-line
+
+  const models = catalog?.models || provider.models || []
+  const q = query.trim().toLowerCase()
+  const filtered = q ? models.filter(m => m.id.toLowerCase().includes(q) || (m.label || '').toLowerCase().includes(q)).slice(0, 120) : models.slice(0, 120)
+  const exact = q && !models.some(m => m.id.toLowerCase() === q)
+  const selected = models.find(m => m.id === value)
+
+  return (
+    <div ref={ref} style={{ position: 'relative', width: '100%' }}>
+      <button onClick={() => setOpen(!open)} type="button" style={{
+        width: '100%', background: 'var(--bg-glass)', border: '1px solid var(--border)',
+        borderRadius: 10, padding: '12px 14px', fontSize: 13, textAlign: 'left',
+        color: value ? 'var(--text-primary)' : 'var(--text-muted)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, cursor: 'pointer',
+      }}>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {selected ? selected.label : value ? value : 'Search models…'}
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          {catalog?.source === 'live' && <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--green)' }}>{models.length} LIVE</span>}
+          {catalog?.source === 'cache' && <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-muted)' }}>{models.length}</span>}
+          {catalog?.source === 'fallback' && <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--amber)' }}>OFFLINE LIST</span>}
+          <ChevronDown size={14} style={{ color: 'var(--text-muted)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.25s' }} />
+        </span>
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 120,
+          background: 'var(--bg-card)', border: '1px solid var(--border)',
+          borderRadius: 12, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+          animation: 'fadeIn 0.15s ease',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', borderBottom: '1px solid var(--border)' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
+              <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.5" y2="16.5" strokeLinecap="round" />
+            </svg>
+            <input
+              autoFocus
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder={`Search ${models.length} models…`}
+              style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 12.5, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}
+            />
+            <button onClick={() => load(true)} title="Refresh catalogue" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 4 }}>
+              <Loader size={12} style={loading ? { animation: 'spin 1s linear infinite' } : {}} />
+            </button>
+          </div>
+
+          <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+            {loading && !models.length && (
+              <div style={{ padding: '14px', fontSize: 12, color: 'var(--text-muted)' }}>Loading catalogue…</div>
+            )}
+            {!loading && !filtered.length && !exact && (
+              <div style={{ padding: '14px', fontSize: 12, color: 'var(--text-muted)' }}>No models match “{query}”.</div>
+            )}
+            {filtered.map(m => (
+              <button key={m.id} type="button" onClick={() => { onChange(m.id); setOpen(false); setQuery('') }} style={{
+                width: '100%', padding: '9px 13px', border: 'none', textAlign: 'left', cursor: 'pointer',
+                background: value === m.id ? 'var(--cyan-dim)' : 'transparent',
+                color: value === m.id ? 'var(--cyan)' : 'var(--text-secondary)', fontSize: 12.5,
+                display: 'flex', justifyContent: 'space-between', gap: 10, transition: 'background 0.12s',
+              }}
+                onMouseEnter={e => { if (value !== m.id) e.currentTarget.style.background = 'var(--border)' }}
+                onMouseLeave={e => { if (value !== m.id) e.currentTarget.style.background = 'transparent' }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.label}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.id}</span>
+              </button>
+            ))}
+            {exact && (
+              <button onClick={() => { onChange(query.trim()); setOpen(false); setQuery('') }} style={{
+                width: '100%', padding: '10px 13px', border: 'none', background: 'var(--cyan-dim)',
+                color: 'var(--cyan)', fontSize: 12.5, textAlign: 'left', cursor: 'pointer', fontWeight: 600,
+              }}>
+                Use exact ID: <span style={{ fontFamily: 'var(--font-mono)' }}>{query.trim()}</span>
+              </button>
+            )}
+          </div>
+          {catalog?.error && (
+            <div style={{ padding: '7px 12px', fontSize: 10.5, color: 'var(--amber)', borderTop: '1px solid var(--border)' }}>{catalog.error}</div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Settings panel ──────────────────────────────────────────
 function AISettings({ config, onSave, onClose, serverProviders = {} }) {
+  const [providers, setProviders] = useState(getAllProviders)
   const [provider, setProvider] = useState(config.provider || 'openai')
-  const [model,    setModel]    = useState(config.model    || '')
+  const [model, setModel]    = useState(config.model    || '')
+  const [baseUrls, setBaseUrls] = useState(config.baseUrls || {})
   // Per-provider keys: load saved keys and pre-fill for the current provider
   const [allKeys,  setAllKeys]  = useState(loadKeys)
   const [showKey,  setShowKey]  = useState(false)
   const [showMCP,  setShowMCP]  = useState(false)
+  const [customForm, setCustomForm] = useState(null) // null | 'new' | { id, name, baseUrl }
+  const [customErr, setCustomErr] = useState('')
+  const [urlErr, setUrlErr] = useState('')
+  const [testState, setTestState] = useState(null) // 'testing' | { ok, message }
+
+  const toast = useToast()
+  const confirm = useConfirm()
 
   // ESC closes the settings sheet (accessibility)
   useEffect(() => {
@@ -487,18 +520,80 @@ function AISettings({ config, onSave, onClose, serverProviders = {} }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const prov   = PROVIDERS.find(p => p.id === provider)
+  const prov = providers.find(p => p.id === provider)
   const apiKey = allKeys[provider] || ''
+  const baseUrl = (baseUrls[provider] ?? prov?.baseUrl ?? '').trim()
+  const editableUrl = Boolean(prov?.editable || provider.startsWith('custom-'))
   const serverHas = Boolean(serverProviders[provider])
-  const canSave = Boolean(model) && (Boolean(apiKey.trim()) || serverHas)
+  const keyless = Boolean(provider.startsWith('custom-') && baseUrl)
+  const canSave = Boolean(model) && (Boolean(apiKey.trim()) || serverHas || keyless)
 
-  // When switching providers, model resets and key pre-fills from saved keys
+  // When switching providers, model resets and the URL/key re-resolve
   const handleProviderSwitch = (id) => {
     setProvider(id)
     setModel('')
+    setTestState(null)
+    setUrlErr('')
   }
 
   const setApiKey = (val) => setAllKeys(prev => ({ ...prev, [provider]: val }))
+  const setBaseUrl = (val) => {
+    setBaseUrls(prev => ({ ...prev, [provider]: val }))
+    setUrlErr(validateBaseUrl(val))
+    setTestState(null)
+  }
+
+  /* ── Custom providers ─────────────────────────────────────── */
+  const openCustomForm = (p = null) => {
+    setCustomForm(p ? { id: p.id, name: p.name, baseUrl: p.baseUrl } : { id: null, name: '', baseUrl: '' })
+    setCustomErr('')
+  }
+
+  const handleSaveCustom = () => {
+    const name = (customForm.name || '').trim()
+    const url = (customForm.baseUrl || '').trim()
+    if (!name) { setCustomErr('Give the provider a name.'); return }
+    const urlProblem = validateBaseUrl(url)
+    if (urlProblem) { setCustomErr(urlProblem); return }
+    const list = customForm.id
+      ? updateCustomProvider(customForm.id, { name, baseUrl: url })
+      : addCustomProvider({ name, baseUrl: url })
+    setProviders(list)
+    const created = list.find(x => (customForm.id ? x.id === customForm.id : x.name === name && x.baseUrl === url.replace(/\/+$/, '')))
+    setCustomForm(null)
+    setCustomErr('')
+    if (created) handleProviderSwitch(created.id)
+    toast.success(customForm.id ? 'Provider updated.' : 'Custom provider added.')
+  }
+
+  const handleDeleteCustom = async (p) => {
+    const ok = await confirm({
+      title: `Remove “${p.name}”?`,
+      body: 'The provider entry is deleted from this browser. Any key saved for it stays in local storage until you clear it.',
+      confirmLabel: 'Remove',
+      danger: true,
+    })
+    if (!ok) return
+    const list = removeCustomProvider(p.id)
+    setProviders(list)
+    if (provider === p.id) handleProviderSwitch('openai')
+    toast.success('Provider removed.')
+  }
+
+  /* ── Connection test ──────────────────────────────────────── */
+  const handleTest = async () => {
+    setTestState('testing')
+    try {
+      const res = await aiAPI.testProvider({
+        provider,
+        baseUrl: editableUrl ? baseUrl : undefined,
+        apiKey: apiKey.trim() || undefined,
+      })
+      setTestState({ ok: Boolean(res?.ok), message: res?.message || (res?.ok ? 'Connection OK.' : 'Test failed.') })
+    } catch (e) {
+      setTestState({ ok: false, message: e.message || 'Test failed.' })
+    }
+  }
 
   const handleSave = () => {
     if (!canSave) return
@@ -507,7 +602,8 @@ function AISettings({ config, onSave, onClose, serverProviders = {} }) {
       provider,
       model,
       apiKey: apiKey.trim(),
-      useServerKey: !apiKey.trim() && serverHas, // host-enabled shared key
+      useServerKey: !apiKey.trim() && serverHas && !keyless, // host-enabled shared key
+      baseUrls,                    // per-provider (editable) base URLs
     })
     onClose()
   }
@@ -520,7 +616,7 @@ function AISettings({ config, onSave, onClose, serverProviders = {} }) {
       padding: 24,
     }}>
       <div style={{
-        width: '100%', maxWidth: 480, maxHeight: 'calc(100dvh - 48px)', overflowY: 'auto',
+        width: '100%', maxWidth: 500, maxHeight: 'calc(100dvh - 48px)', overflowY: 'auto',
         background: 'var(--bg-card)', border: '1px solid var(--border)',
         borderRadius: 20, padding: '28px 28px 24px',
         animation: 'fadeIn 0.2s ease',
@@ -541,47 +637,154 @@ function AISettings({ config, onSave, onClose, serverProviders = {} }) {
           </button>
         </div>
 
-        {/* Provider logo strip */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 18, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 10px', marginBottom: 20 }}>
-          {PROVIDERS.map(p => (
-            <div key={p.id} title={p.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, opacity: provider === p.id ? 1 : 0.55, transition: 'opacity 0.15s' }}>
-              <ProviderLogo id={p.id} size={22} />
-              <span style={{ fontSize: 9.5, fontWeight: 600, color: provider === p.id ? p.color : 'var(--text-muted)', letterSpacing: '0.02em' }}>{p.name.split(' ')[0]}</span>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ marginBottom: 20 }}>
+        {/* Provider grid — first-party + aggregators + your custom ones */}
+        <div style={{ marginBottom: 18 }}>
           <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 10 }}>PROVIDER</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {PROVIDERS.map(p => (
-              <button key={p.id} onClick={() => handleProviderSwitch(p.id)} style={{
-                padding: '12px 14px', borderRadius: 12, cursor: 'pointer', textAlign: 'left',
-                background: provider === p.id ? p.color + '18' : 'var(--bg-glass)',
-                border: `1px solid ${provider === p.id ? p.color + '60' : 'var(--border)'}`,
-                transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 10,
-              }}>
-                <ProviderLogo id={p.id} size={18} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: provider === p.id ? p.color : 'var(--text-secondary)' }}>{p.name}</div>
-                  <div style={{ fontSize: 9, marginTop: 2, color: allKeys[p.id] ? 'var(--green)' : serverProviders[p.id] ? 'var(--cyan)' : 'transparent' }}>
-                    {allKeys[p.id] ? '● Your key saved' : serverProviders[p.id] ? '● Shared key available' : '·'}
+            {providers.map(p => (
+              <div key={p.id} style={{ position: 'relative' }}>
+                <button onClick={() => handleProviderSwitch(p.id)} style={{
+                  width: '100%', padding: '12px 14px', borderRadius: 12, cursor: 'pointer', textAlign: 'left',
+                  background: provider === p.id ? (p.color || 'var(--cyan)') + '18' : 'var(--bg-glass)',
+                  border: `1px solid ${provider === p.id ? (p.color || 'var(--cyan)') + '60' : 'var(--border)'}`,
+                  transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                  <ProviderLogo id={p.id} size={18} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      color: provider === p.id ? (p.color || 'var(--cyan)') : 'var(--text-secondary)',
+                    }}>{p.name}</div>
+                    <div style={{ fontSize: 9, marginTop: 2, color: allKeys[p.id] ? 'var(--green)' : serverProviders[p.id] ? 'var(--cyan)' : 'transparent' }}>
+                      {allKeys[p.id] ? '● Your key saved' : serverProviders[p.id] ? '● Shared key available' : '·'}
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+                {/* custom providers: edit / remove affordances */}
+                {p.id.startsWith('custom-') && (
+                  <div style={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: 4 }}>
+                    <button onClick={(e) => { e.stopPropagation(); openCustomForm(p) }} title="Edit provider" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 7, color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 4 }}>
+                      <Pencil size={11} />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDeleteCustom(p) }} title="Remove provider" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 7, color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 4 }}
+                      onMouseEnter={e => { e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'var(--red)' }}
+                      onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)' }}>
+                      <Trash2 size={11} />
+                    </button>
+                  </div>
+                )}
+              </div>
             ))}
+            {/* Add-custom tile */}
+            <button onClick={() => openCustomForm(null)} style={{
+              padding: '12px 14px', borderRadius: 12, cursor: 'pointer', textAlign: 'left',
+              background: 'transparent', border: '1px dashed var(--border)',
+              color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 10,
+              transition: 'all 0.15s',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--cyan)'; e.currentTarget.style.color = 'var(--cyan)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)' }}>
+              <Plus size={18} style={{ color: 'currentColor' }} />
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600 }}>Custom provider</div>
+                <div style={{ fontSize: 9, marginTop: 2, opacity: 0.8 }}>Any OpenAI-compatible URL</div>
+              </div>
+            </button>
           </div>
         </div>
+
+        {/* Custom provider form */}
+        {customForm && (
+          <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px', marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 10 }}>
+              {customForm.id ? 'EDIT CUSTOM PROVIDER' : 'ADD CUSTOM PROVIDER'}
+            </div>
+            <input
+              value={customForm.name}
+              onChange={e => setCustomForm(f => ({ ...f, name: e.target.value }))}
+              placeholder="Name — e.g. “Ollama local” or “Together AI”"
+              maxLength={40}
+              style={{ width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: 'var(--text-primary)', marginBottom: 8 }}
+            />
+            <input
+              value={customForm.baseUrl}
+              onChange={e => setCustomForm(f => ({ ...f, baseUrl: e.target.value }))}
+              placeholder="Base URL — e.g. http://localhost:11434/v1"
+              style={{ width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}
+            />
+            {customErr && <div style={{ fontSize: 11.5, color: 'var(--red)', marginTop: 7 }}>{customErr}</div>}
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 7, lineHeight: 1.5 }}>
+              Must expose <code style={{ fontFamily: 'var(--font-mono)' }}>/chat/completions</code>. Works with Ollama, LM Studio, vLLM, Together, Groq and friends.
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <button onClick={handleSaveCustom} style={{
+                flex: 1, background: 'var(--btn-primary-bg)', color: '#000', border: 'none', borderRadius: 10,
+                padding: '10px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-display)',
+              }}>{customForm.id ? 'Save changes' : 'Add provider'}</button>
+              <button onClick={() => { setCustomForm(null); setCustomErr('') }} style={{
+                background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10,
+                padding: '10px 14px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', cursor: 'pointer',
+              }}>Cancel</button>
+            </div>
+          </div>
+        )}
+
+        {/* Base URL (editable defaults + custom providers) */}
+        {editableUrl && !customForm && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)' }}>BASE URL</div>
+              {provider !== provider.indexOf('custom') && prov?.defaultBaseUrl && baseUrl !== prov.defaultBaseUrl && (
+                <button onClick={() => setBaseUrl(prov.defaultBaseUrl)} style={{
+                  background: 'none', border: 'none', color: 'var(--cyan)', fontSize: 11, fontWeight: 600,
+                  cursor: 'pointer', padding: 0, fontFamily: 'var(--font-display)',
+                }}>Reset to default</button>
+              )}
+            </div>
+            <div style={{ position: 'relative' }}>
+              <Globe size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input
+                type="text"
+                value={baseUrl}
+                onChange={e => setBaseUrl(e.target.value)}
+                placeholder={prov?.defaultBaseUrl || 'https://your-provider.com/v1'}
+                style={{
+                  width: '100%', background: 'var(--bg-glass)', border: `1px solid ${urlErr ? 'var(--red)' : 'var(--border)'}`,
+                  borderRadius: 10, padding: '12px 14px 12px 36px',
+                  fontSize: 12.5, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)',
+                }}
+              />
+            </div>
+            {urlErr
+              ? <div style={{ fontSize: 11, color: 'var(--red)', marginTop: 6 }}>{urlErr}</div>
+              : <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
+                  {prov?.defaultBaseUrl ? `Default: ${prov.defaultBaseUrl} — editable.` : 'Send requests to this OpenAI-compatible endpoint.'}
+                </div>}
+          </div>
+        )}
 
         {/* Model selector */}
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 8 }}>MODEL</div>
-          <CustomSelect
-            value={model}
-            options={prov?.models || []}
-            onChange={setModel}
-            placeholder="Select AI model..."
-          />
+          {editableUrl || prov?.searchable ? (
+            <ModelSearchSelect
+              value={model}
+              onChange={setModel}
+              provider={prov || { id: provider, models: [] }}
+              baseUrl={baseUrl}
+              apiKey={apiKey.trim() || undefined}
+            />
+          ) : (
+            <CustomSelect
+              value={model}
+              options={prov?.models || []}
+              onChange={setModel}
+              placeholder="Select AI model..."
+            />
+          )}
+          {prov?.note && (
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6, lineHeight: 1.5 }}>{prov.note}</div>
+          )}
         </div>
 
         {/* API Key (BYOK) */}
@@ -603,7 +806,7 @@ function AISettings({ config, onSave, onClose, serverProviders = {} }) {
             <input
               type={showKey ? 'text' : 'password'}
               value={apiKey}
-              onChange={e => setApiKey(e.target.value)}
+              onChange={e => { setApiKey(e.target.value); setTestState(null) }}
               placeholder={serverHas && !apiKey ? 'Optional — shared key active' : (prov?.placeholder || 'Your API key...')}
               style={{
                 width: '100%', background: 'var(--bg-glass)', border: '1px solid var(--border)',
@@ -617,9 +820,30 @@ function AISettings({ config, onSave, onClose, serverProviders = {} }) {
               {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
           </div>
+          {prov?.keyUrl && (
+            <a href={prov.keyUrl} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: 'var(--cyan)', marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}>
+              Get a {prov.name} key <ArrowUpRight size={11} />
+            </a>
+          )}
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
             <AlertCircle size={10} /> {serverHas ? 'Leave empty to use the host’s shared key, or bring your own.' : 'Stored only in your browser — never sent to MindForm servers.'}
           </div>
+        </div>
+
+        {/* Test connection */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          <button onClick={handleTest} disabled={testState === 'testing'} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 7,
+            background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 980,
+            color: 'var(--text-secondary)', padding: '8px 16px', fontSize: 12.5, fontWeight: 600,
+            cursor: testState === 'testing' ? 'wait' : 'pointer', fontFamily: 'var(--font-display)',
+          }}>
+            <Zap size={12} color={testState?.ok ? 'var(--green)' : testState && !testState.ok ? 'var(--red)' : 'var(--amber)'} />
+            {testState === 'testing' ? 'Testing…' : 'Test connection'}
+          </button>
+          {testState && testState !== 'testing' && (
+            <span style={{ fontSize: 11.5, color: testState.ok ? 'var(--green)' : 'var(--red)', lineHeight: 1.4, flex: 1 }}>{testState.message}</span>
+          )}
         </div>
 
         {/* Coach permissions — what a configured key unlocks */}
@@ -660,7 +884,7 @@ function AISettings({ config, onSave, onClose, serverProviders = {} }) {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>MCP server</div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>Quick-edit your data from Claude Desktop, Cursor & friends</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>Account keys for Claude, Cursor, Codex & Antigravity</div>
           </div>
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--cyan)', display: 'flex', alignItems: 'center', gap: 4 }}><Server size={12} /> Setup</span>
         </button>
@@ -779,7 +1003,11 @@ export default function CoachView() {
   const hasOwnKey = Boolean(config.apiKey)
   const hasServerKey = Boolean(config.useServerKey && serverProviders[config.provider])
   const isReady = Boolean(config.provider && config.model && (hasOwnKey || hasServerKey))
-  const prov = PROVIDERS.find(p => p.id === config.provider)
+  // Resolve the active provider from the full catalogue (first-party,
+  // aggregators and the user's custom providers).
+  const prov = getAllProviders().find(p => p.id === config.provider)
+  const activeBaseUrl = config.baseUrls?.[config.provider] || prov?.baseUrl || ''
+  const activeModelLabel = prov?.models?.find(m => m.id === config.model)?.label || config.model
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -837,6 +1065,7 @@ export default function CoachView() {
           provider: config.provider,
           model: config.model,
           apiKey: config.apiKey || undefined,
+          baseUrl: activeBaseUrl || undefined,   // OpenRouter / NVIDIA / custom endpoints
           messages: updated.map(({ role, content }) => ({ role, content })),
         }),
       })
@@ -890,7 +1119,7 @@ export default function CoachView() {
             <div style={{ fontWeight: 600, fontSize: 16 }}>Coach</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
               {isReady
-                ? <span style={{ color: 'var(--green)' }}>● {prov?.name} · {prov?.models.find(m => m.id === config.model)?.label}{hasServerKey && !hasOwnKey ? ' · shared key' : ''} · can edit your plan</span>
+                ? <span style={{ color: 'var(--green)' }}>● {prov?.name || config.provider} · {activeModelLabel}{hasServerKey && !hasOwnKey ? ' · shared key' : ''} · can edit your plan</span>
                 : <span style={{ color: 'var(--amber)' }}>● Pick a provider & add your API key to start</span>
               }
             </div>

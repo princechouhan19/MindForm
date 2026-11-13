@@ -1,25 +1,34 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { ArrowLeft, Shield, FileText, HelpCircle, Compass, ChevronRight } from 'lucide-react'
+import SiteFooter from '../components/Footer'
+import { navigateTo } from '../lib/nav'
 
 /* ── Landing sub-pages (DESIGN.md: quiet canvas, hairlines, one accent) ──
    Routed from App.jsx via real paths: /privacy /terms /faq /how-it-works.
-   The Express SPA fallback serves index.html for all of them in production. */
+   The Express SPA fallback serves index.html for all of them in production.
+
+   Scroll contract (fixed): the page owns its own scroll container
+   (height: 100dvh; overflow-y: auto) because the app shell sets
+   body { overflow: hidden } for the dashboard — relying on body
+   scroll made these pages unscrollable. The container also resets
+   to scrollTop 0 whenever the path changes, so a page always opens
+   at the top, never mid-document. */
 
 export const SUB_PAGES = [
   { path: '/privacy',     title: 'Privacy Policy',  icon: Shield,    desc: 'What MindForm stores, what it never touches, and how deletion works.' },
   { path: '/terms',       title: 'Terms of Use',    icon: FileText,  desc: 'The short, plain-English rules for using MindForm.' },
-  { path: '/faq',         title: 'FAQ',             icon: HelpCircle, desc: 'Answers about data, pricing, the Speak module and self-hosting.' },
+  { path: '/faq',         title: 'FAQ',             icon: HelpCircle, desc: 'Answers about data, pricing, Coach, MCP and the Speak module.' },
   { path: '/how-it-works', title: 'How it works',   icon: Compass,   desc: 'A guided tour of every module — and the 15-minute Speak session.' },
 ]
 
 /* Shared content data — FAQ copy mirrors the FAQPage JSON-LD in index.html. */
 const FAQS = [
   { q: 'What is MindForm?',
-    a: 'MindForm is a free, private productivity dashboard that combines minute-level task planning, a 30-day habit matrix, goal tracking with linked progress, and a discipline streak engine — in one Apple-inspired interface.' },
+    a: 'MindForm is a free-to-use, private productivity dashboard that combines minute-level task planning, a 30-day habit matrix, goal tracking with linked progress, and a discipline streak engine — in one Apple-inspired interface.' },
   { q: 'Is MindForm free?',
-    a: 'Yes. MindForm is 100% free and open source. You can inspect the code, contribute, or self-host it on your own infrastructure.' },
+    a: 'Yes. The web app is 100% free to use. MindForm is proprietary (closed-source) software — the codebase is not public, but using the product costs nothing.' },
   { q: 'Does MindForm store my data?',
-    a: 'Your tasks, habits and goals are stored privately in your account. AI chat history is automatically deleted every 24 hours and community forum messages every 48 hours. AI keys you provide are stored only in your browser.' },
+    a: 'Your tasks, habits and goals are stored privately in your account. AI chat history is automatically deleted every 24 hours and community forum messages every 48 hours. AI keys you provide are stored only in your browser, or as a non-reversible hash in your account when you create an MCP key.' },
   { q: 'How does the streak and aura system work?',
     a: 'Every day you keep your discipline streak you earn aura points, level up through identities from Novice to Legend, and can take on challenges like the 30-day or 90-day protocol.' },
   { q: 'What is the Speak module?',
@@ -29,15 +38,15 @@ const FAQS = [
   { q: 'What is Coach?',
     a: 'Coach is MindForm’s built-in AI assistant. It reads your tasks, habits, goals and streak, then can propose concrete changes — new tasks, habit replans, goals with deadlines — as review cards. Nothing touches your account until you tap Apply.' },
   { q: 'Can Coach edit my tasks, habits and goals?',
-    a: 'Yes — but only with your approval. Coach proposes changes as “Apply” cards in the chat. Applying writes them straight into the Tasks, Habits or Goals sections using the same weekly and monthly buckets you see in the app. You can also run quick starts like “Plan my week”, “Replan habits” or “Edit goals”.' },
+    a: 'Yes — but only with your approval. Coach proposes changes as “Apply” cards in the chat. Applying writes them straight into the Tasks, Habits or Goals sections using the same weekly and monthly buckets you see in the app. You can also run quick starts like “Plan my week”, “Replan habits” or “Edit goals”. Configuring your own API key (BYOK) unlocks the full read-and-propose permission set.' },
   { q: 'Which AI providers does Coach support?',
-    a: 'OpenAI, Google Gemini, Anthropic Claude and Mistral. You bring your own API key, choose the model, and the key is stored only in your browser — MindForm’s servers only forward the request, they never store it.' },
+    a: 'OpenAI, Google Gemini, Anthropic Claude and Mistral — plus any OpenAI-compatible endpoint: OpenRouter and NVIDIA NIM (build.nvidia.com) ship as editable defaults, and you can add fully custom providers with a base URL and searchable model picker. The key is stored only in your browser — MindForm’s servers only forward the request, they never store it.' },
+  { q: 'Can I connect MindForm to Claude, Cursor, Codex or Antigravity?',
+    a: 'Yes. MindForm ships an MCP (Model Context Protocol) server. Create an account key in Settings → MCP Server, then follow the per-platform guides under Docs → MCP. The key gives your AI tools scoped, revocable access to your tasks, habits and goals — no password or JWT involved.' },
   { q: 'Do I need an internet connection?',
     a: 'For account sync, Coach and the community features, yes. Speak practice works fully offline in the browser, and camera recordings never leave your device either way.' },
   { q: 'Can I export my data?',
     a: 'Yes. Task Tracker and Habit Tracker both support one-click CSV export from their manage views.' },
-  { q: 'How do I self-host MindForm?',
-    a: 'Clone the repository, install backend and frontend dependencies, set a MONGO_URI and JWT secret, run the backend (it serves the built frontend from backend/public), and point your domain at it. The stack is Node.js, Express and MongoDB — no paid services required.' },
 ]
 
 const MODULES = [
@@ -46,20 +55,34 @@ const MODULES = [
   { name: 'Goals',          desc: 'Long-term targets with deadlines and categories. Link tasks and habits to a goal and its progress computes itself from the work you are already doing.' },
   { name: 'Fapless',        desc: 'A discipline streak engine with ten identity levels from Novice to Legend. Milestone bonuses, 30-day and 90-day protocols, an urge SOS panel, and a relapse log that asks why — so the pattern becomes visible.' },
   { name: 'Speak',          desc: 'Voice and communication training in 15, 30 or 60-minute guided sessions. Breathing pacer, SOVT hums, neck release, tongue twister ladders, style-shifting read-alouds and an on-camera studio with the PREP impromptu framework.' },
-  { name: 'Coach',          desc: 'The AI layer that ties it together. Ask “plan my week” and Coach proposes concrete tasks, habits and goals as review cards — apply them with one tap, edit them first, or discard them.' },
+  { name: 'Coach',          desc: 'The AI layer that ties it together. Ask “plan my week” and Coach proposes concrete tasks, habits and goals as review cards — apply them with one tap, edit them first, or discard them. BYOK, OpenRouter, NVIDIA NIM and custom OpenAI-compatible providers are supported.' },
+  { name: 'MCP Server',     desc: 'Connect Claude Desktop, Cursor, Codex, Antigravity or any MCP client to your account with a personal key. List, create, update and delete tasks, habits and goals with plain tool calls — revocable at any time.' },
   { name: 'Social',         desc: 'Opt-in only. Public profiles, a global leaderboard ranked by streak, a follow system and a forum where every message auto-deletes after 48 hours.' },
 ]
 
 /* ── Page shell ─────────────────────────────────────────────── */
 function SubPage({ page, theme, setTheme, onHome }) {
+  const scrollRef = useRef(null)
+
   useEffect(() => {
     document.title = `${page.title} — MindForm`
     document.documentElement.setAttribute('data-theme', theme || 'dark')
+    // Always open at the top — a page must never inherit the
+    // previous page's scroll position.
+    if (scrollRef.current) scrollRef.current.scrollTop = 0
+    window.scrollTo(0, 0)
     return () => { document.title = 'MindForm — Habit Tracker, Task Planner & Voice Training' }
   }, [page, theme])
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--lp-canvas)', display: 'flex', flexDirection: 'column' }}>
+    <div
+      ref={scrollRef}
+      style={{
+        height: '100dvh', overflowY: 'auto', overflowX: 'hidden',
+        background: 'var(--lp-canvas)', display: 'flex', flexDirection: 'column',
+        WebkitOverflowScrolling: 'touch',
+      }}
+    >
       {/* Top bar */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 20,
@@ -71,9 +94,14 @@ function SubPage({ page, theme, setTheme, onHome }) {
           <button onClick={onHome} className="lp-link" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14 }}>
             <ArrowLeft size={15} /> MindForm
           </button>
-          <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="lp-fine" style={{ background: 'none', border: '1px solid var(--lp-hairline)', borderRadius: 980, padding: '6px 14px', cursor: 'pointer', color: 'var(--lp-ink-2)' }}>
-            {theme === 'dark' ? 'Light' : 'Dark'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={() => navigateTo('/docs')} className="lp-link" style={{ fontSize: 13, background: 'none', border: 'none', cursor: 'pointer' }}>
+              Docs
+            </button>
+            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="lp-fine" style={{ background: 'none', border: '1px solid var(--lp-hairline)', borderRadius: 980, padding: '6px 14px', cursor: 'pointer', color: 'var(--lp-ink-2)' }}>
+              {theme === 'dark' ? 'Light' : 'Dark'}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -92,34 +120,10 @@ function SubPage({ page, theme, setTheme, onHome }) {
         {page.path === '/how-it-works' && <HowBody />}
       </main>
 
-      {/* Footer */}
-      <footer style={{ borderTop: '1px solid var(--lp-hairline)', background: 'var(--lp-parchment)' }}>
-        <div style={{ maxWidth: 760, margin: '0 auto', padding: '26px clamp(20px, 5vw, 40px)' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, marginBottom: 14 }}>
-            {SUB_PAGES.map(p => (
-              <button key={p.path} onClick={() => onNavigate(p.path)} className="lp-fine"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--lp-ink-2)', padding: 0 }}>
-                {p.title}
-              </button>
-            ))}
-          </div>
-          <div className="lp-fine" style={{ color: 'var(--lp-ink-3)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-            <span>© 2026 MindForm. All rights reserved.</span>
-            <button onClick={onHome} className="lp-link" style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-              Back to MindForm <ChevronRight size={12} />
-            </button>
-          </div>
-        </div>
-      </footer>
+      {/* Shared footer — same component as the landing page and docs */}
+      <SiteFooter maxWidth={760} onNavigate={navigateTo} onHome={onHome} />
     </div>
   )
-
-  function onNavigate(p) {
-    if (p === page.path) return
-    window.history.pushState({}, '', p)
-    // App.jsx listens to popstate only; nudge it with a custom event
-    window.dispatchEvent(new PopStateEvent('popstate'))
-  }
 }
 
 /* ── Section primitives ─────────────────────────────────────── */
@@ -166,7 +170,7 @@ function LegalBody({ kind }) {
       <div style={{ marginTop: 8 }}>
         <P>Last updated {updated}. MindForm is built to know as little about you as possible. This policy explains exactly what is stored and why.</P>
         <H2>What we store</H2>
-        <P>Your account holds an email address, a display name and a bcrypt-hashed password. Your content — tasks, habits, goals, streak history and optional Speak session logs — is stored in your account and scoped to your user ID. That is the whole list.</P>
+        <P>Your account holds an email address, a display name and a bcrypt-hashed password. Your content — tasks, habits, goals, streak history and optional Speak session logs — is stored in your account and scoped to your user ID. If you create an MCP key, we store its non-reversible SHA-256 hash so the server can recognise it; the key itself is shown once and never stored in plain text.</P>
         <H2>What we never see</H2>
         <P>AI keys you add for Coach live in your browser’s local storage and are never persisted server-side. Speak camera recordings are processed by your browser and never leave your device. We do not run advertising trackers, and we do not sell data.</P>
         <H2>Auto-deletion</H2>
@@ -174,7 +178,7 @@ function LegalBody({ kind }) {
         <H2>Community</H2>
         <P>Profiles are private by default. Appearing on the leaderboard or forum requires you to opt in, and you can go back to private whenever you like.</P>
         <H2>Contact</H2>
-        <P>Questions about this policy? Open an issue in the repository or reach the team through the app’s feedback link.</P>
+        <P>Questions about this policy? Reach the team through the app’s feedback link or the support address on the About page.</P>
       </div>
     )
   }
@@ -182,17 +186,17 @@ function LegalBody({ kind }) {
     <div style={{ marginTop: 8 }}>
       <P>Last updated {updated}. By using MindForm you agree to the terms below. They are deliberately short.</P>
       <H2>The service</H2>
-      <P>MindForm is a free, open-source productivity dashboard provided as-is. We aim for high availability but do not guarantee uninterrupted service, and we may change or discontinue features.</P>
+      <P>MindForm is a productivity suite provided as a hosted service at mindform.onrender.com, free to use, and provided as-is. We aim for high availability but do not guarantee uninterrupted service, and we may change or discontinue features.</P>
       <H2>Your account</H2>
-      <P>You are responsible for the activity on your account and for keeping your credentials safe. Disposable email providers are blocked; automated abuse is rate-limited and honeypotted.</P>
+      <P>You are responsible for the activity on your account and for keeping your credentials — including MCP account keys — safe. Disposable email providers are blocked; automated abuse is rate-limited and honeypotted. Treat an MCP key like a password: anyone holding it can edit your plan. Rotate or revoke keys from Settings → MCP Server at any time.</P>
       <H2>Your content</H2>
       <P>Your tasks, habits and goals are yours. Export them at any time. Do not use MindForm to store unlawful content, and do not use the community features to harass others.</P>
       <H2>AI features</H2>
-      <P>Coach is powered by third-party AI providers using your own API key. AI output can be wrong — review every proposed change before applying it. MindForm is not responsible for decisions made on AI advice.</P>
+      <P>Coach is powered by third-party AI providers using your own API key (or a shared key where the host enables one). AI output can be wrong — review every proposed change before applying it. MindForm is not responsible for decisions made on AI advice, and external MCP clients act with the permissions of the key you issue them.</P>
       <H2>Health disclaimer</H2>
       <P>Speak provides general voice exercises for informational purposes and is not medical advice. If you experience pain or a voice condition, consult a qualified professional first.</P>
       <H2>License</H2>
-      <P>The source code is released under its repository license. You may self-host it for personal or internal use under those terms.</P>
+      <P>MindForm is proprietary software. The codebase is not open source; nothing in the service grants you a licence to copy, modify, redistribute or resell the software. See the LICENSE file in the private repository for the full terms that apply to the MindForm team.</P>
     </div>
   )
 }
@@ -214,7 +218,9 @@ function HowBody() {
       <H2>The discipline engine</H2>
       <P>Fapless wraps everything in a streak with real stakes: ten identity levels, milestone bonuses, 30-day and 90-day protocols, and an SOS panel for hard moments. When you slip, the relapse log asks why — the answer matters more than the counter.</P>
       <H2>Coach, your AI copilot</H2>
-      <P>Coach reads your tasks, habits, goals and streak, then proposes concrete changes: this week’s tasks, a habit replan, a 90-day goal with a deadline. Every proposal arrives as a review card — tap Apply and it lands in the right module, or discard it. Nothing changes without you.</P>
+      <P>Coach reads your tasks, habits, goals and streak, then proposes concrete changes: this week’s tasks, a habit replan, a 90-day goal with a deadline. Every proposal arrives as a review card — tap Apply and it lands in the right module, or discard it. Nothing changes without you. Bring your own key from OpenAI, Gemini, Claude or Mistral, or point Coach at OpenRouter, NVIDIA NIM or any OpenAI-compatible endpoint.</P>
+      <H2>Connect your AI tools with MCP</H2>
+      <P>MindForm exposes a Model Context Protocol server. Generate an account key in Settings → MCP Server and Claude Desktop, Cursor, Codex CLI or Antigravity can list, create and update your tasks, habits and goals with plain tool calls — scoped to your account, revocable instantly. The full setup guide lives under Docs → MCP.</P>
       <H2>The 15-minute Speak session</H2>
       <P>Speak is a daily voice gym. The 15-minute routine moves through six steps, each grounded in published voice research:</P>
       <div style={{ display: 'grid', gap: 12, margin: '20px 0 8px' }}>
@@ -232,7 +238,7 @@ function HowBody() {
           </div>
         ))}
       </div>
-      <P>Thirty-minute and one-hour routines add an obstacle course (pen-in-mouth and over-tongue drills) and a pace-and-pause trainer. Self-hosting your own copy? Clone the repository, set a MongoDB URI and JWT secret, and run the backend — it serves the built frontend out of the box.</P>
+      <P>Thirty-minute and one-hour routines add an obstacle course (pen-in-mouth and over-tongue drills) and a pace-and-pause trainer.</P>
     </div>
   )
 }

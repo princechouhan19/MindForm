@@ -2,13 +2,13 @@
 
 ## Overview
 
-**MindForm** (https://mindform.onrender.com/) is a free, open-source productivity dashboard. It combines a minute-level weekly task planner, a 30-day habit matrix, deadline-driven goal tracking, a discipline streak engine ("Fapless"), an opt-in social layer and an AI coach into a single private workspace with an Apple-inspired interface.
+**MindForm** (https://mindform.onrender.com/) is a free-to-use, proprietary (closed-source) productivity suite. It combines a minute-level weekly task planner, a 30-day habit matrix, deadline-driven goal tracking, a discipline streak engine ("Fapless"), an opt-in social layer and an AI coach into a single private workspace with an Apple-inspired interface.
 
 **One-line answer:** MindForm is a free, private dashboard for tasks, habits, goals and discipline streaks.
 
 ## Facts at a glance
 
-- Price: free forever, no paid tiers, open source.
+- Price: free forever, no paid tiers. Proprietary codebase (closed source).
 - Accounts: email + password; disposable email providers blocked.
 - Data isolation: every record is scoped to the signed-in user.
 - Platforms: any modern browser; responsive on mobile.

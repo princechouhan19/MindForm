@@ -337,7 +337,7 @@ export default function SettingsView({ theme, setTheme, onNavigate }) {
           } />
         <Row icon={Cable} iconBg="var(--purple)"
           title="MCP Server"
-          subtitle="Connect Claude Desktop, Cursor & friends — 12 quick-edit tools"
+          subtitle="Create account keys for Claude, Cursor, Codex & Antigravity — 13 quick-edit tools"
           onClick={() => setShowMCP(true)}
           accessory={<ChevronRight size={15} color="var(--text-muted)" />}
           last />

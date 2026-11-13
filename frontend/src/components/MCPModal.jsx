@@ -1,85 +1,129 @@
-import React, { useEffect, useState } from 'react'
-import { X, Copy, Check, Cable, ShieldCheck, Terminal } from 'lucide-react'
+import React, { useEffect, useState, useCallback } from 'react'
+import { X, Cable, ShieldCheck, KeyRound, Plus, RefreshCw, Trash2, AlertTriangle, BookOpen, Clock, CheckCircle2 } from 'lucide-react'
+import { mcpAPI } from '../api/client'
+import { useToast } from './Toast'
+import { useConfirm } from './ConfirmDialog'
+import CodeBlock, { CopyButton } from './CodeBlock'
+import MFButton from './ui'
+import { mcpConfigs, PLATFORM_ORDER } from '../lib/mcp-configs'
+import { navigateTo } from '../lib/nav'
 
 /* ═══════════════════════════════════════════════════════════════
    MCPModal — "Connect your tools" panel for the MindForm MCP server.
 
-   The MCP server (backend/src/mcp/server.js) speaks Model Context
-   Protocol over stdio and exposes 12 tools that read and edit the
-   signed-in user's tasks, habits and goals — the same quick edits
-   Coach proposes in the app. Rendered from Settings and Coach.
+   Auth model: per-account MCP keys (mfk_…), no JWT. Create → shown
+   once → paste into Claude Desktop / Cursor / Codex / Antigravity /
+   any MCP client. Rotate or revoke instantly. The server stores
+   only a SHA-256 hash, so the plaintext can never be shown again.
+
+   Rendered from Settings → MCP Server and Coach → Settings.
    ═══════════════════════════════════════════════════════════════ */
 
 const TOOL_GROUPS = [
-  { label: 'Tasks',  color: 'var(--cyan)',   tools: ['list_tasks', 'create_task', 'delete_task'] },
-  { label: 'Habits', color: 'var(--amber)',  tools: ['list_habits', 'create_habit', 'update_habit', 'delete_habit', 'check_habit'] },
-  { label: 'Goals',  color: 'var(--brand-secondary)', tools: ['list_goals', 'create_goal', 'complete_goal', 'delete_goal'] },
+  { label: 'Tasks',  color: 'var(--cyan)',               tools: ['list_tasks', 'create_task', 'delete_task'] },
+  { label: 'Habits', color: 'var(--amber)',              tools: ['list_habits', 'create_habit', 'update_habit', 'delete_habit', 'check_habit'] },
+  { label: 'Goals',  color: 'var(--brand-secondary)',    tools: ['list_goals', 'create_goal', 'complete_goal', 'delete_goal'] },
+  { label: 'Stats',  color: 'var(--purple)',             tools: ['get_overview'] },
 ]
 
-function CopyButton({ text, label = 'Copy' }) {
-  const [done, setDone] = useState(false)
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(text)
-    } catch {
-      const ta = document.createElement('textarea')
-      ta.value = text
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      ta.remove()
-    }
-    setDone(true)
-    setTimeout(() => setDone(false), 1600)
-  }
-  return (
-    <button onClick={copy} style={{
-      display: 'inline-flex', alignItems: 'center', gap: 6,
-      background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8,
-      color: done ? 'var(--green)' : 'var(--text-secondary)', padding: '6px 12px',
-      fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-display)',
-      transition: 'all 0.15s', flexShrink: 0,
-    }}>
-      {done ? <Check size={12} /> : <Copy size={12} />} {done ? 'Copied' : label}
-    </button>
-  )
+const fmtDate = (d) => {
+  try { return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) } catch { return '—' }
 }
 
-const CodeBlock = ({ children, note }) => (
-  <div style={{ marginBottom: 14 }}>
-    <div style={{
-      position: 'relative', background: 'var(--bg-glass)', border: '1px solid var(--border)',
-      borderRadius: 12, padding: '14px 16px', overflowX: 'auto',
-    }}>
-      <pre style={{ margin: 0, fontFamily: 'var(--font-mono)', fontSize: 12, lineHeight: 1.6, color: 'var(--text-secondary)', whiteSpace: 'pre' }}>{children}</pre>
-      <div style={{ position: 'absolute', top: 8, right: 8 }}><CopyButton text={children} /></div>
-    </div>
-    {note && <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 6 }}>{note}</div>}
-  </div>
-)
-
 export default function MCPModal({ onClose }) {
-  // ESC closes
+  const toast = useToast()
+  const confirm = useConfirm()
+  const [keys, setKeys] = useState(null)            // null = loading
+  const [creating, setCreating] = useState(false)   // inline create form
+  const [keyName, setKeyName] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [freshKey, setFreshKey] = useState(null)    // plaintext shown once
+  const [tab, setTab] = useState('claude')
+  const [activeKey, setActiveKey] = useState('')    // plaintext (while modal open) to fill configs
+
+  const base = (() => { try { return window.location.origin || 'https://mindform.onrender.com' } catch { return 'https://mindform.onrender.com' } })()
+
+  const loadKeys = useCallback(async () => {
+    try {
+      const res = await mcpAPI.list()
+      setKeys(res?.data || [])
+    } catch (err) {
+      setKeys([])
+      toast.error(err.message || 'Could not load MCP keys.')
+    }
+  }, [toast])
+
+  useEffect(() => {
+    loadKeys()
+  }, [loadKeys])
+
+  // ESC closes the modal (accessibility)
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const token = localStorage.getItem('mf_token') || ''
-  const claudeConfig = JSON.stringify({
-    mcpServers: {
-      mindform: {
-        command: 'node',
-        args: ['/path/to/mindform/backend/src/mcp/server.js'],
-        env: {
-          MF_URI: 'mongodb://127.0.0.1:27017/mindform',
-          MF_TOKEN: '<your-mf-token>',
-          JWT_SECRET: '<your-jwt-secret>',
-        },
-      },
-    },
-  }, null, 2)
+  const handleCreate = async () => {
+    const name = keyName.trim() || 'My key'
+    setBusy(true)
+    try {
+      const res = await mcpAPI.create(name)
+      const key = res?.data?.key
+      if (!key) throw new Error('Key creation returned no key.')
+      setFreshKey(key)
+      setActiveKey(key)
+      setCreating(false)
+      setKeyName('')
+      loadKeys()
+      toast.success('Key created — copy it now, it will not be shown again.')
+    } catch (err) {
+      toast.error(err.message || 'Could not create the key.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleRotate = async (k) => {
+    const ok = await confirm({
+      title: `Rotate “${k.name}”?`,
+      body: 'A new key is generated and the old one stops working immediately. You will need to update any client that used the old key.',
+      confirmLabel: 'Rotate',
+      danger: false,
+    })
+    if (!ok) return
+    try {
+      const res = await mcpAPI.rotate(k.id)
+      const key = res?.data?.key
+      setFreshKey(key || null)
+      if (key) setActiveKey(key)
+      loadKeys()
+      toast.success(key ? 'Key rotated — copy the new key below.' : 'Key rotated.')
+    } catch (err) {
+      toast.error(err.message || 'Could not rotate the key.')
+    }
+  }
+
+  const handleRevoke = async (k) => {
+    const ok = await confirm({
+      title: `Revoke “${k.name}”?`,
+      body: 'Every tool call with this key fails immediately. This cannot be undone — create a new key when you need one.',
+      confirmLabel: 'Revoke',
+      danger: true,
+    })
+    if (!ok) return
+    try {
+      await mcpAPI.revoke(k.id)
+      if (freshKey && k.prefix && freshKey.startsWith(k.prefix)) { setFreshKey(null); setActiveKey('') }
+      loadKeys()
+      toast.success('Key revoked.')
+    } catch (err) {
+      toast.error(err.message || 'Could not revoke the key.')
+    }
+  }
+
+  const cfg = mcpConfigs(base, activeKey || 'mfk_YOUR_KEY_HERE')
+  const c = cfg[tab]
 
   return (
     <div onClick={onClose} style={{
@@ -88,7 +132,7 @@ export default function MCPModal({ onClose }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18,
     }}>
       <div role="dialog" aria-modal="true" aria-label="MCP server" onClick={e => e.stopPropagation()} className="mf-sheet"
-        style={{ width: 'min(560px, 100%)', maxHeight: 'min(86dvh, 720px)', overflowY: 'auto', padding: 0 }}>
+        style={{ width: 'min(600px, 100%)', maxHeight: 'min(88dvh, 760px)', overflowY: 'auto', padding: 0 }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '22px 24px 16px', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 2, borderRadius: '20px 20px 0 0' }}>
           <div style={{ width: 38, height: 38, borderRadius: 12, background: 'color-mix(in srgb, var(--purple) 15%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -96,7 +140,7 @@ export default function MCPModal({ onClose }) {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>MCP Server</div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Quick-edit MindForm from AI tools you already use</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Quick-edit your data from Claude, Cursor, Codex & Antigravity</div>
           </div>
           <button onClick={onClose} aria-label="Close" style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', padding: 7, borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer' }}>
             <X size={14} />
@@ -106,13 +150,113 @@ export default function MCPModal({ onClose }) {
         <div style={{ padding: '18px 24px 26px' }}>
           <p style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text-secondary)', margin: '0 0 16px' }}>
             MindForm ships a <strong style={{ color: 'var(--text-primary)' }}>Model Context Protocol (MCP) server</strong>.
-            Point Claude Desktop, Cursor, Windsurf or any MCP client at it and your assistant can list, create, update
-            and delete your tasks, habits and goals with plain tool calls — always scoped to your account, never to anyone else's.
+            Connect it with a personal <strong style={{ color: 'var(--text-primary)' }}>account key</strong> — no password,
+            no JWT — and your AI tools can list, create, update and delete your tasks, habits and goals with plain
+            tool calls, always scoped to your account.
           </p>
 
-          {/* Tools */}
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 10 }}>12 TOOLS INCLUDED</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8, marginBottom: 20 }}>
+          {/* ── Account keys ───────────────────────────── */}
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <KeyRound size={11} /> ACCOUNT KEYS
+          </div>
+
+          {/* Plaintext reveal (once) */}
+          {freshKey && (
+            <div style={{
+              background: 'color-mix(in srgb, var(--brand-warning, #f59e0b) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--brand-warning, #f59e0b) 35%, transparent)',
+              borderRadius: 12, padding: '12px 14px', marginBottom: 14,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <AlertTriangle size={14} color="var(--brand-warning, #f59e0b)" />
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--brand-warning, #f59e0b)' }}>Copy it now — shown only once</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <code style={{
+                  flex: 1, fontFamily: 'var(--font-mono)', fontSize: 11.5, wordBreak: 'break-all',
+                  background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', color: 'var(--text-primary)',
+                }}>{freshKey}</code>
+                <CopyButton text={freshKey} label="Copy key" />
+              </div>
+            </div>
+          )}
+
+          {/* Keys list */}
+          {keys === null ? (
+            <div style={{ fontSize: 12.5, color: 'var(--text-muted)', padding: '8px 2px 14px' }}>Loading keys…</div>
+          ) : keys.length === 0 ? (
+            <div style={{ fontSize: 12.5, color: 'var(--text-muted)', padding: '8px 2px 14px', lineHeight: 1.55 }}>
+              No keys yet. Create one per machine or client — you can revoke each independently.
+            </div>
+          ) : (
+            <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', marginBottom: 12 }}>
+              {keys.map((k, i) => (
+                <div key={k.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px',
+                  borderTop: i ? '1px solid var(--border)' : 'none', flexWrap: 'wrap',
+                }}>
+                  <div style={{ flex: 1, minWidth: 140 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 13.5, fontWeight: 600, color: k.revoked ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: k.revoked ? 'line-through' : 'none' }}>{k.name}</span>
+                      {k.revoked
+                        ? <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--red)', background: 'color-mix(in srgb, var(--red) 12%, transparent)', padding: '2px 8px', borderRadius: 20 }}>REVOKED</span>
+                        : <CheckCircle2 size={13} color="var(--brand-success)" />}
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{k.prefix}…</div>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: 1, minWidth: 130 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Clock size={10} /> created {fmtDate(k.createdAt)}</span>
+                    <span>{k.lastUsedAt ? `last used ${fmtDate(k.lastUsedAt)}` : 'never used'}</span>
+                  </div>
+                  {!k.revoked && (
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={() => handleRotate(k)} title="Rotate key" style={{
+                        background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8,
+                        color: 'var(--text-secondary)', padding: 7, cursor: 'pointer', display: 'flex',
+                      }}><RefreshCw size={13} /></button>
+                      <button onClick={() => handleRevoke(k)} title="Revoke key" style={{
+                        background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 8,
+                        color: 'var(--text-muted)', padding: 7, cursor: 'pointer', display: 'flex',
+                      }}
+                        onMouseEnter={e => { e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'var(--red)' }}
+                        onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+                      ><Trash2 size={13} /></button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Create key */}
+          {creating ? (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16 }}>
+              <input
+                autoFocus
+                value={keyName}
+                onChange={e => setKeyName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleCreate() }}
+                placeholder="Key name — e.g. “MacBook Cursor”"
+                maxLength={40}
+                style={{
+                  flex: 1, background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 10,
+                  padding: '10px 12px', fontSize: 13, color: 'var(--text-primary)',
+                }}
+              />
+              <MFButton onClick={handleCreate} disabled={busy} size="sm">{busy ? 'Creating…' : 'Create'}</MFButton>
+              <MFButton variant="glass" onClick={() => { setCreating(false); setKeyName('') }} size="sm">Cancel</MFButton>
+            </div>
+          ) : (
+            <div style={{ marginBottom: 16 }}>
+              <MFButton variant="secondary" size="sm" onClick={() => { setCreating(true); setFreshKey(null) }}>
+                <Plus size={13} /> Create key
+              </MFButton>
+            </div>
+          )}
+
+          {/* ── Tools ──────────────────────────────────── */}
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 10 }}>13 TOOLS INCLUDED</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 20 }}>
             {TOOL_GROUPS.map(g => (
               <div key={g.label} style={{ background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 12px' }}>
                 <div style={{ fontSize: 11.5, fontWeight: 700, color: g.color, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 6 }}>{g.label}</div>
@@ -123,33 +267,44 @@ export default function MCPModal({ onClose }) {
             ))}
           </div>
 
-          {/* Quick start */}
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Terminal size={11} /> QUICK START
+          {/* ── Platform setup ─────────────────────────── */}
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 10 }}>CONNECT YOUR PLATFORM</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+            {PLATFORM_ORDER.map(id => (
+              <button key={id} onClick={() => setTab(id)} style={{
+                background: tab === id ? 'color-mix(in srgb, var(--purple) 14%, transparent)' : 'var(--bg-glass)',
+                border: `1px solid ${tab === id ? 'color-mix(in srgb, var(--purple) 45%, transparent)' : 'var(--border)'}`,
+                borderRadius: 980, padding: '6px 13px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                color: tab === id ? 'var(--purple, var(--brand-primary))' : 'var(--text-secondary)',
+                fontFamily: 'var(--font-display)', transition: 'all 0.15s',
+              }}>{cfg[id].label}</button>
+            ))}
           </div>
-          <CodeBlock note={'Run it from the backend folder. MF_TOKEN is your MindForm JWT (button below copies it from this browser).'}>
-{`cd backend
-MF_TOKEN=<your-token> npm run mcp`}
-          </CodeBlock>
-          {token && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-              <CopyButton text={token} label="Copy my MF_TOKEN" />
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Local only — the token never leaves this browser.</span>
-            </div>
+
+          {c.steps?.length > 0 && (
+            <ol style={{ margin: '0 0 10px', padding: '0 0 0 18px', fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.7 }}>
+              {c.steps.map(s => <li key={s}>{s}</li>)}
+            </ol>
           )}
+          <CodeBlock code={c.code} note={c.note} />
 
-          {/* Claude Desktop config */}
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 10 }}>CLAUDE DESKTOP CONFIG</div>
-          <CodeBlock note={'Paste into Claude Desktop → Settings → Developer → Edit Config, then restart the app.'}>
-            {claudeConfig}
-          </CodeBlock>
-
-          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px' }}>
-            <ShieldCheck size={15} color="var(--brand-success)" style={{ flexShrink: 0, marginTop: 1 }} />
-            <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55 }}>
-              Full setup guide, tool schemas and security notes live in <code style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, background: 'var(--bg-glass)', padding: '1px 6px', borderRadius: 6 }}>backend/src/mcp/README.md</code>.
-              The server is read/write for <em>your</em> account only, and every write mirrors what Coach can do in-app.
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-glass)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', marginTop: 6 }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flex: 1, minWidth: 220 }}>
+              <ShieldCheck size={15} color="var(--brand-success)" style={{ flexShrink: 0, marginTop: 1 }} />
+              <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+                Keys are stored as SHA-256 hashes and scoped to your account only. Revoke any time — access ends on the next request.
+              </div>
             </div>
+            <button
+              onClick={() => { onClose(); navigateTo('/docs/mcp') }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0,
+                background: 'none', border: '1px solid var(--border)', borderRadius: 980,
+                color: 'var(--cyan)', padding: '8px 14px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'var(--font-display)',
+              }}>
+              <BookOpen size={13} /> Full guide
+            </button>
           </div>
         </div>
       </div>

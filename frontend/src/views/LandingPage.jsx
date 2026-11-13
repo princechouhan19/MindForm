@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
+import SiteFooter from '../components/Footer'
 import {
   ArrowRight, CheckSquare, Activity, Target, Flame,
   ChevronRight, Sun, Moon, Menu, X, Lock, Bell, BarChart3, Users2, Shield, Mic,
@@ -105,29 +106,6 @@ const FAQS = [
     a: 'Speak is MindForm’s voice and communication training module. It offers guided 15, 30 and 60-minute sessions covering diaphragm breathing (4–2–6), SOVT hums and lip trills, neck release with vowels, English tongue twister ladders, style-shifting read-alouds and on-camera impromptu speaking with the PREP framework — every drill grounded in published voice research.' },
   { q: 'Does the Speak camera recording upload my video?',
     a: 'No. Camera Studio uses your browser’s MediaRecorder and the video never leaves your device: recordings live only in memory as temporary blob URLs and disappear when you close the session. Nothing is uploaded to any server.' },
-]
-
-/* Footer links that scroll to on-page sections (was: dead links). */
-const FOOTER_TARGETS = {
-  'How it works': 'lp-how',
-  'Privacy model': 'lp-privacy',
-  'Self-hosting': 'lp-faq',
-  'FAQ': 'lp-faq',
-}
-
-const FOOTER_COLS = [
-  {
-    title: 'Product',
-    links: ['Task Tracker', 'Habit Tracker', 'Goals', 'Fapless', 'Speak', 'Social', 'AI Coach'],
-  },
-  {
-    title: 'Resources',
-    links: ['How it works', 'Privacy model', 'Self-hosting', 'FAQ'],
-  },
-  {
-    title: 'Community',
-    links: ['Leaderboard', 'Forum', 'Contribute'],
-  },
 ]
 
 /* ── Reveal helper ─────────────────────────────────────────── */
@@ -676,59 +654,10 @@ export default function LandingPage({ onGetStarted, theme, setTheme, onSubPage }
         </button>
       </section>
 
-      {/* ── Footer — parchment, fine print (DESIGN.md footer) ─ */}
-      <footer style={{ background: 'var(--lp-parchment)', borderTop: '1px solid var(--lp-hairline)' }}>
-        <div style={{ maxWidth: 980, margin: '0 auto', padding: '40px clamp(20px, 5vw, 80px) 28px' }}>
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-            gap: 28, paddingBottom: 24, borderBottom: '1px solid var(--lp-hairline)',
-          }}>
-            {FOOTER_COLS.map((col) => (
-              <div key={col.title}>
-                <div className="lp-caption-strong" style={{ fontSize: 12, color: 'var(--lp-ink)', marginBottom: 10 }}>{col.title}</div>
-                {col.links.map((l) => (
-                  <div key={l} className="lp-fine" style={{ color: 'var(--lp-ink-2)', padding: '5px 0', cursor: 'pointer', lineHeight: 1.9 }}
-                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--lp-accent)'; e.currentTarget.style.textDecoration = 'underline' }}
-                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--lp-ink-2)'; e.currentTarget.style.textDecoration = 'none' }}
-                    onClick={FOOTER_TARGETS[l] ? () => goTo(FOOTER_TARGETS[l]) : () => onGetStarted('register')}
-                  >{l}</div>
-                ))}
-              </div>
-            ))}
-            <div>
-              <div className="lp-caption-strong" style={{ fontSize: 12, color: 'var(--lp-ink)', marginBottom: 10 }}>Get started</div>
-              <div className="lp-fine" style={{ color: 'var(--lp-ink-2)', padding: '5px 0' }}>Free forever</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-                <button className="lp-btn-primary" onClick={() => onGetStarted('register')} style={{ padding: '6px 16px', fontSize: 12, cursor: 'pointer' }}>
-                  Sign up free <ArrowRight size={12} />
-                </button>
-                <button onClick={() => onGetStarted('login')} className="lp-link" style={{ fontSize: 12, textAlign: 'left', cursor: 'pointer', background: 'none', border: 'none', padding: '2px 0' }}>
-                  Sign in
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="lp-fine" style={{ paddingTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, color: 'var(--lp-ink-3)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <img src="/logo.png" alt="MindForm" style={{ width: 16, height: 16, borderRadius: 4, objectFit: 'contain' }} />
-              <span>© 2026 MindForm. All rights reserved.</span>
-            </div>
-            <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
-              {[['Privacy Policy', '/privacy'], ['Terms of Use', '/terms'], ['How it works', '/how-it-works'], ['FAQ', '/faq']].map(([l, target]) => (
-                <span key={l} style={{ cursor: 'pointer', transition: 'color 0.2s' }}
-                  onClick={() => onSubPage && onSubPage(target)}
-                  onMouseEnter={e => e.currentTarget.style.color = 'var(--lp-ink)'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'var(--lp-ink-3)'}
-                >{l}</span>
-              ))}
-              <button onClick={() => onGetStarted('login')} className="lp-link" style={{ fontSize: 12, cursor: 'pointer', background: 'none', border: 'none' }}>
-                Sign in <ArrowRight size={12} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* ── Footer — the shared SiteFooter component, used identically
+          on the landing page, sub-pages, docs and (via App routing)
+          everywhere else. Single source of truth for links. ─ */}
+      <SiteFooter onNavigate={onSubPage} onGetStarted={onGetStarted} />
     </div>
   )
 }

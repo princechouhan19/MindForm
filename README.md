@@ -1,189 +1,170 @@
 <p align="center">
-  <img src="logo.png" width="120" alt="MindForm Logo" />
+  <img src="logo.png" width="110" alt="MindForm" />
 </p>
 
-# MindForm 2.4 — Apple-Grade Productivity Suite
+<h1 align="center">MindForm</h1>
 
 <p align="center">
-  <a href="https://mindform.onrender.com/"><strong>🚀 Live Demo</strong></a>
+  <strong>The Apple-grade productivity suite — tasks, habits, goals, discipline streaks,<br/>voice training, an AI Coach and an MCP server, in one private workspace.</strong>
 </p>
 
-**MindForm** is a high-performance, full-stack productivity ecosystem for habit tracking, minute-level task planning, goal progression and discipline streaks — redesigned end-to-end around **Apple's Human Interface Guidelines**: iOS system colors, SF-style typography, an 8-pt grid, continuous-corner radii, WCAG-AA contrast and keynote-style motion.
+<p align="center">
+  <a href="https://mindform.onrender.com/"><strong>🚀 Live app</strong></a> ·
+  <a href="#-module-tour">Module tour</a> ·
+  <a href="#-ai-coach">AI Coach</a> ·
+  <a href="#-mcp-server">MCP server</a> ·
+  <a href="docs/">Documentation</a> ·
+  <a href="#-license">License</a>
+</p>
+
+<p align="center">
+  <img alt="platform" src="https://img.shields.io/badge/platform-web%20%7C%20PWA-0a84ff" />
+  <img alt="stack" src="https://img.shields.io/badge/stack-React%2018%20·%20Node.js%20·%20MongoDB-30d158" />
+  <img alt="license" src="https://img.shields.io/badge/license-proprietary-f59e0b" />
+  <img alt="version" src="https://img.shields.io/badge/version-3.1-8e8e93" />
+</p>
+
+> **MindForm is not open source.** The web app is free to use, but the codebase is
+> proprietary — see [LICENSE.md](LICENSE.md). This repository is private; it exists
+> for the MindForm team and deployment infrastructure.
 
 ---
 
-## ✨ What's new in 2.0 (design & UX overhaul)
+## Why MindForm
 
-### Apple design system (frontend)
-- **Typography** — SF Pro stack (`-apple-system → Inter` fallback) with Apple's type ramp (11/12/13/15/17/20/26/32/40 px) and tight optical tracking. Removed Syne/Bricolage/DM Mono webfonts (faster loads, native look).
-- **Color** — iOS system palette with semantic tokens: systemBlue `#0A84FF/#007AFF`, systemOrange, systemGreen, systemRed, systemIndigo, systemPink, systemPurple. Full **light theme** on the apple.com `#F5F5F7` canvas — every legacy hardcoded neon (`rgba(0,229,255)`, `#ffd700`, `#ff4500`, …) is tokenized.
-- **Grid & spacing** — 8-pt spacing scale, `--content-max: 980px` content column, consistent card padding.
-- **Radii** — continuous-corner token set (8/10/12/16/22/28/980px pill).
-- **Contrast** — all text/label pairs meet WCAG AA in both themes; buttons use white-on-blue instead of failing black-on-gold.
+Most productivity apps track *something*. MindForm connects everything: minute-level
+tasks feed a 30-day habit matrix, habits and tasks drive goal progress automatically,
+and a discipline streak engine wraps the whole day in real stakes. On top sits **Coach**
+— an AI copilot that reads your plan and proposes concrete edits, and an **MCP server**
+that plugs your account into Claude, Cursor, Codex and Antigravity.
 
-### Landing page — apple.com storytelling
-- **Built on the apple.com design spec** — `frontend/DESIGN.md` (VoltAgent apple design analysis) is the single source of truth for the landing surface: Action Blue `#0066cc` as the only accent (`#2997ff` on dark tiles), canvas `#ffffff` ↔ parchment `#f5f5f7` ↔ near-black tiles `#272729/#2a2a2c/#252527`, weight-600 tight-tracked headlines, 17 px body, pill CTAs with the `scale(0.95)` press state, hairline utility cards, zero decorative gradients and exactly one product shadow (`3px 5px 30px rgba(0,0,0,0.22)`).
-- Keynote hero with masked-line reveal (fixes the old invisible-headline bug), product render with scroll parallax and a frosted always-black global nav.
-- Feature ribbon, full-bleed scroll-triggered product tiles (Tasks → Habits → Goals → Fapless), animated stat counters, privacy tile, parchment CTA finale and apple.com-style fine-print footer.
-- Replaced the WebGL starfield with flat canvases — lighter, calmer, on-brand. Removed `three.js`, `split-type` and `@studio-freight/lenis` dependencies (**bundle 0.92 MB**).
+- **One system, not five apps** — plan, track, progress and discipline in a single account.
+- **Apple design language throughout** — SF-style type ramp, iOS system colors, 8-pt grid,
+  inset grouped lists, keynote-grade motion, WCAG-AA contrast in dark and light themes.
+- **Private by architecture** — data scoped to your user ID; AI keys never leave your
+  browser; chat history auto-deletes every 24 h; forum messages every 48 h.
+- **Fast** — route-level code splitting (the landing page ships ~22 kB gzip of app JS),
+  compression, rate limiting, an aggregate `/stats/summary` endpoint for one-round-trip
+  dashboards.
 
-### New features & sub-features
-- **Today (Overview) dashboard** — greeting, task/habit progress rings, streak & goal cards, one-tap module jumps; now the default view.
-- **Onboarding** — 3-step Apple-style welcome on first sign-in (per account).
-- **Toast notifications** — global success/error/warning/info toasts replace every `alert()`.
-- **Confirm dialogs** — destructive actions (delete goal, reset streak, replace week, copy tasks) use a centered alert-dialog with Escape support instead of `confirm()`.
-- **Mobile** — HIG-compliant 5-tab bottom nav (Today/Tasks/Habits/Goals + **More** sheet for Fapless/Social/AI/Settings), 44-pt minimum touch targets, safe-area support; **Goals is now fully responsive** (was desktop-only).
+## Module tour
 
-### Fixed bugs
-- 🔴 **Data-loss race** — auto-save could overwrite server data with defaults while a week/month fetch was in flight. `useSync` now gates saves behind a `ready` flag.
-- 🔴 **Invisible hero headline** (SplitText + gradient text) — replaced with masked-line reveals.
-- 🔴 **Aura inconsistency** — leaderboard counted raw seconds (1,037,107) while Fapless used the level formula (8,160). A single server-side `utils/aura.js` engine now powers Fapless, leaderboard and profiles.
-- Fapless mobile: `justifycontent` typo, missing `@keyframes` (aura-pulse/aura-plus/auraFloat/glow never ran).
-- GoalsView `linkedTasks.length` crash on legacy goals; unhandled rejections across views.
-- API 404s returned HTML in production static mode → now JSON.
-- `DonutChart` unclamped percent; `AuthContext` logout didn't clear errors; duplicate TTL index warning; malformed-JSON 500s → clean 400s.
-
-### Accessibility & polish
-- `:focus-visible` rings, `aria-label`/`aria-current`/`alertdialog` roles, Escape-to-close on all modals, `prefers-reduced-motion` support, visible grabbable scrollbars.
-
-### Backend
-- Server-side streak/aura engine (`src/utils/aura.js`) — one formula everywhere.
-- Hardened controllers: key-format validation, input clamping, `catchAsync` + `AppError` everywhere, enum whitelists.
-- New `GET /api/stats/summary` aggregate endpoint.
-- Graceful shutdown (SIGTERM/SIGINT), request timeouts, token key migrated to `mf_token` (legacy auto-migrated), 401 → auto-logout.
-- Sanitized `.env.example`; **rotate your MongoDB credentials** — they were committed in the original archive.
-
----
-
-## ✨ What's new in 2.1 (refinement round)
-
-### Apple Design System charts (`components/MFCharts.jsx`)
-- New chart kit modeled on **Apple Health / Stocks / Fitness**: rounded gradient bars with the max value emphasized, Fitness-style activity rings with rounded caps, smooth Stocks-style area curves, and a floating capsule tooltip with backdrop blur. No gridlines, no axis lines — the data speaks for itself.
-- Applied across **Tasks** (weekly progress, week score, per-day rings) and **Habits** (daily/weekly progress, GOAL·DONE·LEFT rings, mood & motivation curves).
-
-### Tasks — fixed "+" button overflow (MANAGE TASKS)
-- Root cause: the bottom split used a hardcoded `400px 1fr` grid and a non-wrapping add-row, so the time input and "+" button spilled outside the card on narrow viewports.
-- Fix: responsive `mf-split-grid` (collapses to one column ≤768 px), wrapping add-row with `min-width: 0` guards, fixed-width time field, and a 44-pt blue "+" button (HIG touch target). Both desktop and mobile manage tabs verified.
-
-### Goals — rethinked feature
-- **Milestones:** every goal can now carry a measurable checkpoint list (add in the form, tick inline on the card, quick-add without opening the editor). Backend model + controller support added with validation.
-- **Pace tracking:** progress is compared against the goal's creation→deadline window — cards show *Ahead of pace / On track / Behind pace / Overdue* chips, so a 30%-done goal due tomorrow no longer looks "fine".
-- **Progress model:** overall % now averages every available signal (milestones + linked tasks + linked habits) instead of silently reading 0 for unlinked goals.
-- **Templates:** four research-grounded quick-starts (Read 12 books, Run 5K, Ship a project, Emergency fund) that prefill title, deadline and milestones — blank-page friction removed.
-- **Apple Fitness ring** per goal card, quick *Mark complete / Reopen* actions, decoded task-name matching (linked progress actually counts now), and a fully responsive mobile layout.
-
-### Fapless — research-based redesign
-- **Urge Rescue (SOS)** — one prominent band + full-screen flow: 3-minute **urge-surfing timer** with an animated box-breathing pacer, **HALT + digital trigger check** with a tailored tip per state, urge intensity slider, and **replacement action chips** (push-ups, cold water, walk, accountability text…). Surfing an urge is logged and earns **+15 aura** (mastery experiences build self-efficacy).
-- **Urge log** in the database (`urgeLogs`) with trigger, intensity before/after and strategy; the History section shows the log and analytics (urges resisted, wave success rate, best streak, top triggers).
-- **Compassionate relapse flow** — shame-based "demotivational quotes" removed (abstinence violation effect: shame fuels binges). Relapses now use a structured trigger debrief + optional note, followed by a kind reframe screen with your best streak and stats.
-- **"Your brain on Day N"** — evidence-informed timeline of what to expect at each stage, with the current stage highlighted.
-- Shame-y level labels softened ("Clown"→"Day One", "Noob"→"Initiate"); ids and images unchanged.
-- 🐞 **Aura formula bug fixed** — the streak-aura accumulator never advanced its cursor, so every level's full span was double-counted (a 5-day streak earned ~3,300 aura instead of ~50). One server-side engine (`utils/aura.js`) is the single source of truth for Fapless, leaderboard and profiles.
-
-### Social — Game Center & iMessage language
-- **Podium leaderboard** (🥈🥇🥉 blocks) for the top 3, clean ranked rows below, follow buttons and "YOU" chip.
-- **iMessage-style community forum** — blue bubbles for your messages, gray for others, grouped headers with flags/badges/timestamps, capsule input with a round send button.
-- Profile tab rebuilt as an iOS-style hero card + stats band + inset-grouped edit sheet with a real iOS toggle; admin panel restyled into inset groups.
-
-### Settings — iOS Settings app language
-- Inset-grouped rounded lists with uppercase section headers, colored rounded-square icon tiles, chevron/status accessories and 52-pt rows.
-- **Theme picker** is now two visual preview cards (Dark / Light) instead of a bare toggle.
-- Permissions rows show live status chips with Enable actions; About and Session groups added; footnotes under each group.
-
-### Screenshots
-- 28 fresh captures in `Showcase/` (desktop + mobile, dark + light) — now covering the rebuilt **Speak** studio, every landing tile and the new Goals form.
-
-
-### v2.4 — DESIGN.md as the single source of truth + Speak module
-- **`frontend/DESIGN.md`** (VoltAgent apple design analysis, 563 lines) is committed to the repo and now governs the **entire frontend**, not just the landing page.
-- **Token layer rebuilt** — one accent (Action Blue `#0066cc` / Sky Link `#2997ff` on dark), hairline cards at 18 px, radii locked to the 5/8/11/18/980 scale, weight ladder 300/400/600/700 (500 removed), card & button shadows eliminated (the single `3px 5px 30px` product shadow survives on landing imagery only), focus ring `#0071e3`.
-- **Real SF substitute** — Inter Variable is bundled at `public/fonts/` and wired into both font stacks, so the Apple-tight cadence renders identically off-Apple platforms.
-- **Every view scrubbed** — Tasks, Habits, Goals, Fapless, Social, AI Coach, Settings, Auth: all decorative gradients flattened to flat surfaces, neon glows removed, primary CTAs normalized to the Action Blue pill grammar (`scale(0.95)` press), page headers set at 600/-0.022em.
-- **New: Speak — Voice & Communication Studio** (`VoiceCoachView.jsx`) — research-based drills (4-2-6 diaphragm breathing pacer, SOVT hums & lip trills, neck release + vowels, bronze/silver/gold twister ladder, style-shifting read-alouds, pen-in-mouth obstacle round, pace & pause trainer, on-camera PREP impromptu studio with local-only recording) packaged as **15 / 30 / 60-minute guided sessions** with a fullscreen session player, progress ring and completion logging (`/api/voice`, `VoiceLog` model, localStorage fallback).
-- **Landing** — a fifth product tile introduces Speak (`Speak — new`), stats and footer updated, and every product render in the tiles was re-captured from the redesigned app.
-
-
-### v2.2 polish
-- **Overview dashboard**: new Apple Health-style "Last 14 days" activity chart (combined daily task + habit completion, today highlighted) built on the MFCharts kit; dashboard rings now reuse the shared `MFRing` component.
-- Previous-month data now included in the demo seed so the trend renders a full window.
-- Verified AI Coach / Auth / Landing are fully tokenized to the iOS palette (no legacy colors remain).
-
----
-
-## 🛠 Technology Stack
-
-| Layer | Technologies |
+| Module | What it does |
 | :--- | :--- |
-| **Frontend** | React 18, Vite 5, GSAP + ScrollTrigger, Lenis, Recharts, Lucide Icons |
-| **Backend** | Node.js, Express, JWT, Helmet.js, Rate-Limiting |
-| **Database** | MongoDB Atlas (NoSQL) |
-| **Deployment** | Render (CI/CD Integrated) |
+| **Today** | Greeting, progress rings, streak & goal cards, one-tap module jumps — the whole day at a glance. |
+| **Task Tracker** | Minute-level weekly planner with day-by-day check-offs, Week Score, next-task countdown, insights and CSV export. |
+| **Habit Tracker** | 30-day matrix, streaks, mood + motivation (1–10) next to every check-in, completion charts, CSV export. |
+| **Goals** | Career / health / personal / general goals with deadlines; progress computes itself from linked tasks and habits. |
+| **Fapless** | Discipline streak engine — ten identity levels (Novice → Legend), milestone bonuses, 30/90-day protocols, urge SOS panel, relapse log with reasons. |
+| **Speak** | Voice & communication training: 15/30/60-minute guided sessions — 4–2–6 diaphragm breathing, SOVT hums, neck release, tongue-twister ladders, style-shifting read-alouds, on-camera PREP studio (recording never leaves the device). |
+| **Social** | Opt-in public profiles, global streak leaderboard, follow system, forum with 48-hour auto-deletion. |
+| **Coach** | The AI layer — see below. |
+| **MCP Server** | Your account, inside your AI tools — see below. |
 
----
+<p align="center">
+  <img src="screenshots/after/Landing-Top.png" alt="MindForm landing" width="640" />
+</p>
+<p align="center">
+  <img src="screenshots/after/Coach-Proposals.png" alt="Coach apply-cards" width="420" />
+  &nbsp;
+  <img src="screenshots/after/Fapless.png" alt="Fapless" width="420" />
+</p>
 
-## 📁 System Architecture
+## AI Coach
 
-```text
-mindform/
-├── backend/
-│   ├── public/            # production build of the frontend
-│   └── src/
-│       ├── controllers/   # auth, tasks, habits, goals, fapless
-│       ├── middleware/    # JWT verification & security
-│       ├── models/        # User, TaskWeek, HabitMonth, Goal, Fapless, ForumMessage
-│       ├── routes/        # Express routers + social/admin
-│       └── utils/         # aura engine, AppError, catchAsync, email validator
-└── frontend/
-    ├── public/
-    │   ├── shots/         # product screenshots used by the landing page
-    │   ├── robots.txt · sitemap.xml · llms.txt · llms.md · site.webmanifest
-    └── src/
-        ├── api/           # typed API client (timeout, 401 handling)
-        ├── components/    # Sidebar, Toast, ConfirmDialog, Onboarding
-        ├── context/       # AuthContext
-        ├── hooks/         # useSync (race-safe auto-save)
-        └── views/         # Overview, TaskTracker, HabitTracker, Goals, Fapless, Social, AI Chat, Settings, Landing, Auth
+Coach reads your current week's tasks, this month's habits, your goals and your streak,
+then answers with that context — and proposes concrete changes as **apply-cards**
+(`create_task`, `create_habit`, `create_goal`, `update_habit`, `complete_goal`,
+`delete_habit`, `delete_task`). Nothing touches your account until you tap **Apply**.
+
+**Providers — bring your own key (BYOK):**
+
+| Provider | Type | Model picker |
+| :--- | :--- | :--- |
+| OpenAI · Google Gemini · Anthropic Claude · Mistral | First-party | Curated list |
+| **OpenRouter** | Built-in aggregator (editable base URL) | **Searchable live catalogue** (~470 models) |
+| **NVIDIA NIM** — build.nvidia.com | Built-in aggregator (editable base URL) | **Searchable live catalogue** |
+| **Custom provider** | Any OpenAI-compatible endpoint (Ollama, LM Studio, vLLM, Together, Groq…) | Searchable · fetched or manual entry |
+
+Edge cases are handled: SSRF-guarded base URLs (HTTPS enforced in production, private
+ranges blocked), 45 s request timeouts, connection tester with plain-language errors,
+12 h model-catalogue cache with offline fallback, keyless local endpoints (Ollama) and
+host-configurable shared keys with BYOK priority.
+
+Guide: [`docs/ai-coach.md`](docs/ai-coach.md) · in-app: `/docs/ai-coach`.
+
+## MCP Server
+
+MindForm speaks the **Model Context Protocol** — no JWT required. Every account issues
+its own **MCP keys** (`mfk_…`), stored as SHA-256 hashes and revocable instantly.
+
+```jsonc
+// Cursor (.cursor/mcp.json) — Claude Desktop / Codex / Antigravity configs at /docs/mcp
+{
+  "mcpServers": {
+    "mindform": {
+      "url": "https://mindform.onrender.com/mcp",
+      "headers": { "Authorization": "Bearer mfk_YOUR_KEY" }
+    }
+  }
+}
 ```
 
----
+**13 tools** — `list/create/delete_task`, `list/create/update/delete/check_habit`,
+`list/create/complete/delete_goal`, `get_overview` — the same bucket math as the app,
+scoped to the key's account, rate-limited server-side.
 
-## ⚡ Technical Setup
+Transports: **HTTP** (`POST /mcp`, JSON-RPC 2.0 — works with mcp-remote, Cursor,
+Codex, Antigravity) and a dependency-free **stdio bridge** for local clients.
+Create keys in **Settings → MCP Server**; per-platform configs in **Docs → MCP**.
 
-### Backend
-1. `cd backend`
-2. `npm install`
-3. `cp .env.example .env` and configure `MONGO_URI` + `JWT_SECRET`
-4. `npm run dev` (port 5000)
+Guide: [`docs/mcp.md`](docs/mcp.md) · in-app: `/docs/mcp`.
 
-> Local dev without MongoDB: `node src/dev-memory.js` boots an **in-memory MongoDB** (dev only).
+## Documentation
 
-### Frontend
-1. `cd frontend`
-2. `npm install`
-3. `npm run dev` (port 5173, proxies `/api` → backend)
-4. `npm run build` → outputs to `../backend/public` for single-service deploys
+Everything ships in-repo and in-app (`/docs`):
 
----
+| Doc | Contents |
+| :--- | :--- |
+| [`docs/architecture.md`](docs/architecture.md) | System map, frontend view/routing model, backend layering, MCP topology |
+| [`docs/system-design.md`](docs/system-design.md) | Data models, week/month bucket math, aura engine, security layers, scaling |
+| [`docs/backend.md`](docs/backend.md) | Setup, environment variables, route reference, models, error handling |
+| [`docs/frontend.md`](docs/frontend.md) | Structure, design tokens, state, code splitting, how to add a view |
+| [`docs/development.md`](docs/development.md) | Team dev setup, scripts, conventions, release checklist |
+| [`docs/deployment.md`](docs/deployment.md) | Render deployment, env vars, custom domains, self-hosting |
+| [`docs/mcp.md`](docs/mcp.md) | Full MCP guide — keys, per-platform configs, tool reference |
+| [`docs/ai-coach.md`](docs/ai-coach.md) | Full Coach guide — BYOK, providers, apply-card schema, privacy |
 
-## 🔒 Security & Performance
-- **Data isolation:** every query is scoped by user ID.
-- **Sanitization:** Helmet.js, CORS, NoSQL-injection protection, rate limiting (200 req/15 min, strict 3 regs/hour).
-- **Privacy:** AI chats auto-delete after 24 h, forum posts after 48 h (TTL).
-- **Optimized builds:** 0.92 MB total bundle, 3× fewer font requests, window-scroll landing without WebGL.
+## Quick start (team)
 
----
+```bash
+# backend — serves the API and the built frontend on :5000
+cd backend
+npm install
+cp .env.example .env          # set MONGO_URI + JWT_SECRET
+npm run dev                   # or: npm start
 
-## 📸 Screenshots
-See `Showcase/` (v2.1 desktop + mobile) and `screenshots/before/` (v1 audit), `screenshots/after/` (v2 redesign) in the release package.
+# frontend — Vite dev server on :5173 (proxies /api to :5000)
+cd ../frontend
+npm install
+npm run dev
 
----
+# production build → backend/public (the backend serves it)
+cd ../frontend && npm run build
+```
 
-## 🔍 SEO / AEO / GEO
-- `robots.txt` — welcomes search engines **and** AI crawlers (GPTBot, PerplexityBot, ClaudeBot, Applebot, Google-Extended…)
-- `sitemap.xml`, canonical tags, Open Graph + Twitter cards
-- `llms.txt` + `llms.md` — answer-engine product/data sheets (AEO)
-- JSON-LD: `WebApplication` + `FAQPage`; geo meta (`geo.region`, ICBM)
+Detailed walkthrough: [`docs/development.md`](docs/development.md).
 
----
+## Security & privacy
 
-© 2026 MindForm. All Rights Reserved.
+- bcrypt (cost 12) passwords, JWT sessions, Helmet CSP, mongo-sanitize, layered rate limits, honeypot + disposable-email blocking.
+- MCP keys: 168-bit random, SHA-256 at rest, instant revocation, endpoint-scoped.
+- SSRF guard on all user-supplied provider base URLs.
+- AI chat TTL 24 h · forum TTL 48 h · camera recordings never leave the device.
+- Report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
+
+## License
+
+Copyright © 2026 Prince Chouhan. **Proprietary — all rights reserved.**
+MindForm is closed-source software: no copying, modification, redistribution or
+reselling without written permission. See [LICENSE.md](LICENSE.md) and [LEGAL.md](LEGAL.md).

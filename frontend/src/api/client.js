@@ -148,3 +148,19 @@ export const voiceAPI = {
 export const statsAPI = {
   summary: () => request('GET', '/stats/summary'),
 }
+
+// MCP account keys — the no-JWT way to connect AI tools.
+// The plaintext key is returned EXACTLY ONCE at creation/rotation;
+// the server keeps only a SHA-256 hash.
+export const mcpAPI = {
+  list: () => request('GET', '/mcp/keys'),
+  create: (name) => request('POST', '/mcp/keys', { name }, { timeout: 20000 }),
+  rotate: (id) => request('POST', `/mcp/keys/${id}/rotate`, null, { timeout: 20000 }),
+  revoke: (id) => request('DELETE', `/mcp/keys/${id}`),
+}
+
+// AI provider utilities (Coach)
+export const aiAPI = {
+  providers: () => request('GET', '/ai/providers'),
+  testProvider: (payload) => request('POST', '/ai/test', payload, { timeout: 30000 }),
+}

@@ -17,6 +17,8 @@ const faplessRoutes = require('./routes/fapless')
 const aiRoutes      = require('./routes/ai')
 const socialRoutes  = require('./routes/social')
 const voiceRoutes   = require('./routes/voice')
+const mcpKeyRoutes  = require('./routes/mcp')
+const mcpHttp       = require('./mcp/http')
 
 const app = express()
 
@@ -130,6 +132,13 @@ app.use('/api/fapless', faplessRoutes)
 app.use('/api/ai',      aiRoutes)
 app.use('/api/social',  socialRoutes)
 app.use('/api/voice',   voiceRoutes)
+app.use('/api/mcp',     mcpKeyRoutes)   // MCP account keys (JWT-protected management)
+
+// MCP server — Model Context Protocol over HTTP, authenticated by
+// per-account keys (mfk_…), NOT JWTs. Mounted before the /api 404
+// so clients like Claude Desktop, Cursor, Codex and Antigravity can
+// POST JSON-RPC to /mcp directly.
+app.use('/mcp', mcpHttp)
 
 // Cross-module aggregate — powers the Overview ("Today") page in one round-trip
 app.get('/api/stats/summary', require('./middleware/auth').protect, async (req, res) => {

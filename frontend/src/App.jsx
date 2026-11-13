@@ -6,6 +6,9 @@ import Onboarding from './components/Onboarding'
 import Sidebar from './components/Sidebar'
 import LandingPage from './views/LandingPage'
 import SubPage, { SUB_PAGES } from './views/SubPages'
+import { DOCS_PAGES } from './lib/docs-registry.jsx'
+import ErrorPage from './views/ErrorPage'
+import { navigateTo } from './lib/nav'
 
 // Route-level code splitting: each module loads on demand, so the
 // landing page and first dashboard paint ship a fraction of the JS
@@ -20,6 +23,7 @@ const CoachView     = lazy(() => import('./views/CoachView'))
 const SocialView    = lazy(() => import('./views/SocialView'))
 const VoiceCoachView = lazy(() => import('./views/VoiceCoachView'))
 const AuthPage      = lazy(() => import('./views/AuthPage'))
+const DocsView      = lazy(() => import('./views/DocsView'))
 import {
   Loader, CheckSquare, Activity, Target, Flame, Settings, Brain, Users2, Home, MoreHorizontal, LayoutGrid, Mic,
 } from 'lucide-react'
@@ -40,23 +44,15 @@ const NAV_ITEMS = [
 const MOBILE_TABS = ['overview', 'tasks', 'habits', 'goals', 'more']
 const MORE_SHEET_ITEMS = ['fapless', 'voice', 'social', 'ai', 'settings']
 
-/* Last-resort crash guard: a render error must never leave a blank page. */
+/* Last-resort crash guard: a render error must never leave a blank page.
+   Renders the same 500 surface users see for server errors. */
 class ErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { error: null } }
   static getDerivedStateFromError(error) { return { error } }
   componentDidCatch(error, info) { console.error('MindForm crash:', error, info) }
   render() {
     if (this.state.error) {
-      return (
-        <div role="alert" style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: 'var(--bg-base)', color: 'var(--text-secondary)', padding: 24, textAlign: 'center', fontFamily: 'var(--font-body)' }}>
-          <div style={{ fontSize: 40 }}>🛠️</div>
-          <div style={{ fontSize: 19, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>Something went wrong.</div>
-          <div style={{ fontSize: 13.5, maxWidth: 380, lineHeight: 1.55 }}>An unexpected error interrupted this view. Reloading usually fixes it — your data is safe on the server.</div>
-          <button onClick={() => window.location.reload()} style={{ background: 'var(--btn-primary-bg)', color: '#fff', border: 'none', borderRadius: 980, padding: '11px 26px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-display)' }}>
-            Reload MindForm
-          </button>
-        </div>
-      )
+      return <ErrorPage code={500} error={this.state.error} onRetry={() => window.location.reload()} />
     }
     return this.props.children
   }
@@ -85,6 +81,8 @@ function Dashboard() {
   const handleOpenAuth = (mode = 'login') => {
     setAuthMode(mode)
     setPage('auth')
+    // Keep the URL in sync so refresh / back / deep links all work.
+    try { window.history.pushState({}, '', mode === 'register' ? '/register' : '/login') } catch { /* noop */ }
   }
 
   const [theme, setTheme] = useState(() => {
@@ -93,19 +91,22 @@ function Dashboard() {
 
   // Lightweight path router for landing sub-pages (/privacy, /terms, /faq, /how-it-works).
   // Served behind the Express SPA fallback in production.
-  const readPath = () => window.location.pathname.replace(/\/+$/, '') || '/'
+  const readPath = () => (window.location.pathname.replace(/\/+$/, '') || '/').toLowerCase()
   const [path, setPath] = useState(readPath)
   useEffect(() => {
     const onPop = () => {
       const p = readPath()
       setPath(p)
+      window.scrollTo(0, 0)
       if (p === '/login') { setAuthMode('login'); setPage('auth') }
       else if (p === '/register') { setAuthMode('register'); setPage('auth') }
       else if (p === '/auth') { setPage('auth') }
+      else if (p === '/') { setPage(user ? 'dashboard' : 'landing') }
+      // sub-pages, docs pages and 404 render straight from `path`
     }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
-  }, [])
+  }, [user])
 
   useEffect(() => {
     const p = readPath()
@@ -117,7 +118,8 @@ function Dashboard() {
   const goHome = () => {
     window.history.pushState({}, '', '/')
     setPath('/')
-    setPage('landing')
+    setPage(user ? 'dashboard' : 'landing')
+    window.scrollTo(0, 0)
   }
 
   // Once user logs in, jump to dashboard
@@ -164,12 +166,25 @@ function Dashboard() {
     setShowOnboarding(false)
   }
 
-  // Sub-page routing must happen AFTER every hook above — an early return
-  // before a hook is a Rules-of-Hooks violation (production React error #300,
-  // "Rendered fewer hooks than expected" → blank sub-pages).
-  const subPage = SUB_PAGES.find(p => p.path === path)
+  // Sub-page / docs / 404 routing must happen AFTER every hook above — an
+  // early return before a hook is a Rules-of-Hooks violation (production
+  // React error #300, "Rendered fewer hooks than expected" → blank pages).
+  const subPage  = SUB_PAGES.find(p => p.path === path)
+  const docsPage = DOCS_PAGES.find(p => p.path === path)
   if (subPage) {
     return <SubPage page={subPage} theme={theme} setTheme={setTheme} onHome={goHome} />
+  }
+  if (docsPage) {
+    return (
+      <Suspense fallback={<ViewLoader />}>
+        <DocsView page={docsPage} theme={theme} setTheme={setTheme} onHome={goHome} />
+      </Suspense>
+    )
+  }
+  // Anything not registered above is a real 404 (never a blank page)
+  const KNOWN_PATHS = ['/', '', '/auth', '/login', '/register']
+  if (!KNOWN_PATHS.includes(path)) {
+    return <ErrorPage code={404} onHome={goHome} />
   }
 
   if (loading) {
@@ -184,14 +199,14 @@ function Dashboard() {
 
   // ── Landing Page ──────────────────────────────────
   if (page === 'landing') {
-    return <LandingPage onGetStarted={handleOpenAuth} theme={theme} setTheme={setTheme} onSubPage={(p) => { window.history.pushState({}, '', p); setPath(p) }} />
+    return <LandingPage onGetStarted={handleOpenAuth} theme={theme} setTheme={setTheme} onSubPage={navigateTo} />
   }
 
   // ── Auth Page (not logged in) ─────────────────────
   if (!user) {
     return (
       <Suspense fallback={<ViewLoader />}>
-        <AuthPage initialMode={authMode} onBack={() => setPage('landing')} />
+        <AuthPage initialMode={authMode} onBack={goHome} />
       </Suspense>
     )
   }

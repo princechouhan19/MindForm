@@ -2,7 +2,7 @@
 
 > MindForm is a free, private productivity dashboard for habit tracking, minute-level task planning, long-term goals and discipline streaks — in one Apple-inspired interface.
 
-MindForm is a full-stack productivity ecosystem that helps people build discipline through data-driven habit tracking, task management, goal progression and psychological wellness monitoring. It is 100% free and open source.
+MindForm is a full-stack productivity ecosystem that helps people build discipline through data-driven habit tracking, task management, goal progression and psychological wellness monitoring. The web app is free to use; MindForm is proprietary (closed-source) software.
 
 ## Core modules
 
@@ -12,8 +12,8 @@ MindForm is a full-stack productivity ecosystem that helps people build discipli
 - **Fapless**: a discipline streak engine with 10 identity levels (Novice → Legend), milestone bonuses, challenges (30-day, 90-day protocol), relapse history with reasons and aura points.
 - **Speak**: guided voice and communication training in 15, 30 or 60-minute sessions. Drills include 4–2–6 diaphragm breathing, SOVT hums and lip trills, neck release with sustained vowels, English tongue twister ladders (bronze/silver/gold), style-shifting read-alouds and on-camera impromptu speaking with the PREP framework. Camera recordings use the browser MediaRecorder and never leave the device.
 - **Social Hub**: opt-in public profiles, a global leaderboard ranked by streak, a follow system and a private community forum where messages auto-delete after 48 hours.
-- **Coach** (AI assistant): a chat interface grounded in the user's real tasks, habits, goals and streak. Coach can propose concrete changes — new tasks, habit replans, goals with deadlines — as review cards; nothing is written until the user taps Apply. Quick starts include "Plan my week", "Add habits", "Replan habits", "Set a goal" and "Edit goals". Works with OpenAI, Google Gemini, Anthropic Claude and Mistral; the user brings their own API key, which is stored only in their browser.
-- **MCP server**: a Model Context Protocol (stdio) server ships with the backend, exposing 12 tools (list/create/update/delete for tasks, habits and goals) so external MCP clients such as Claude Desktop can make the same quick edits against the signed-in user's account.
+- **Coach** (AI assistant): a chat interface grounded in the user's real tasks, habits, goals and streak. Coach can propose concrete changes — new tasks, habit replans, goals with deadlines — as review cards; nothing is written until the user taps Apply. Quick starts include "Plan my week", "Add habits", "Replan habits", "Set a goal" and "Edit goals". Works with OpenAI, Google Gemini, Anthropic Claude and Mistral, plus OpenRouter, NVIDIA NIM (build.nvidia.com) and any custom OpenAI-compatible endpoint (editable base URL, searchable live model catalogue); the user brings their own API key, which is stored only in their browser.
+- **MCP server**: a Model Context Protocol server (HTTP at /mcp, plus a stdio bridge) exposes 13 tools (list/create/update/delete for tasks, habits and goals, plus get_overview) so external MCP clients — Claude Desktop, Cursor, Codex CLI, Antigravity and any MCP-capable agent — can make the same quick edits against your account, authenticated with a personal, revocable account key (no JWT needed). Setup guides at /docs/mcp.
 
 ## Privacy model
 
@@ -46,8 +46,10 @@ A 30-minute "Full workout" adds an Obstacle Course drill (pen-in-mouth / over-to
 - How it works: https://mindform.onrender.com/how-it-works
 - Privacy Policy: https://mindform.onrender.com/privacy
 - Terms of Use: https://mindform.onrender.com/terms
-- Docs and self-hosting: see the repository README.
+- Documentation centre: https://mindform.onrender.com/docs
+- MCP server guide: https://mindform.onrender.com/docs/mcp
+- AI Coach guide: https://mindform.onrender.com/docs/ai-coach
 
 ## Pricing
 
-MindForm is free forever. There are no paid tiers.
+MindForm is free forever. There are no paid tiers. The codebase is proprietary and not open for redistribution.

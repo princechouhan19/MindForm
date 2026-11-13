@@ -17,6 +17,46 @@ const SERVER_KEYS = {
   mistral:   process.env.MISTRAL_API_KEY,
 }
 
+/* Default base URLs for the two built-in aggregators (editable from
+   the client — the body's baseUrl always wins, after validation). */
+const DEFAULT_BASE_URLS = {
+  openrouter: 'https://openrouter.ai/api/v1',
+  nvidia:     'https://integrate.api.nvidia.com/v1',
+}
+const IS_DEV = (process.env.NODE_ENV || 'development') === 'development'
+
+/* ─── SSRF guard for user-supplied base URLs ───────────────────
+   Custom providers point at third-party OpenAI-compatible APIs.
+   We must never let a key-holder turn the backend into a proxy
+   against private infrastructure, cloud metadata or itself.     */
+function assertSafeBaseUrl(raw) {
+  let u
+  try { u = new URL(String(raw)) } catch {
+    throw new Error('Invalid base URL — use a full URL like https://api.example.com/v1')
+  }
+  if (!['http:', 'https:'].includes(u.protocol)) {
+    throw new Error('Base URL must start with http:// or https://')
+  }
+  if (IS_DEV === false && u.protocol !== 'https:') {
+    throw new Error('Base URL must use HTTPS in production')
+  }
+  if (u.username || u.password) {
+    throw new Error('Base URL must not embed credentials (user:pass@host)')
+  }
+  const host = u.hostname.toLowerCase().replace(/\.$/, '')
+  const privateNames = ['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]', 'metadata.google.internal']
+  if (privateNames.includes(host) || host.endsWith('.local') || host.endsWith('.internal') || host.endsWith('.localhost')) {
+    if (!IS_DEV) throw new Error(`Blocked host: ${host}`)
+  }
+  if (/^(10|127)\./.test(host) || /^192\.168\./.test(host) || /^169\.254\./.test(host) || /^172\.(1[6-9]|2\d|3[01])\./.test(host)) {
+    if (!IS_DEV) throw new Error(`Blocked private address: ${host}`)
+  }
+  if (u.port && ['22', '23', '25', '445', '3306', '5432', '6379', '9200', '27017'].includes(u.port)) {
+    throw new Error(`Blocked port: ${u.port}`)
+  }
+  return u.origin + u.pathname.replace(/\/+$/, '')
+}
+
 // ─── GET /api/ai/providers ──────────────────────────────────────
 // Which providers have a server-side key (booleans only — never the keys).
 router.get('/providers', protect, (req, res) => {
@@ -34,13 +74,28 @@ router.get('/providers', protect, (req, res) => {
 // Returns: { reply: string, usedServerKey?: boolean }
 router.post('/chat', protect, async (req, res) => {
   try {
-    const { provider, model, apiKey, messages } = req.body
+    const { provider, model, apiKey, messages, baseUrl } = req.body
     const serverKey = SERVER_KEYS[provider]
-    if (!provider || !model || (!apiKey && !serverKey) || !messages?.length) {
+    const customPending = baseUrl || provider === 'openrouter' || provider === 'nvidia' || provider.startsWith('custom-')
+    // Keyless custom endpoints (Ollama, LM Studio…) are allowed: no key,
+    // no server key, but a validated base URL to send requests to.
+    if (!provider || !model || (!apiKey && !serverKey && !customPending) || !messages?.length) {
       return res.status(400).json({ success: false, message: 'model and messages are required — add your own API key (BYOK) or ask the host to enable a shared key.' })
     }
     const effectiveKey = apiKey || serverKey
-    const usedServerKey = !apiKey
+    const usedServerKey = !apiKey && Boolean(serverKey)
+
+    // Custom / aggregator providers (OpenRouter, NVIDIA NIM, anything
+    // OpenAI-compatible). The client supplies the base URL; we validate
+    // it against the SSRF guard before any request leaves the server.
+    let customBase = null
+    if (baseUrl || provider === 'openrouter' || provider === 'nvidia' || provider.startsWith('custom-')) {
+      try {
+        customBase = assertSafeBaseUrl(baseUrl || DEFAULT_BASE_URLS[provider] || '')
+      } catch (e) {
+        return res.status(400).json({ success: false, message: e.message })
+      }
+    }
 
     const userId = req.user._id
     const now = new Date()
@@ -151,7 +206,10 @@ router.post('/chat', protect, async (req, res) => {
     // ── Call provider API ──────────────────────────────────────
     let reply = ''
     try {
-      if (provider === 'openai') {
+      if (customBase) {
+        // OpenAI-compatible path: OpenRouter, NVIDIA NIM, custom endpoints
+        reply = await callOpenAICompatible(effectiveKey, model, systemPrompt, sanitizedMessages, customBase, { provider })
+      } else if (provider === 'openai') {
         reply = await callOpenAI(effectiveKey, model, systemPrompt, sanitizedMessages)
       } else if (provider === 'gemini') {
         reply = await callGemini(effectiveKey, model, systemPrompt, sanitizedMessages)
@@ -360,5 +418,120 @@ async function callMistral(apiKey, model, system, messages) {
     req.end()
   })
 }
+
+// ─── OpenAI-compatible (OpenRouter · NVIDIA NIM · custom) ────────
+// One caller for every endpoint that speaks /chat/completions.
+// baseUrl is pre-validated by assertSafeBaseUrl. Uses fetch with a
+// hard timeout so a hanging provider can never pin the request.
+async function callOpenAICompatible(apiKey, model, system, messages, baseUrl, { provider = 'custom' } = {}) {
+  const body = JSON.stringify({
+    model,
+    messages: [{ role: 'system', content: system }, ...messages],
+    max_tokens: 1024,
+    temperature: 0.7,
+  })
+  const headers = { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+  if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`
+  // OpenRouter attribution headers (optional but recommended by their docs)
+  if (provider === 'openrouter') {
+    headers['HTTP-Referer'] = process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || 'https://mindform.onrender.com'
+    headers['X-Title'] = 'MindForm'
+  }
+
+  let res
+  try {
+    res = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers,
+      body,
+      signal: AbortSignal.timeout(45000),
+    })
+  } catch (e) {
+    if (e?.name === 'TimeoutError' || e?.name === 'AbortError') throw new Error('Provider timed out after 45s')
+    throw new Error(`Could not reach ${baseUrl} — check the base URL and your connection.`)
+  }
+
+  let parsed = null
+  try { parsed = await res.json() } catch { parsed = null }
+  if (parsed?.error) throw new Error(parsed.error.message || JSON.stringify(parsed.error))
+  if (!res.ok) throw new Error(`${provider} error ${res.status}: ${(parsed && (parsed.message || parsed.details)) || 'request failed'}`)
+  const reply = parsed?.choices?.[0]?.message?.content
+  if (!reply) throw new Error('AI returned an empty response.')
+  return reply
+}
+
+// ─── POST /api/ai/test — validate a provider config ─────────────
+// Used by the Coach settings "Test connection" button. Checks the
+// key against the provider's /models endpoint (or a tiny chat call
+// when models are not listable) and reports plain-language results.
+router.post('/test', protect, async (req, res) => {
+  try {
+    const { provider, baseUrl, apiKey } = req.body
+    const serverKey = SERVER_KEYS[provider]
+    const effectiveKey = apiKey || serverKey
+
+    let modelsUrl = null
+    let headers = {}
+    if (baseUrl || provider === 'openrouter' || provider === 'nvidia' || provider.startsWith('custom-')) {
+      let base
+      try { base = assertSafeBaseUrl(baseUrl || DEFAULT_BASE_URLS[provider] || '') } catch (e) {
+        return res.status(400).json({ success: false, ok: false, message: e.message })
+      }
+      modelsUrl = `${base}/models`
+      if (effectiveKey) headers['Authorization'] = `Bearer ${effectiveKey}`
+      if (provider === 'openrouter') {
+        headers['HTTP-Referer'] = process.env.PUBLIC_URL || 'https://mindform.onrender.com'
+        // OpenRouter's /models is public, so it can't validate a key —
+        // use the authenticated /key endpoint instead.
+        modelsUrl = `${base}/key`
+      }
+    } else if (provider === 'openai') {
+      modelsUrl = 'https://api.openai.com/v1/models'
+      headers['Authorization'] = `Bearer ${effectiveKey}`
+    } else if (provider === 'mistral') {
+      modelsUrl = 'https://api.mistral.ai/v1/models'
+      headers['Authorization'] = `Bearer ${effectiveKey}`
+    } else if (provider === 'anthropic') {
+      modelsUrl = 'https://api.anthropic.com/v1/models'
+      headers['x-api-key'] = effectiveKey
+      headers['anthropic-version'] = '2023-06-01'
+    } else if (provider === 'gemini') {
+      modelsUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(effectiveKey || '')}`
+    } else {
+      return res.status(400).json({ success: false, ok: false, message: `Unknown provider: ${provider}` })
+    }
+
+    if (!effectiveKey && !modelsUrl.includes('generativelanguage') && !String(provider).startsWith('custom-')) {
+      return res.status(400).json({ success: false, ok: false, message: 'Add an API key first.' })
+    }
+
+    let r
+    try {
+      r = await fetch(modelsUrl, { headers, signal: AbortSignal.timeout(15000) })
+    } catch (e) {
+      return res.json({ success: true, ok: false, message: `Could not reach the provider (${e.name === 'TimeoutError' ? 'timed out' : 'network error'}). Check the base URL.` })
+    }
+
+    let data = null
+    try { data = await r.json() } catch { data = null }
+    if (!r.ok) {
+      const detail = data?.error?.message || data?.message || ''
+      const friendly = r.status === 401 ? 'Invalid API key.' : r.status === 403 ? 'Key valid but lacks access to models.' : `Provider returned ${r.status}.`
+      return res.json({ success: true, ok: false, message: `${friendly}${detail ? ' ' + detail : ''}` })
+    }
+
+    const ids = (data?.data || data?.models || []).map(m => m.id || m.name).filter(Boolean)
+    return res.json({
+      success: true,
+      ok: true,
+      message: ids.length ? `Connection OK — ${ids.length} models available.` : 'Connection OK.',
+      count: ids.length,
+      sample: ids.slice(0, 3),
+    })
+  } catch (err) {
+    console.error('AI test route error:', err)
+    res.status(500).json({ success: false, ok: false, message: 'Internal server error.' })
+  }
+})
 
 module.exports = router
